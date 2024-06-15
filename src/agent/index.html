@@ -1,0 +1,132 @@
+<script src="https://unpkg.com/compromise@14.13.0/builds/compromise.js"></script>
+
+<script>
+
+	 
+let sampleTeam =	{
+    "id": "1716720278036-n6jkh49rj7t",
+    "samples": [
+        "write a program to count to 10",
+        "write software to calculate how many days to my birthday given parameters birthdate and todays date"
+    ],
+    "name": "software development team",
+    "members": [
+        {
+            "id": "1715533081877-2tpar0hlv9j",
+            "name": "Computer Programmer",
+            "message": "you are a computer programmer. you write complete working programs. when you reply you answer with code. strictly code and nothing else. do not comments about the code or descriptions of what the code is doing.\n- your favorite programming language is python\n- you add comments to your code to clarify algorithms and identify the meaning of variables\n- use long variable names that clearly identify their purpose\nWhen you write code blocks wrap them in ```python ``` or ```javascript ``` or whatever is the programming language being used\nYou must wrap code blocks in quotes",
+            "config": {
+                "maxTokens": "6837",
+                "samples": [
+                    "write a function to calculate the fibonacci numbers",
+                    "write a program that writes the numbers from one to ten in reverse",
+                    "write a react component that lists an array of samples. Use react-bootstrap."
+                ],
+                "preferredModel": "3",
+                "temperature": "0.04",
+                "topP": "0.75",
+                "temperatureOpenAI": "0.06",
+                "topPOpenAI": "0.7",
+                "frequencyPenalty": "0.09",
+                "presencePenalty": "-0.01"
+            },
+            "samples": [
+                "write a function to calculate the fibonacci numbers",
+                "write a program that writes the numbers from one to ten in reverse",
+                "write a react component that lists an array of samples. Use react-bootstrap."
+            ],
+            "category": [
+                "code",
+                "generator"
+            ],
+            "skills": "You are very skilled at writing python software",
+            "backStory": "You spend much time at home maintaining a network of Linux based servers"
+        },
+        {
+            "samples": [
+                "```a=5; b=2 c=a + b     ```   what does this code do?"
+            ],
+            "name": " Code Summariser",
+            "message": "You are teaching software engineering. Explain the code below. In particular provide a list of the functions and important variables as well as a description of the purpose of the code. ",
+            "category": [
+                "summariser",
+                "code"
+            ],
+            "skills": "You are very good at detailed analysis of software code",
+            "backStory": "You like adding comments to code",
+            "config": {
+                "temperature": "0.19",
+                "topK": "74",
+                "maxTokens": "3843",
+                "temperatureOpenAI": "0.19",
+                "topPOpenAI": "0.66",
+                "frequencyPenalty": "0.49",
+                "presencePenalty": "0.39"
+            },
+            "id": "1716312923586-z2unlz19v6j"
+        }
+    ],
+    "planner": [],
+    "type": "mixtureofexperts",
+    "message": "### Team Instructions Here",
+    "category": [
+        "code"
+    ]
+}
+	
+
+
+
+let url = "https://api.groq.com/openai"
+let key = "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"
+let model = "llama3-8b-8192"
+
+let onUpdate = function(partial, content) {
+	//console.log('onUpdate',partial, content)
+	document.getElementById('output').innerHTML = content
+	document.getElementById('status').innerHTML = "UPDATED"
+}
+let onComplete = function(content) {
+	console.log('onComplete',content)
+	document.getElementById('output').innerHTML = content
+	document.getElementById('status').innerHTML = "COMPLETE"
+}
+let onReady = function(e) {
+	//console.log('onReady',e)
+	document.getElementById('status').innerHTML = "READY"
+}
+let onError = function(e) {
+	console.log('onError',e)
+	c.stop()
+	document.getElementById('status').innerHTML = "ERROR"
+}
+let onStart = function(e) {
+	//console.log('onStart',e)
+	document.getElementById('status').innerHTML = "STARTED"
+}
+let c = llmApiClient({url,key,model, onReady})
+
+let modelConfig = {}
+
+function start() {
+	//console.log("startup")
+	c.startTeam({message: "```\na=5; b=2 c=a + b     ```\nwhat does this code do?n", team: sampleTeam,modelConfig, onUpdate, onComplete, onError,onStart}).then(function(answer) {
+		console.log('FINISHED TEAM',answer)
+		document.getElementById('status').innerHTML = "FINISHED"
+		document.getElementById('output').innerHTML = answer
+	})
+}
+
+function stop() {
+	c.stop()
+}
+
+//window.onload = start
+</script>
+<body>
+	<button onclick="start()" >Start</button>
+	<button onclick="stop()" >Stop</button>
+	
+	<div id="output" ></div>
+	<div id="status" ></div>
+</body>
