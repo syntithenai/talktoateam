@@ -2,7 +2,8 @@ import {useState} from 'react'
 import {Button, ButtonGroup, Modal, ListGroup, Badge} from 'react-bootstrap'
 import useIcons from '../useIcons'
 import ModelSelector from './ModelSelector'
-export default function ModelSelectorModal({defaultOptions, onChange , value, icons}) {
+
+export default function ModelSelectorModal({ defaultOptions, onChange , value, icons}) {
     
   const [show, setShow] = useState(false);
   const handleClose = () => {
@@ -10,14 +11,11 @@ export default function ModelSelectorModal({defaultOptions, onChange , value, ic
   }
   const handleShow = () => setShow(true);
   
-    
-  var sortedOptions = Array.isArray(options) ? options : []
-    sortedOptions.sort(function (a,b) {if (a > b) return 1; else return -1})
-  
-  function onChangeWrap() {
-    onChange()
+  function onChangeWrap(v) {
+    onChange(v)
     handleClose()
   }
+
   if (!show) {
 	  return <Button size="sm" variant="secondary"  onClick={handleShow} >
 			<span>{icons.brain} {value}</span> 

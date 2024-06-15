@@ -10,16 +10,17 @@ import ToolsConfigForm from '../components/ToolsConfigForm'
 //import SystemMessageForm from '../components/SystemMessageForm'
 
 import {Link } from 'react-router-dom'
-import ModelSelector from '../components/ModelSelector'
+import ModelSelectorModal from '../components/ModelSelectorModal'
 
-export default function SettingsPage({ utils,aiUsage, config,setRoles,setTeams, setConfig, chatHistory, setChatHistory, forceRefresh, refreshHash, token, login, logout, user, availableModels}) {
-	const icons = useIcons()
+export default function SettingsPage({icons, utils,aiUsage, config,setRoles,setTeams, setConfig, chatHistory, setChatHistory, forceRefresh, refreshHash, token, login, logout, user, availableModels}) {
 	console.log(token)
+	
 	function clearConfig() {
 		setConfig({llm:{},stt:{},tts:{}})
 		aiUsage.setLogs({})
 		forceRefresh()
 	}
+	
 	function clearAll() {
 		setConfig({llm:{},stt:{},tts:{}})
 		aiUsage.setLogs({})
@@ -76,10 +77,10 @@ export default function SettingsPage({ utils,aiUsage, config,setRoles,setTeams, 
 				
 				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>{aiUsage.getTotal()}</b>
 				</span></Link>}
-			</div>
+			</div> 
 			<div id="body" style={{zIndex:'3',position: 'relative', top: '4em', left: 0, width: '100%',  paddingTop:'0.2em',paddingLeft:'0.5em', backgroundColor:'white', height:'100%'}}  >
 			  <h3>Settings </h3><Button onClick={testbal}>BALANCE</Button>
-			  <ModelSelector onChange={function(e) {console.log(e)}} value={""} defaultOptions={availableModels} />
+			  <ModelSelectorModal onChange={function(e) {console.log(e)}} value={""} defaultOptions={availableModels}  forceRefresh={forceRefresh} icons={icons}/>
 			  <Button style={{float:'right', fontSize:'0.7em', marginRight:'0.5em'}} variant="success" onClick={startWizard} >{icons.magic} Setup Wizard</Button>
 			  <Button style={{float:'right', fontSize:'0.7em', marginRight:'0.5em'}} variant="warning" onClick={clearConfig} >{icons.bin} Clear Config And Usage Logs</Button>
 			  <Button style={{float:'right', fontSize:'0.7em', marginRight:'0.5em'}} variant="danger" onClick={clearAll} >{icons.bin} Clear All</Button>

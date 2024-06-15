@@ -53,20 +53,49 @@ export default function useAppState(props) {
 		props.doSave()
 	}
 
+	const [creditBalance, setCreditBalance] = useState(0)
+	function updateCreditBalance(token) {
+		if (token) {
+			fetch(import.meta.env.VITE_API_URL + '/balance', {
+				method: 'GET',
+				headers: {
+					'authorization': 'Bearer '+token
+				}
+			}).then(function(response) {
+				// console.log("bill respon l", response)
+				if (!response.ok) {
+					throw new Error('Failed to load balance');
+				}
+				response.text().then(function(data) {
+					// console.log("bill respon DATA", data)
+					if (float(data) > 0) {
+						setCreditBalance(float(data))
+					} else {
+						setCreditBalance(0)
+					}
+				})
+			})
+		}
+	}
+
 	const [availableModels, setAvailableModels]  = useState([])
 	useEffect(function() {
-		console.log("appstate load")
+		// console.log("appstate load")
 		fetch(import.meta.env.VITE_API_URL + '/pricing', {
 			method: 'GET'
 		}).then(function(response) {
-			console.log("bill respon l", response)
+			// console.log("bill respon l", response)
 			if (!response.ok) {
 				throw new Error('Failed to load pricing');
 			}
 			response.json().then(function(data) {
-				console.log("bill respon DATA", data)
+				// console.log("bill respon DATA", data)
 				if (data && data.llm) {
-					console.log("LOADED MODELS",data)
+					data = data.llm.map(function(model) {
+						model.id = utils.generateRandomId()
+						return model
+					})
+					// console.log("LOADED MODELS",data)
 					setAvailableModels(data)
 				}
 			})
@@ -146,5 +175,5 @@ export default function useAppState(props) {
 		setRefreshHash(new Date().getTime())
 	}
 
-	return { availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
+	return { creditBalance, updateCreditBalance, availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
 }
