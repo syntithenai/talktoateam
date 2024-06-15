@@ -41,8 +41,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				  />
 				
 				<Form.Label>Tavily Web Search URL</Form.Label>
-				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://github.com/syntithenai/voice2llm" target="new" >https://github.com/syntithenai/voice2llm</a></span></Form.Text>
-          
+				
 				<Form.Control
 					type="text"
 					value={config && config.tools && config.tools.tavily_url}
@@ -52,8 +51,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				<Form.Group style={{marginTop:'1.5em'}} as={Col} controlId="openaiKey">
 				
 				  <Form.Label>CORS Proxy URL</Form.Label>
-				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >For self hosting see <a href="https://github.com/syntithenai/voice2llm" target="new" >https://github.com/syntithenai/voice2llm</a></span></Form.Text>
-          
+				
 				<Form.Control
 					type="text"
 					value={config && config.tools && config.tools.cors_url ? config.tools.cors_url : 'https://proxy.cors.sh/'}
@@ -71,26 +69,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				  />
 				  
 			</Form.Group>
-			
-			<Form.Group  style={{marginTop:'1.5em'}} as={Col} controlId="openaiKey">
-				<Form.Label>Piston Code Runner URL</Form.Label>
-				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://github.com/engineer-man/piston" target="new" >https://github.com/engineer-man/piston</a></span></Form.Text>
-				<Form.Control
-					type="text"
-					value={config && config.tools && config.tools.piston_url ?  config.tools.piston_url : 'https://emkc.org/api/v2/piston'}
-					onChange={(e) => {setConfigValue('piston_url',e.target.value);  }}
-				  />
-				
-				<Form.Label>Code Generation Max Attempts</Form.Label>
-				<Form.Control
-					type="text"
-					value={config && config.tools && config.tools.piston_max_attempts > 0 ? config.tools.piston_max_attempts : 3}
-					onChange={(e) => {setConfigValue('piston_max_attempts',e.target.value);  }}
-				  />
-			</Form.Group>
-			
-			
-       
+		
 		  </Row>
 		 </div>
       
@@ -101,3 +80,19 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 };
 
 export default ToolsConfigForm;
+// {{<Form.Group  style={{marginTop:'1.5em'}} as={Col} controlId="openaiKey">
+// 				<Form.Label>Piston Code Runner URL</Form.Label>
+// 				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://github.com/engineer-man/piston" target="new" >https://github.com/engineer-man/piston</a></span></Form.Text>
+// 				<Form.Control
+// 					type="text"
+// 					value={config && config.tools && config.tools.piston_url ?  config.tools.piston_url : 'https://emkc.org/api/v2/piston'}
+// 					onChange={(e) => {setConfigValue('piston_url',e.target.value);  }}
+// 				  />
+				
+// 				<Form.Label>Code Generation Max Attempts</Form.Label>
+// 				<Form.Control
+// 					type="text"
+// 					value={config && config.tools && config.tools.piston_max_attempts > 0 ? config.tools.piston_max_attempts : 3}
+// 					onChange={(e) => {setConfigValue('piston_max_attempts',e.target.value);  }}
+// 				  />
+// 			</Form.Group>}}

@@ -79,7 +79,7 @@ export default function RolePage(props) {
 			</div>
 			
 			<div style={{position: 'fixed', bottom: 5, right:5, backgroundColor: 'white', height: '2em', width:'2em', borderRadius:'50px'}} >
-				<a target='new' href="https://github.com/syntithenai/voice2llm" style={{color:'black'}}  >{icons["github"]}</a>
+				<a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black'}}  >{icons["github"]}</a>
 			</div> 
 		</>}
 	</div>

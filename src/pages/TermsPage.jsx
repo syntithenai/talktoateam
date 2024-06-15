@@ -30,12 +30,12 @@ export default function TermsPage({refreshHash, icons,token, logout, user,login 
 							
 							<div style={paraStyle}>This software is provided as is without guarantees or warranties.</div>
 							<br/>
-							<div style={paraStyle}>The software is open source MIT style license so you can modify and use it however you like without attribution. See <a href="https://github.com/syntithenai/voice2llm" target="_new">Github for details</a></div>
+							<div style={paraStyle}>The software is open source MIT style license so you can modify and use it however you like without attribution. See <a href="https://github.com/syntithenai/syntithenai_agents" target="_new">Github for details</a></div>
 							<br/>
 			</div>
 			
 			<div style={{position: 'fixed', bottom: 5, right:5, backgroundColor: 'white', height: '2em', width:'2em', borderRadius:'50px'}} >
-				<a target='new' href="https://github.com/syntithenai/voice2llm" style={{color:'black', borderRadius:'50px'}}  >{icons["github"]}</a>
+				<a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black', borderRadius:'50px'}}  >{icons["github"]}</a>
 			</div> 
 	</div>)
 }

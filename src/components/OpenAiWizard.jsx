@@ -161,22 +161,7 @@ export default function OpenAiWizard({user, token, login, logout, config, setCon
 		  </Form.Group>
 		
 	</Col>
-	
-	<Col style={{border:'1px solid black', paddingTop:'1.5em',paddingBottom:'1.5em', paddingLeft:'1em', paddingRight:'1em'}}  className='mb-3'>
-		<b>Technical folks can run your own language model and other services easily using Docker. </b>
-		<span style={{display:'block',marginTop:'1em',marginLeft:'3em', fontStyle:'italic'}} >See <a href="https://github.com/syntithenai/voice2llm" target="-new" >https://github.com/syntithenai/voice2llm</a></span>
-		<Form.Group className="mb-3" controlId="formUrl">
-        <Form.Control style={{float:'left', width:'80%'}} type="text" placeholder="Enter hostname or IP address" value={url} onChange={function(e) {setUrl(e.target.value)}} />
-        <Button style={{float:'left'}}  disabled={!key} variant="success" onClick={setSelfHosted} >
-			Setup Self Hosted Domain Name
-		  </Button>
-		  <div style={{clear:'both'}} />
-        <div><Form.Text className="text-muted">
-        eg 192.168.1.22 or localhost or mydomain.com 
-        </Form.Text></div>
-        
-      </Form.Group>
-    </Col>  
+ 
 	</Row>
 	<Row>
 		<Col>
@@ -190,7 +175,7 @@ export default function OpenAiWizard({user, token, login, logout, config, setCon
 	<Row style={{borderTop:'2px solid black', marginTop:'1em', marginBottom:'1em'}} >
 		<Col>
 			<Form.Text className="text-muted">
-				  <span style={{ color:'black', fontWeight:'bold'}}  >This an Open Source project released under an MIT licence, the <a target='new' href="https://github.com/syntithenai/voice2llm" style={{color:'black', borderRadius:'50px'}}  >	source code is available on Github</a><a target='new' href="https://github.com/syntithenai/voice2llm" style={{color:'black', borderRadius:'50px'}}  >{icons["github"]}  </a>
+				  <span style={{ color:'black', fontWeight:'bold'}}  >This an Open Source project released under an MIT licence, the <a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black', borderRadius:'50px'}}  >	source code is available on Github</a><a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black', borderRadius:'50px'}}  >{icons["github"]}  </a>
 				  
 				  </span>
 				  <span  >
@@ -206,3 +191,19 @@ export default function OpenAiWizard({user, token, login, logout, config, setCon
 	</div>
 	</div>
 }
+	
+// <Col style={{border:'1px solid black', paddingTop:'1.5em',paddingBottom:'1.5em', paddingLeft:'1em', paddingRight:'1em'}}  className='mb-3'>
+// <b>Technical folks can run your own language model and other services easily using Docker. </b>
+// <span style={{display:'block',marginTop:'1em',marginLeft:'3em', fontStyle:'italic'}} >See <a href="https://github.com/syntithenai/voice2llm" target="-new" >https://github.com/syntithenai/voice2llm</a></span>
+// <Form.Group className="mb-3" controlId="formUrl">
+// <Form.Control style={{float:'left', width:'80%'}} type="text" placeholder="Enter hostname or IP address" value={url} onChange={function(e) {setUrl(e.target.value)}} />
+// <Button style={{float:'left'}}  disabled={!key} variant="success" onClick={setSelfHosted} >
+// 	Setup Self Hosted Domain Name
+//   </Button>
+//   <div style={{clear:'both'}} />
+// <div><Form.Text className="text-muted">
+// eg 192.168.1.22 or localhost or mydomain.com 
+// </Form.Text></div>
+
+// </Form.Group>
+// </Col> 

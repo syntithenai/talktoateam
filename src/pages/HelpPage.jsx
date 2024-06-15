@@ -242,7 +242,7 @@ google_search(they might be giants)
 			</div>
 			
 			<div style={{position: 'fixed', bottom: 0, right:0, backgroundColor: 'white', height: '3em', width:'3em'}} >
-				<a target='new' href="https://github.com/syntithenai/voice2llm" style={{color:'black'}}  >{icons["github"]}</a>
+				<a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black'}}  >{icons["github"]}</a>
 			</div> 
 	</div>)
 }

@@ -81,8 +81,7 @@ const STTConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				onChange={(e) => {setConfigValue('use',!(config && config.stt && config.stt.use === 'self_hosted') ? 'self_hosted' : '') }}
 			  />
 		  <Form.Label>Self Hosted URL</Form.Label>
-		  <Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://github.com/syntithenai/voice2llm" target="-new" >https://github.com/syntithenai/voice2llm</a></span></Form.Text>
-          
+		  
           <Form.Control
             type="text"
             value={config && config.stt && config.stt.self_hosted_url}

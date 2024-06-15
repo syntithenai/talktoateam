@@ -435,7 +435,7 @@ export default function ChatPage({ user, token, login, logout, refresh, doSave,t
 				<hr/>
 			</div>
 			<div style={{position: 'fixed', bottom: 5, right:5, backgroundColor: 'white', height: '2em', width:'2em', borderRadius:'50px'}} >
-				<a target='new' href="https://github.com/syntithenai/voice2llm" style={{color:'black'}}  >{icons["github"]}</a>
+				<a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black'}}  >{icons["github"]}</a>
 			</div> 
 			<>{[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(a) {
 				return <div key={a} id={"mermaidrenderer_"+a} style={{position: 'fixed', top:-1000, left: -1000, height:'200px', width:'200px', border:'2px solid green', zIndex: 20}} /> 
