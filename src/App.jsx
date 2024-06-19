@@ -8,12 +8,11 @@ import {Button, ListGroup, ButtonGroup} from 'react-bootstrap'
 import useUtils from './useUtils'
 import useAppState from './useAppState'
 import TextareaAutosize from 'react-textarea-autosize';
-import OpenAiWizard from './components/OpenAiWizard'
+import ConfigWizard from './components/ConfigWizard'
 import ReactGA from "react-ga4";
 
 import useLlm from './useLlm'
 import useTeamLlm from './useTeamLlm'
-import useSelfHostedLlm from './useSelfHostedLlm'
 import useGoogleLogin from './useGoogleLogin'
 import useAudioPlayQueue from './useAudioPlayQueue'
 import useChatHistoryManager from './useChatHistoryManager'
@@ -43,14 +42,13 @@ import TeamPage from './pages/TeamPage'
 import TokensPage from './pages/TokensPage'
 import FilesPage from './pages/FilesPage'
 import useTools from './useTools'
-
-
-function App({nlp}) {
+import useModelSelector from './useModelSelector'
 	
+function App({nlp}) {
+
 	// when document is loaded from google because of change elsewhere
 	function onMerge(d) {
 		let lastId = localStorage.getItem("voice2llm_last_saved_id")
-		//console.log("MERGE",d, lastId)
 		if (lastId && d && d.id === lastId) {
 			//console.log("MERGE skipped, last save from here")
 		} else {
@@ -64,9 +62,7 @@ function App({nlp}) {
 	
 	useEffect(function() {
 		refresh()  // autologin
-		//ReactGA.initialize(import.meta.env.VITE_GOOGLE_ANALYTICS_ID);
-		//ReactGA.send({ hitType: "pageview", page: "/", title: "Home Page" });
-		
+		ReactGA.initialize(import.meta.env.VITE_GOOGLE_ANALYTICS_ID);
 	},[])
 	
 	const [googleDocumentId, setGoogleDocumentId] = useState('')
@@ -85,12 +81,11 @@ function App({nlp}) {
 	}
 	
 	const {scrollTo, generateRandomId} = useUtils()
-	const {  creditBalance, updateCreditBalance, availableModels ,utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter} = useAppState({doSave})
-	
-	useEffect(function() {
-		if (token && token.access_token) updateCreditBalance(token.access_token)
-	},[token])
+	const { abortController, creditBalance, updateCreditBalance, availableModels ,utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter} = useAppState({doSave, token})
+	let modelSelector = useModelSelector({config, creditBalance, token, availableModels})
 
+	
+	
 	const {files, fileManager} = useFileManager({storeName:'files', token, logout, allowMimeTypes : ['.txt'], loadData : false, onError : function(e) {window.alert(e)}, forceRefresh})
 	
 	
@@ -98,7 +93,7 @@ function App({nlp}) {
 	
 	const {deleteRole, exportRoles,importRoles,init, roles,rolesRef, setRoles, currentRole, setCurrentRole, newRole, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  currentRoleRef, currentTeam, currentTeamRef,  setCurrentTeam, deleteTeam, duplicateRole, teams, setTeams} = useSystemMessageManager({forceRefresh, doSave, chatHistoryId, categories, setCategories})
 	const aiUsage = useOpenAiUsageLogger()
-	const configManager = useConfigManager({config})
+	const configManager = useConfigManager({config, token})
 	const {queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, urlAudioPlayer} = useAudioPlayQueue({
 		onStopPlaying: function() { forceRefresh()},
 		onStartPlaying: function() { forceRefresh()},
@@ -113,7 +108,10 @@ function App({nlp}) {
 		forceRefresh: forceRefresh
 	})
 	
-	
+	useEffect(function() {
+		updateCreditBalance(token ? token.access_token : '')
+	},[token ? token.access_token : null, JSON.stringify(aiUsage.totals)])  // on login and usage total change
+
 	function newChat() {
 		stopLanguageModels()
 		if (!currentChatHistory() || currentChatHistory().length > 0) { 
@@ -127,10 +125,10 @@ function App({nlp}) {
 	const [runtimes, setRuntimes] = useState({})
 	useEffect(() => {
 		try {
-			fetch(configManager.codeRunnerEndpoint() + '/api/v2/piston/runtimes', {
+			fetch(configManager.codeRunnerEndpoint() + '/runtimes', {
 				method: 'GET',
 				headers: {
-					//'Authorization': 'Bearer '+key,
+					'Authorization': 'Bearer '+((config && config.tools && config.tools.piston_key) ? config.tools.piston_key : ''),
 					'Content-Type': 'application/json'
 				},
 			}).then(function(response) {
@@ -143,17 +141,16 @@ function App({nlp}) {
 				console.log(e)
 			})
 		} catch (error) {
-			console.error('Speech generateion error:', error);
+			console.error('Error loading code runtimes:', error);
 		}
 	}, [])
-	
-	const tools = useTools({runtimes, config})
+	// console.log("PRE",config,configRef)
+	const tools = useTools(runtimes, config, token, creditBalance, abortController)
 	
 	
 	async function playSpeech(text, forceEngine='', forceVoice='', forceSpeed='') {
 		//console.log("PLAY",text, roles ? roles[currentRole] : 'noroles')
 		if (roles && roles[currentRole] && roles[currentRole].config  && roles[currentRole].config.outputType && roles[currentRole].config.outputType.trim().length > 0) {
-			//console.log("SKIP PLAY non text")
 			return 
 		} else {
 			// TODO STRIP TEXT INSIDE ```  ``` - CODE BLOCKS ETC
@@ -161,68 +158,9 @@ function App({nlp}) {
 		}
 	}
 	
-
 	const {usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt} = utils.summariseConfig(config)
-	
-	
-	const selfHostedLlm = useSelfHostedLlm({
-		url: config && config.llm && config.llm.self_hosted_url  ? config.llm.self_hosted_url : '',
-		onReady: function() {
-			console.log('aillm rfffready',config)
-			setLlmEnabled(true)
-			forceRefresh()
-		},
-		onStart: function() {
-			//console.log('LOCAL LLM START')
-			addAssistantMessage('')
-			forceRefresh()
-			utils.scrollTo('endofdocument')
-		},
-		onUpdate: function(d, partial) {
-			//console.log('LOCAL LLM UPDATE',partial,d,roles && roles[currentRole] && roles[currentRole].config ? roles[currentRole].config.ttsSpeed/100 : null)
-			//console.log('sh last index',getLastAssistantChatIndex(chatHistory))
-			setLastAssistantMessage(d)
-			forceRefresh()
-			utils.scrollTo('endofdocument')
-			//if (useTts) {
-			playSpeech(partial,'','',roles && roles[currentRole] && roles[currentRole].config ? roles[currentRole].config.ttsSpeed/100 : 1).then(function() {
-				
-			})
-			//}
-		},
-		onComplete: function(d, usage) {
-			// no logging for self hosteds
-			//if (!(config && config.llm && config.llm.self_hosted_url)) aiUsage.log(usage)
-			
-			//console.log('LOCAL LLM complete',d)
-			setLastAssistantMessage(d)
-			doSave()
-			//console.log("LOCAL LLM COMPLETE",lastLlmTrigger.current)
-			if (lastLlmTrigger.current === 'speech') {
-				setAutoStartMicrophone(true)
-				
-			}
-			forceRefresh()
-			utils.scrollTo('endofdocument')
-		},
-		onError: function(err) {
-			alert(err)
-			stopLanguageModels()
-			revertChatHistory()
-		},
-		forceRefresh,
-		currentChatHistory
-	})
-	
 	const aiLlm = useLlm({
-		url: config && config.llm && config.llm.openai_hosted_url  ? config.llm.openai_hosted_url : 'https://api.openai.com',
-		key: config && config.llm && config.llm.openai_key  ? config.llm.openai_key : '',
-		model: config && config.llm && config.llm.openai_model  ? config.llm.openai_model : '',
-		onReady: function() {
-			//console.log('aillm rfffready',config)
-			setLlmEnabled(true)
-			forceRefresh()
-		},
+		modelSelector,
 		onStart: function() {
 			//console.log('LOCAL LLM START')
 			addAssistantMessage('')
@@ -231,56 +169,50 @@ function App({nlp}) {
 		},
 		onUpdate: function(d, partial, duration) {
 			//console.log('LOCAL LLM UPDATE',partial,d)
-			//console.log('sh last index',getLastAssistantChatIndex(chatHistory))
 			setLastAssistantMessage(d,{duration})
 			forceRefresh()
 			utils.scrollTo('endofdocument')
-			//if (useTts) {
-			playSpeech(partial,'','',roles && roles[currentRole] && roles[currentRole].config ? roles[currentRole].config.ttsSpeed/100 : 1).then(function() {
+			playSpeech(partial,'','',roles && roles[currentRole] && roles[currentRole].config  && roles[currentRole].config.ttsSpeed > 0.2 ? roles[currentRole].config.ttsSpeed/100 : 1).then(function() {
 				
 			})
-			//}
 		},
 		onComplete: function(d, usage) {
-			// no logging for self hosteds
-			//if (!(config && config.llm && config.llm.self_hosted_url)) aiUsage.log(usage)
-			
 			console.log('LOCAL LLM complete',d, usage)
 			setLastAssistantMessage(d, usage)
 			doSave()
-			//console.log("LOCAL LLM COMPLETE",lastLlmTrigger.current)
 			if (lastLlmTrigger.current === 'speech') {
 				setAutoStartMicrophone(true)
-				
 			}
 			forceRefresh()
 			utils.scrollTo('endofdocument')
 		},
-		onError: function(err) {
-			alert(err)
+		onError: function(error) {
+			//console.log("LLM ERR",err, typeof err, JSON.stringify(err))
 			stopLanguageModels()
-			revertChatHistory()
+			console.log(error.name)
+			if (error instanceof DOMException && error.name == 'AbortError') {
+				console.log('ABORT: ', error.message);
+			} else {
+				console.log('LLM error:', error.message);
+				alert(error)
+			}
+			//alert(err)
+			// revertChatHistory()
 		},
 		forceRefresh,
 		aiUsage,
 		currentChatHistory,
 		tools,
-		nlp
+		nlp,
+		abortController
 	})
 	
 	
 	const teamLlm = useTeamLlm({
-		url: config && config.llm && config.llm.openai_hosted_url  ? config.llm.openai_hosted_url : 'https://api.openai.com',
-		key: config && config.llm && config.llm.openai_key  ? config.llm.openai_key : '',
-		model: config && config.llm && config.llm.openai_model  ? config.llm.openai_model : '',
+		modelSelector,
 		teams,
 		roles,
 		utils,
-		onReady: function() {
-			//console.log('aillm rfffready',config)
-			setLlmEnabled(true)
-			forceRefresh()
-		},
 		onStart: function() {
 			//console.log('TEAM LLM START')
 			addAssistantMessage('')
@@ -290,14 +222,12 @@ function App({nlp}) {
 		onUpdate: function(d, duration) {
 			console.log('TEAM LLM UPDATE', d , duration)
 			setLastAssistantMessage(d, {duration})
-			//console.log("SET ACCORDUUU",d.length -1)
 			setAccordionSelectedKey(d.length - 1)
 			forceRefresh()
 			utils.scrollTo('endofdocument')
 		},
 		onComplete: function(d, usage) {
 			console.log('TEAM LLM COMPLETE', d , usage)
-			// no logging for self hosteds
 			//if (!(config && config.llm && config.llm.self_hosted_url)) aiUsage.log(usage)
 			setLastAssistantMessage(d, usage)
 			//console.log("SET ACCORD",d.length -1)
@@ -306,16 +236,22 @@ function App({nlp}) {
 			forceRefresh()
 			utils.scrollTo('endofdocument')
 		},
-		onError: function(err) {
-			alert(err)
+		onError: function(error) {
 			stopLanguageModels()
-			try {
-				revertChatHistory()
-			} catch (e) {}
+			if (error instanceof AbortError) {
+				console.log('ABORT: ', error.message);
+			} else {
+				console.log('LLM error:', error.message);
+				alert(error)
+			}
+			// try {
+			// 	revertChatHistory()
+			// } catch (e) {}
 		},
 		forceRefresh,
 		aiUsage,
-		tools
+		tools,
+		abortController
 	}) 
 	
 
@@ -329,28 +265,24 @@ function App({nlp}) {
 	}
 	
 	function stopLanguageModels(setButton = true) {
-		console.log([aiLlm.isBusy,selfHostedLlm.isBusy,teamLlm.isBusy,isPlaying])
 		console.log("STOP LANG MODELS", setButton)
 		stopAllPlaying()
 		aiLlm.stop()
-		selfHostedLlm.stop()
 		teamLlm.stop()
 		if (setButton)  {
 			setAutoStopMicrophone(true)
 			lastLlmTrigger.current="button" ;
 		}
 		forceRefresh()
-		console.log("D",aiLlm.isBusy,selfHostedLlm.isBusy,teamLlm.isBusy,isPlaying)
 	}
 	
 	// initialise relevant language model when config changes
-	useEffect(function() {
-		const {useOpenAi, useSelfHosted} = utils.summariseConfig(config)
-		if (useOpenAi) aiLlm.init()
-		if (useSelfHosted) selfHostedLlm.init()
-		if (currentTeam) teamLlm.init()
-		configRef.current = config
-	},[JSON.stringify(config)])
+	// useEffect(function() {
+	// 	const {useOpenAi, useSelfHosted} = utils.summariseConfig(config)
+	// 	if (useOpenAi) aiLlm.init()
+	// 	if (currentTeam) teamLlm.init()
+	// 	configRef.current = config
+	// },[JSON.stringify(config)])
 	
 	// submit history and userMessage to LLM
 	function submitForm(userMessage) {
@@ -360,29 +292,22 @@ function App({nlp}) {
 			if (userMessage) {
 				stopLanguageModels(false)
 				addUserMessage(userMessage)
-				//chatHistory.current.push({role:'user',content:userMessage})
-				//setChatHistory(chatHistory.current)
 				setUserMessage('')
 				doSave()
-				//console.log("SUBMIT hist", chatHistoryIdRef.current,  chatHistoriesRef.current[chatHistoryIdRef.current] ,roles[currentRoleRef.current])
+				abortController.current = new AbortController()
 				const {useLlm, useOpenAi, useSelfHosted, useGroq} = utils.summariseConfig(config)
 				let systemMessage = currentRoleRef.current && roles && roles[currentRoleRef.current] && roles[currentRoleRef.current].message ? roles[currentRoleRef.current].message : ''
 				if (currentRoleRef.current && roles && roles[currentRoleRef.current] && roles[currentRoleRef.current].skills) {
-					//console.log("APPEND SKILLS",roles[currentRole].skills)
 					systemMessage += "\n\n" + roles[currentRole].skills
 				}
 				if (currentRoleRef.current && roles && roles[currentRoleRef.current] && roles[currentRoleRef.current].backStory) systemMessage += "\n\n" + roles[currentRoleRef.current].backStory
 				
-				
 				if (currentTeam) {
-					if (useOpenAi || useGroq)  teamLlm.start(userMessage, currentTeam,  chatHistoriesRef.current[chatHistoryIdRef.current])
-					
-					//else if (useSelfHosted)  teamLlm.start(userMessage, chatHistoriesRef.current[chatHistoryIdRef.current], selfHostedLlm, currentTeam, config )
+					teamLlm.start(userMessage, currentTeam,  chatHistoriesRef.current[chatHistoryIdRef.current])
 				} else {
 					console.log("APP AI START", useOpenAi, useGroq)
-					if (useOpenAi || useGroq)  aiLlm.start(roles[currentRole], chatHistoriesRef.current[chatHistoryIdRef.current]) 
+					aiLlm.start(roles[currentRole], chatHistoriesRef.current[chatHistoryIdRef.current]) 
 					//, config.llm.openai_key, config.llm.openai_model ,roles[currentRoleRef.current])
-					//else if (useSelfHosted)  selfHostedLlm.start(systemMessage, chatHistoriesRef.current[chatHistoryIdRef.current],roles[currentRoleRef.current] )
 				}
 				//if (config && config.llm && config.llm.google_gemini_key && config.llm.use === 'gemini')  geminiLlm.start(chatHistory)
 				//if (config && config.llm && config.llm.self_hosted_url && config.llm.use === 'self_hosted')  localLlm.start(systemMessage, chatHistory.current, systemConfig)
@@ -390,19 +315,20 @@ function App({nlp}) {
 				
 			}
 		} catch (e) {
+			window.alert(e)
 			console.log(e)
 		}
 		return false
 	}
 	
 	
-	let allProps = {  creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, selfHostedLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}
+	let allProps = {  modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}
 	
 	return (<>
 		{mergeData && <MergeWarningModal chatHistoryId={chatHistoryId} chatHistories={chatHistories} setChatHistories={setChatHistories} logs={aiUsage.logs} setLogs={aiUsage.setLogs} doSave={doSave} config={config} setConfig={setConfig} forceRefresh={forceRefresh} mergeData={mergeData} setMergeData={setMergeData} roles={roles} setRoles={setRoles}  currentRole={currentRole} setCurrentRole={setCurrentRole} setChatHistoryRoles={setChatHistoryRoles} chatHistoryRoles={chatHistoryRoles} />}
 		{!mergeData && 
 			<>
-				{!hasRequiredConfig(config) && <OpenAiWizard login={login} logout={logout} user={user} token={token} config={config} setConfig={setConfig} forceRefresh={forceRefresh} />}
+				{!hasRequiredConfig(config) && <ConfigWizard login={login} logout={logout} user={user} token={token} config={config} setConfig={setConfig} forceRefresh={forceRefresh} />}
 				{hasRequiredConfig(config) && <Router >
 						<Routes>
 							<Route  path={`/`}   element={<ChatPage {...allProps}  />} />

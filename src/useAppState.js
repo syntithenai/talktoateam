@@ -7,7 +7,7 @@ export default function useAppState(props) {
 
 	const {scrollTo, generateRandomId} = useUtils()
 	const utils = useUtils()
-	
+	let abortController = useRef(new AbortController())
 	const [accordionSelectedKey, setAccordionSelectedKey] = useState(0)
 	
 	const utteranceQueue = useRef([])
@@ -47,19 +47,21 @@ export default function useAppState(props) {
 	const [isSpeaking, setIsSpeaking] = useState(false)
 	const [config, setConfigInner] = useState()
 	function setConfig(v) {
-		//console.log("appstate set config",v)
+		console.log("appstate set config",v)
 		setConfigInner(v)
 		localStorage.setItem("voice2llm_config",JSON.stringify(v))
 		props.doSave()
 	}
 
 	const [creditBalance, setCreditBalance] = useState(0)
-	function updateCreditBalance(token) {
-		if (token) {
+	function updateCreditBalance(access_token) {
+		console.log('balance update',access_token)
+		
+		if (access_token) {
 			fetch(import.meta.env.VITE_API_URL + '/balance', {
 				method: 'GET',
 				headers: {
-					'authorization': 'Bearer '+token
+					'authorization': 'Bearer '+access_token
 				}
 			}).then(function(response) {
 				// console.log("bill respon l", response)
@@ -68,48 +70,84 @@ export default function useAppState(props) {
 				}
 				response.text().then(function(data) {
 					// console.log("bill respon DATA", data)
-					if (float(data) > 0) {
-						setCreditBalance(float(data))
+					if (parseFloat(data) > 0) {
+						setCreditBalance(parseFloat(data))
 					} else {
 						setCreditBalance(0)
 					}
 				})
 			})
+		} else {
+			setCreditBalance(0)
 		}
 	}
 
 	const [availableModels, setAvailableModels]  = useState([])
 	useEffect(function() {
-		// console.log("appstate load")
-		fetch(import.meta.env.VITE_API_URL + '/pricing', {
-			method: 'GET'
-		}).then(function(response) {
-			// console.log("bill respon l", response)
-			if (!response.ok) {
-				throw new Error('Failed to load pricing');
-			}
-			response.json().then(function(data) {
-				// console.log("bill respon DATA", data)
-				if (data && data.llm) {
-					data = data.llm.map(function(model) {
-						model.id = utils.generateRandomId()
-						return model
-					})
-					// console.log("LOADED MODELS",data)
-					setAvailableModels(data)
+		console.log("appstate load models", creditBalance, config, props.token)
+		if (configRef.current) {
+			fetch(import.meta.env.VITE_API_URL + '/pricing', {
+				method: 'GET',
+				headers: {
+					'authorization': 'Bearer '+ (props.token && props.token.access_token ? props.token.access_token : '')
 				}
+			}).then(function(response) {
+				console.log("bill respon l", response)
+				if (!response.ok) {
+					throw new Error('Failed to load pricing');
+				}
+				response.json().then(function(data) {
+					console.log("bill respon DATA", data)
+					if (data && data.llm) {
+						let availableModels = data.llm.map(function(model) {
+							model.id = utils.generateRandomId()
+							return model
+						})
+						let allowedProviders = []
+						if (creditBalance > 0 && props.token && props.token.access_token) {
+							// all the models OK
+							allowedProviders = ['openai','groqcloud','togetherai','deepinfra']
+						} else {
+							if (configRef.current && configRef.current.llm && configRef.current.llm.openai_key) {
+								allowedProviders.push('openai')
+							}
+							if (configRef.current && configRef.current.llm && configRef.current.llm.groqcloud_key) {
+								allowedProviders.push('groqcloud')
+							}
+						}
+						console.log("providers", allowedProviders)
+						let models = availableModels.filter(function(model) {
+							// console.log(model.provider, allowedProviders)
+							if (model.provider && allowedProviders.indexOf(model.provider) !== -1) {
+								return true
+							}
+							return false
+						})
+						if (configRef.current && configRef.current.llm && configRef.current.llm.self_hosted_url) {
+							if (configRef.current && configRef.current.llm && configRef.current.llm.self_hosted_models) {
+								configRef.current.llm.self_hosted_models.split(",").forEach(function(m) {
+									models.push({provider:'selfhosted', model: m, price_in: 0, price_out:0})
+								})
+							} else {
+								models.push({provider:'selfhosted', model: 'selfhosted', price_in: 0, price_out:0})
+							}
+						}
+						setAvailableModels(models)
+						console.log("LOADED MODELS",models, allowedProviders)
+					}
+				})
 			})
-		})
-	},[])
+		}
+
+	},[config && config.llm && config.llm.self_hosted_models ? config.llm.self_hosted_models : '',config && config.llm && config.llm.self_hosted_key ? config.llm.self_hosted_key : '',config && config.llm && config.llm.openai_key ? config.llm.openai_key : '', config && config.llm && config.llm.groqcloud_key ? config.llm.groqcloud_key : '', creditBalance, props.token && props.token.access_token ? props.token.access_token  : '' ])
 	
-	const [llmEnabled, setLlmEnabled] = useState(false)
+	const [llmEnabled, setLlmEnabled] = useState(true)
 	const configRef = useRef({})
 	const lastLlmTrigger = useRef('')
 	const icons = useIcons()
 	
 	// load config from localStorage
 	useEffect(function() {
-		
 		if (!config) { 
 			try {
 				let c = JSON.parse(localStorage.getItem("voice2llm_config"))
@@ -158,6 +196,7 @@ export default function useAppState(props) {
 	
 	// trigger wizard if no llm is configured
 	function hasRequiredConfig() {
+		return true
 		//const {useLlm} = utils.summariseConfig(config)
 		//console.log("has req conf", useLlm)
 		return config && config.llm && config.llm.use
@@ -175,5 +214,5 @@ export default function useAppState(props) {
 		setRefreshHash(new Date().getTime())
 	}
 
-	return { creditBalance, updateCreditBalance, availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
+	return {abortController, creditBalance, updateCreditBalance, availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
 }

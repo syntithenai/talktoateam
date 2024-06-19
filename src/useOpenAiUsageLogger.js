@@ -21,7 +21,7 @@ export default function useOpenAiUsageLogger() {
 		} catch (e) {}
 	},[])
 	
-	const pricing = {
+	const dpricing = {
 		"---------- OPENAI  -------": {
 		"price_in": "0.00",
 		"price_out": "0.00",
@@ -89,22 +89,23 @@ export default function useOpenAiUsageLogger() {
 		return parseInt(characters)/1000000 * 15
 	}
 	
-	function getLlmPrice(model, tokens_in, tokens_out) {
-		let price_in = 0
-		let price_out = 0
-		let total = 0
-		if (pricing && pricing[model] && (pricing[model].price_in > 0 || pricing[model].price_out > 0)) {
-			price_in = parseFloat(pricing[model].price_in) * tokens_in / 1000000
-			price_out = parseFloat(pricing[model].price_out) * tokens_out / 1000000
-			total += (price_in + price_out)
-		}
-		return {price_in, price_out, total}
-	}
+	// function getLlmPrice(model, tokens_in, tokens_out) {
+	// 	let price_in = 0
+	// 	let price_out = 0
+	// 	let total = 0
+	// 	if (pricing && pricing[model] && (pricing[model].price_in > 0 || pricing[model].price_out > 0)) {
+	// 		price_in = parseFloat(pricing[model].price_in) * tokens_in / 1000000
+	// 		price_out = parseFloat(pricing[model].price_out) * tokens_out / 1000000
+	// 		total += (price_in + price_out)
+	// 	}
+	// 	return {price_in, price_out, total}
+	// }
 	
 	const [totals, setTotals] = useState({})
 	
 	function collated(start=null, end=null) {
-		//console.log("collate", start, end)
+		console.log("collate", start, end)
+		return {logs:{}, grandTotals:{}, tallies:{}}
 		//let startTime = start ? new Date(start).now() : null
 		//let endTime = end ? new Date(end).now() : null
 		////let startTime = new Date(start)
@@ -127,10 +128,12 @@ export default function useOpenAiUsageLogger() {
 					if ((end === null || logDate <= endTime) && (start === null || logDate >= startTime)) {
 						if (!collated.hasOwnProperty(key)) collated[key] = []
 						if (!tallies.hasOwnProperty(key)) tallies[key] = []
-						let price_in = parseFloat(pricing[logEntry.model].price_in) * logEntry.tokens_in / 1000000
-						let price_out = parseFloat(pricing[logEntry.model].price_out) * logEntry.tokens_out / 1000000
-						if (price_in === NaN) price_in = 0
-						if (price_out === NaN) price_out = 0
+						// let price_in = parseFloat(pricing[logEntry.model].price_in) * logEntry.tokens_in / 1000000
+						// let price_out = parseFloat(pricing[logEntry.model].price_out) * logEntry.tokens_out / 1000000
+						// if (price_in === NaN) 
+						let price_in = 0
+						//if (price_out === NaN) 
+						let price_out = 0
 						collated[key].push({date: logEntry.date, tokens_in: (logEntry.tokens_in > 0 ? logEntry.tokens_in : 0), tokens_out: (logEntry.tokens_out > 0 ? logEntry.tokens_out : 0), price_in, price_out})
 						grandTotals.tokens_in = (grandTotals.tokens_in > 0 ? grandTotals.tokens_in : 0) + (logEntry.tokens_in > 0 ? logEntry.tokens_in : 0)
 						grandTotals.tokens_out = (grandTotals.tokens_out > 0 ? grandTotals.tokens_out : 0) + (logEntry.tokens_out > 0 ? logEntry.tokens_out : 0)
@@ -148,44 +151,44 @@ export default function useOpenAiUsageLogger() {
 		return {logs: collated, grandTotals, tallies}
 	}
 	
-	function getTotal() {
-		let total = 0
-		try {
-			let logEntries = JSON.parse(localStorage.getItem("openai_log"))
-			//console.log(logEntries)
-			logEntries.map(function(logEntry) {
-				if (logEntry && logEntry.model && pricing[logEntry.model] && (logEntry.tokens_in > 0 ||logEntry.tokens_out > 0 )) {
-					total += parseFloat(pricing[logEntry.model].price_in) * logEntry.tokens_in / 1000000
-					total += parseFloat(pricing[logEntry.model].price_out) * logEntry.tokens_out / 1000000
-					//console.log("add",total,pricing[logEntry.model].price_in ,logEntry.tokens_in, pricing[logEntry.model].price_out,logEntry.tokens_out)
-				}
-			})
-		} catch (e) {}
-		try {
-			let logEntries = JSON.parse(localStorage.getItem("openai_log_stt"))
-			//console.log(logEntries)
-			logEntries.map(function(logEntry) {
-				if (logEntry && logEntry.model && logEntry.seconds > 0) {
-					total += getSttPrice(logEntry.seconds)
-					//console.log("add stt",total,getSttPrice(logEntry.seconds))
-				}
-			})
-		} catch (e) {}
-		try {
-			let logEntries = JSON.parse(localStorage.getItem("openai_log"))
-			//console.log(logEntries)
-			logEntries.map(function(logEntry) {
-				if (logEntry && logEntry.model && logEntry.letters > 0) {
-					total += getTtsPrice(logEntry.letters)
-					//console.log("add tts",total,getTtsPrice(logEntry.seconds))
-				}
-			})
-		} catch (e) {}
-		return total.toLocaleString('en-US', {
-			style: 'currency',
-			currency: 'USD'
-		  });
-	}
+	// function getTotal() {
+	// 	let total = 0
+	// 	try {
+	// 		let logEntries = JSON.parse(localStorage.getItem("openai_log"))
+	// 		//console.log(logEntries)
+	// 		logEntries.map(function(logEntry) {
+	// 			if (logEntry && logEntry.model && pricing[logEntry.model] && (logEntry.tokens_in > 0 ||logEntry.tokens_out > 0 )) {
+	// 				total += parseFloat(pricing[logEntry.model].price_in) * logEntry.tokens_in / 1000000
+	// 				total += parseFloat(pricing[logEntry.model].price_out) * logEntry.tokens_out / 1000000
+	// 				//console.log("add",total,pricing[logEntry.model].price_in ,logEntry.tokens_in, pricing[logEntry.model].price_out,logEntry.tokens_out)
+	// 			}
+	// 		})
+	// 	} catch (e) {}
+	// 	try {
+	// 		let logEntries = JSON.parse(localStorage.getItem("openai_log_stt"))
+	// 		//console.log(logEntries)
+	// 		logEntries.map(function(logEntry) {
+	// 			if (logEntry && logEntry.model && logEntry.seconds > 0) {
+	// 				total += getSttPrice(logEntry.seconds)
+	// 				//console.log("add stt",total,getSttPrice(logEntry.seconds))
+	// 			}
+	// 		})
+	// 	} catch (e) {}
+	// 	try {
+	// 		let logEntries = JSON.parse(localStorage.getItem("openai_log"))
+	// 		//console.log(logEntries)
+	// 		logEntries.map(function(logEntry) {
+	// 			if (logEntry && logEntry.model && logEntry.letters > 0) {
+	// 				total += getTtsPrice(logEntry.letters)
+	// 				//console.log("add tts",total,getTtsPrice(logEntry.seconds))
+	// 			}
+	// 		})
+	// 	} catch (e) {}
+	// 	return total.toLocaleString('en-US', {
+	// 		style: 'currency',
+	// 		currency: 'USD'
+	// 	  });
+	// }
 	
 	function log({tokens_in, tokens_out, model, key, url}) {
 		//console.log("LOG",tokens_in, tokens_out, model, key)
@@ -239,5 +242,6 @@ export default function useOpenAiUsageLogger() {
 		setLogs(logs)
 	}
 	
-	return {pricing, totals, log, getTotal, logSTT, logTTS, logs, setLogs, collated, getLlmPrice}
+	return { totals, log, logSTT, logTTS, logs, setLogs, collated}
 }
+//getTotal, pricing

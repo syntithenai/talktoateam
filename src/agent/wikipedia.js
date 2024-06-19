@@ -1,10 +1,10 @@
-export default function(config) {
+export default function({config, abortController}) {
 
   async function wikipedia_search(searchTerm) {
             const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm)}&utf8=&format=json&origin=*`;
-
+            let options =  {signal: abortController.current.signal}
             try {
-                const response = await fetch(apiUrl);
+                const response = await fetch(apiUrl, options);
                 const data = await response.json();
 				console.log("WIKISEARCH DATA",response,data)
                 if (data.query.search.length > 0) {
@@ -20,11 +20,11 @@ export default function(config) {
 
         async function wikipedia_load_page(title) {
 			const pageUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&titles=${encodeURIComponent(title)}&format=json&explaintext=true&origin=*`;
-
+            let options =  {signal: abortController.current.signal}
             try {
-                const response = await fetch(pageUrl);
+                const response = await fetch(pageUrl, options);
                 const data = await response.json();
-                console.log("DD",data)
+                // console.log("DD",data)
 				const key = Object.keys(data.query.pages).length > 0 ? Object.keys(data.query.pages)[0] : null
 				const text = key ? data.query.pages[key].extract : ''
 				return text

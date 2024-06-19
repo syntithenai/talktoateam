@@ -92,7 +92,7 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 
 	
 	async function refresh() {
-		console.log('refresh')
+		// console.log('refresh')
 		return search(null).then(function(res) {
 				setFiles(res)
 				return 
@@ -102,7 +102,7 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 	
 	
 	function addFiles(filesToAdd, resetFilter = true) {
-		console.log('add', filesToAdd, resetFilter)
+		// console.log('add', filesToAdd, resetFilter)
 		if (Array.isArray(filesToAdd)) {
 			var newFiles = files
 			filesToAdd.forEach(function(file) {
@@ -115,7 +115,7 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 	}
 	
 	function updateFiles(files, resetFilter = true) {
-		console.log('updatefiles',files,resetFilter)
+		// console.log('updatefiles',files,resetFilter)
 		setFiles(files)
 		forceRefresh()
 		return files
@@ -255,7 +255,7 @@ function save(file) {
 
 
 	function search(titleFilter = null, noData = true) {
-		console.log('search', titleFilter)
+		// console.log('search', titleFilter)
 		return new Promise(function(resolve,reject) {
 			var final = []
 			store.iterate(function(value, key, iterationNumber) {

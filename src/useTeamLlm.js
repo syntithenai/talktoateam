@@ -2,7 +2,7 @@ import {useState, useRef	} from 'react'
 import nlp from 'compromise'
 import agenticLlmApiClient from './agent/agenticLlmApiClient'
 
-export default function useTeamLlm({url, key, model, onReady, aiUsage, tools, config, engines, onUpdate, onComplete, onStart, onError, teams, roles, utils}) {
+export default function useTeamLlm({modelSelector, abortController, onReady, aiUsage, tools, config, engines, onUpdate, onComplete, onStart, onError, teams, roles, utils}) {
     //console.log("AI LLM INI ",url)
     const isBusy = useRef(false);
     function setIsBusy(v) {
@@ -10,14 +10,14 @@ export default function useTeamLlm({url, key, model, onReady, aiUsage, tools, co
 	}
     const aiKey = useRef('')
     const eventSource = useRef()
-    var controller = useRef(new AbortController())
-   	var client = agenticLlmApiClient({url, key, model, onReady, aiUsage, onError, tools , onStart })
+    // var controller = useRef(new AbortController())
+   	var client = agenticLlmApiClient({modelSelector, onReady, aiUsage, onError, tools , onStart , abortController})
 
 	function stop() {
 		//console.log("ai stop")
 		if (isBusy.current) {
 			try {
-				if (controller.current) controller.current.abort('click') //.catch(function(e) {console.log(e)})	
+				if (abortController.current) abortController.current.abort('click') //.catch(function(e) {console.log(e)})	
 			} catch (e) {
 				console.log(e)
 			}
@@ -26,8 +26,8 @@ export default function useTeamLlm({url, key, model, onReady, aiUsage, tools, co
 	}
 
 	async function start(message, currentTeam, chatHistory) {
-		controller.current = new AbortController()
-		var signal = controller.current.signal;
+		// controller.current = new AbortController()
+		// var signal = abortController.current.signal;
 		//console.log("START TEAM", message, chatHistory, engine, currentTeam, roles, teams)
 		if (currentTeam && teams[currentTeam]) {
 			//console.log("START TEAM",teams[currentTeam])
@@ -48,7 +48,7 @@ export default function useTeamLlm({url, key, model, onReady, aiUsage, tools, co
 			//console.log("ssssssSTART TEAM",  useTeam)
 			//onStart()
 			setIsBusy(true)
-			client.startTeam({message, messages: chatHistory, team: useTeam, onUpdate, onComplete: function(content, usage) {setIsBusy(false); onComplete(content, usage)} ,onStart })
+			client.startTeam({message, messages: chatHistory, team: useTeam, onUpdate, onComplete: function(content, usage) {console.log("OC",content, usage); setIsBusy(false); onComplete(content, usage)} ,onStart })
 		}
 		
 		

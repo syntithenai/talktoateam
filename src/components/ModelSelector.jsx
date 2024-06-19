@@ -13,13 +13,13 @@ export default function ModelSelector({defaultOptions, onChange , value , forceR
       console.log('sel model',model)
       setFilter('')
       setOptions(defaultOptions)
-      onChange(model)
+      onChange(model.provider + ' ' + model.model)
     }
     
     function filterChange(e) {
       let f = e.target.value
       setFilter(f)
-      var sortedOptions = Array.isArray(defaultOptions) ? defaultOptions : []
+      var sortedOptions = defaultOptions && Array.isArray(defaultOptions) ? defaultOptions : []
       if (f && f.length > 0) {
         sortedOptions = sortedOptions.filter(function (a) {if ( !f || f.length === 0 || (filter && a && ((a.model && a.model.toLowerCase().indexOf(filter.toLowerCase()) !== -1) || (a.provider && a.provider.toLowerCase().indexOf(filter.toLowerCase()) !== -1)) )) return true; else return false})
       }
@@ -27,7 +27,7 @@ export default function ModelSelector({defaultOptions, onChange , value , forceR
     }
 
     useEffect(function() {
-      var sortedOptions = Array.isArray(defaultOptions) ? defaultOptions : []
+      var sortedOptions = defaultOptions && Array.isArray(defaultOptions) ? defaultOptions : []
       setOptions(sortedOptions)
     },[])
 
@@ -35,20 +35,26 @@ export default function ModelSelector({defaultOptions, onChange , value , forceR
   
   return (
     <>
-		<div>
+		<div style={{width:'100%'}}>
         <input type='search' value={filter} onChange={filterChange}   />
-         
         </div>
-        {<div style={{position:'relative', top:'0px', zIndex:10}} >
+        {<div style={{position:'relative', top:'0px', zIndex:10, width: '100%'}} >
           <ListGroup  style={{zIndex:'20',clear:'both', width: '100%'}}>
             {options.map(function(option,tk) {
-              return <ListGroup.Item  key={tk} className={(tk%2 === 0) ? 'even': 'odd'} onClick={function(e) {	selectModel(option)}} ><b>{option.provider}</b> {option.model}</ListGroup.Item>
+              return <ListGroup.Item  key={tk} className={(tk%2 === 0) ? 'even': 'odd'} onClick={function(e) {	selectModel(option)}} >
+                <div style={{marginBottom:'0.4em'}} ><b>{option.provider}</b> {option.model}</div>
+                <div  >
+                {option.parameters && <Button  style={{marginLeft:'0.5em'}} variant="secondary" >{option.parameters}B Parameters</Button>}
+                {option.context_length && <Button  style={{marginLeft:'0.5em'}} variant="secondary" >{parseInt(option.context_length)/1024}k Context</Button>}
+                <Button style={{marginLeft:'0.5em'}} variant="outline-success" >$In/Out {option.price_in}/{option.price_out}</Button>
+                </div>
+                
+                </ListGroup.Item>
             })}
           </ListGroup>
           
           
         </div>}
-        {JSON.stringify(defaultOptions)}
     </>
   );
 }

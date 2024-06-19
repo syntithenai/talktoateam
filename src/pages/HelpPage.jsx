@@ -11,7 +11,7 @@ function onLoggedIn(d) {
 }
 
 // import useEmbeddingsWorker from '../useEmbeddingsWorker'
-export default function HelpPage({refreshHash, icons,token, logout, user,login, config, utils, aiUsage , forceRefresh}) {
+export default function HelpPage({creditBalance, refreshHash, icons,token, logout, user,login, config, utils, aiUsage , forceRefresh}) {
 	const {openAiBillable} = utils.summariseConfig(config)
 	let paraStyle={marginTop:'0.5em'}
 
@@ -57,7 +57,7 @@ export default function HelpPage({refreshHash, icons,token, logout, user,login, 
 				
 				{!(token && token.access_token) && <Button onClick={function() { login()}} variant="success" >{icons["user"]}</Button>}
 				</span>}
-				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>{aiUsage.getTotal()}</b>
+				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>${creditBalance > 0 && token && token.access_token  ? parseFloat(creditBalance).toFixed(2) : 0}</b>
 				</span></Link>}
 			</div>
 			
@@ -68,8 +68,8 @@ export default function HelpPage({refreshHash, icons,token, logout, user,login, 
     <h2>Overview</h2>
     
    
-    <p><i>Syntithenai</i> (from ancient Greek synthesis) is a web application supporting the use of agentic workflows with language models.</p>
-    <p>It is essentially a chat user interface to support asking questions of a language model.</p>
+    <p><i>TalkToATeam</i> is a web application supporting the use of agentic workflows with language models.</p>
+    <p>It is essentially a chat user interface to talk to language models.</p>
     <p>By providing language models more context in the form of descriptive system prompts, responses can be made much more relevant. Management and application of Personas is provided to this end.</p>
     <p>By chaining requests to language models and tools, complex flows of information and workflows can be built. Management and application of Teams is provided to this end.</p>
     <p>The software provides for multiple data sources to be injected into prompt workflows including.</p>
@@ -246,19 +246,5 @@ google_search(they might be giants)
 			</div> 
 	</div>)
 }
-//useEffect(function() {
-		//fetch("https://thesession.org/tunes/search?format=json&q=humours").then(function(searchResults) {
-			//searchResults.json().then(function(sr) {
-				//console.log(sr)
-				//if (sr && sr.tunes && sr.tunes[0] && sr.tunes[0].id) {
-					//fetch("https://thesession.org/tunes/"+sr.tunes[0].id+"?format=json").then(function(j) {
-						//j.json().then(function(h) {
-							//console.log(h)
-						//})
-					//})
 
-				//} 
-			//})
-		//})	
-	//},[])
 	

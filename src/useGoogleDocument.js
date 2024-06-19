@@ -144,43 +144,44 @@ export default function useGoogleDocument(googleFileName, token, logout, refresh
 	function doPollChanges() {
 		return new Promise(function(resolve,reject) {
 			//console.log('DO POLL' ,accessToken, localStorage.getItem('google_last_page_token'))
-			if (pausePolling && pausePolling.current) {
-				resolve()
-			} else {
-				if (localStorage.getItem('google_last_page_token') && accessToken) {
-					//console.log('REALLY DO POLL token ',accessToken)
-					var url = 'https://www.googleapis.com/drive/v3/changes?pageToken=' + localStorage.getItem('google_last_page_token')
-					axios({
-						method: 'get',
-						url: url,
-						headers: {'Authorization': 'Bearer '+accessToken},
-					}).then(function(postRes) {
-						//console.log('CHANGES',postRes)
-						if (postRes && postRes.data && postRes.data.newStartPageToken) {
-						  localStorage.setItem('google_last_page_token',postRes.data.newStartPageToken)
-						}
-						if (postRes && postRes.data && Array.isArray(postRes.data.changes) && postRes.data.changes.length > 0) {
-						  resolve(postRes.data.changes)
-						} else {
-							//console.log('no data')
-							//stopPollChanges()
-							//refresh()
-							resolve([])
-						} 
-					}).catch(function(e) {
-						console.log('axios err', e)
-						if (e && e.response && e.response.status == '401') {
-							  console.log('LOGOUT ON AUTH TOKEN FAIL')
-							  logout()
-						}
-						resolve()
-					})
-				} else {
-					console.log('no token or last page token')
-					//stopPollChanges()
-					resolve()
-				}
-			}
+			resolve()
+    //   if (pausePolling && pausePolling.current) {
+		// 		resolve()
+		// 	} else {
+		// 		if (localStorage.getItem('google_last_page_token') && accessToken) {
+		// 			//console.log('REALLY DO POLL token ',accessToken)
+		// 			var url = 'https://www.googleapis.com/drive/v3/changes?pageToken=' + localStorage.getItem('google_last_page_token')
+		// 			axios({
+		// 				method: 'get',
+		// 				url: url,
+		// 				headers: {'Authorization': 'Bearer '+accessToken},
+		// 			}).then(function(postRes) {
+		// 				//console.log('CHANGES',postRes)
+		// 				if (postRes && postRes.data && postRes.data.newStartPageToken) {
+		// 				  localStorage.setItem('google_last_page_token',postRes.data.newStartPageToken)
+		// 				}
+		// 				if (postRes && postRes.data && Array.isArray(postRes.data.changes) && postRes.data.changes.length > 0) {
+		// 				  resolve(postRes.data.changes)
+		// 				} else {
+		// 					//console.log('no data')
+		// 					//stopPollChanges()
+		// 					//refresh()
+		// 					resolve([])
+		// 				} 
+		// 			}).catch(function(e) {
+		// 				console.log('axios err', e)
+		// 				if (e && e.response && e.response.status == '401') {
+		// 					  console.log('LOGOUT ON AUTH TOKEN FAIL')
+		// 					  logout()
+		// 				}
+		// 				resolve()
+		// 			})
+		// 		} else {
+		// 			console.log('no token or last page token')
+		// 			//stopPollChanges()
+		// 			resolve()
+		// 		}
+		// 	}
 		})
 	}
 

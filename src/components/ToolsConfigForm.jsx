@@ -32,6 +32,13 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 		
 		<Row className="mb-3">
 			<Form.Group style={{marginTop:'1.5em'}}as={Col} controlId="openaiKey">
+				<Form.Label>Tavily Web Search URL</Form.Label>
+				<Form.Control
+					type="text"
+					value={config && config.tools && config.tools.tavily_url}
+					onChange={(e) => {setConfigValue('tavily_url',e.target.value);  }}
+				  />
+				  
 				<Form.Label>Tavily Web Search API Key</Form.Label>
 				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://app.tavily.com/" target="new" >https://app.tavily.com/</a></span></Form.Text>
 				<Form.Control
@@ -40,13 +47,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 					onChange={(e) => {setConfigValue('tavily_key',e.target.value);  }}
 				  />
 				
-				<Form.Label>Tavily Web Search URL</Form.Label>
 				
-				<Form.Control
-					type="text"
-					value={config && config.tools && config.tools.tavily_url}
-					onChange={(e) => {setConfigValue('tavily_url',e.target.value);  }}
-				  />
 				</Form.Group>  
 				<Form.Group style={{marginTop:'1.5em'}} as={Col} controlId="openaiKey">
 				
@@ -69,7 +70,22 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				  />
 				  
 			</Form.Group>
-		
+			{<Form.Group  style={{marginTop:'1.5em'}} as={Col} controlId="openaiKey">
+				<Form.Label>Piston Code Runner URL</Form.Label>
+				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://github.com/engineer-man/piston" target="new" >https://github.com/engineer-man/piston</a></span></Form.Text>
+				<Form.Control
+					type="text"
+					value={config && config.tools && config.tools.piston_url ?  config.tools.piston_url : 'https://emkc.org/api/v2/piston'}
+					onChange={(e) => {setConfigValue('piston_url',e.target.value);  }}
+				  />
+				
+				<Form.Label>Piston Code Runner Key</Form.Label>
+				<Form.Control
+					type="text"
+					value={config && config.tools && config.tools.piston_key > 0 ? config.tools.piston_key : ''}
+					onChange={(e) => {setConfigValue('piston_key',e.target.value);  }}
+				  />
+			</Form.Group>}
 		  </Row>
 		 </div>
       
@@ -80,19 +96,3 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 };
 
 export default ToolsConfigForm;
-// {{<Form.Group  style={{marginTop:'1.5em'}} as={Col} controlId="openaiKey">
-// 				<Form.Label>Piston Code Runner URL</Form.Label>
-// 				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://github.com/engineer-man/piston" target="new" >https://github.com/engineer-man/piston</a></span></Form.Text>
-// 				<Form.Control
-// 					type="text"
-// 					value={config && config.tools && config.tools.piston_url ?  config.tools.piston_url : 'https://emkc.org/api/v2/piston'}
-// 					onChange={(e) => {setConfigValue('piston_url',e.target.value);  }}
-// 				  />
-				
-// 				<Form.Label>Code Generation Max Attempts</Form.Label>
-// 				<Form.Control
-// 					type="text"
-// 					value={config && config.tools && config.tools.piston_max_attempts > 0 ? config.tools.piston_max_attempts : 3}
-// 					onChange={(e) => {setConfigValue('piston_max_attempts',e.target.value);  }}
-// 				  />
-// 			</Form.Group>}}

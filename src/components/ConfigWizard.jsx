@@ -2,7 +2,7 @@ import {Form, Row, Col, Button} from 'react-bootstrap';
 import {useState, useEffect} from 'react'
 import useIcons from '../useIcons'
 
-export default function OpenAiWizard({user, token, login, logout, config, setConfig, forceRefresh}) {
+export default function ConfigWizard({user, token, login, logout, config, setConfig, forceRefresh}) {
 	
 	const [key,setKey] = useState('')
 	const [groqKey,setGroqKey] = useState('')

@@ -65,7 +65,7 @@ export default function CodeViewer({pistonCodeRunnerEndpoint, language, code, ic
 			setError('')
 			try {
 				startWaiting()
-				fetch(pistonCodeRunnerEndpoint + '/api/v2/piston/execute', {
+				fetch(pistonCodeRunnerEndpoint + '/execute', {
 					method: 'POST',
 					headers: {
 						//'Authorization': 'Bearer '+key,

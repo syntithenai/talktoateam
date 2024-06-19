@@ -30,7 +30,7 @@ export default function usePollingGoogleDocument(props) {
               resolve()
           }
       })
-  }, pausePolling, pollingInterval)
+  }, true, pollingInterval)
   		
   useEffect(function() {
 	  //console.log('use google doc token change', token)

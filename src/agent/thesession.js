@@ -1,8 +1,9 @@
-export default function(config) { 
+export default function({config, abortController}) { 
 	
         function thesession_settings_by_id(message) {
 			return new Promise(function(resolve,reject) {
-				fetch("https://thesession.org/tunes/"+message+"?format=json").then(function(j) {
+				let options =  {signal: abortController.current.signal}
+				fetch("https://thesession.org/tunes/"+message+"?format=json", options).then(function(j) {
 					j.json().then(function(h) {
 						//console.log(h)
 						let ires = []
@@ -33,7 +34,8 @@ export default function(config) {
 		
 		function thesession_search_single(message) {
 			return new Promise(function(resolve,reject) {
-				fetch("https://thesession.org/tunes/search?format=json&q=" + message).then(function(searchResults) {
+				let options =  {signal: abortController.current.signal}
+				fetch("https://thesession.org/tunes/search?format=json&q=" + message,options).then(function(searchResults) {
 					searchResults.json().then(function(sr) {
 						if (sr && sr.tunes && sr.tunes[0] && sr.tunes[0].id) {
 							fetch("https://thesession.org/tunes/"+sr.tunes[0].id+"?format=json").then(function(j) {
@@ -64,7 +66,8 @@ export default function(config) {
         
         function thesession_search_list(message) {
 			return new Promise(function(resolve,reject) {
-				fetch("https://thesession.org/tunes/search?format=json&q=" + message).then(function(searchResults) {
+				let options =  {signal: abortController.current.signal}
+				fetch("https://thesession.org/tunes/search?format=json&q=" + message, options).then(function(searchResults) {
 					searchResults.json().then(function(sr) {
 						let res = sr.tunes.map(function(r) {
 							 return r.id + ' ' + r.name

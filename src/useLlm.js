@@ -2,18 +2,18 @@ import agenticLlmApiClient from './agent/agenticLlmApiClient'
 import {useState, useRef} from 'react'
 
 
-export default function useLlm({url, key, model, onUpdate, onComplete, onReady, onError,onStart, forceRefresh, aiUsage, currentChatHistory, tools, nlp}) {
+export default function useLlm({modelSelector, abortController, onUpdate, onComplete, onReady, onError,onStart, forceRefresh, aiUsage, currentChatHistory, tools, nlp}) {
     //console.log("AI LLM INI ",url)
     const isBusy = useRef(false);
     function setIsBusy(v) {
 		isBusy.current = v
 	}
 
-	var client = agenticLlmApiClient({url, key, model, onReady, aiUsage, onError, tools , onStart })
+	var client = agenticLlmApiClient({modelSelector, onReady, aiUsage, onError, tools , onStart, abortController })
 
     const aiKey = useRef('')
     const eventSource = useRef()
-    var controller = useRef(new AbortController())
+    // var controller = useRef(new AbortController())
    	
 	function init() { 
 		if (onReady) onReady()
@@ -26,7 +26,7 @@ export default function useLlm({url, key, model, onUpdate, onComplete, onReady, 
 		//console.log("ai stop")
 		if (isBusy.current) {
 			try {
-				if (controller.current) controller.current.abort('click') //.catch(function(e) {console.log(e)})	
+				if (abortController.current) abortController.current.abort('click')
 			} catch (e) {
 				console.log(e)
 			}

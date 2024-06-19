@@ -1,11 +1,11 @@
 import {React, useState, useEffect, useRef} from 'react'
 import {Button, Tabs, Tab} from 'react-bootstrap'
 import {Link} from 'react-router-dom'
- import DatePicker from "react-datepicker";
-
+import DatePicker from "react-datepicker";
+import BuyCredit from '../components/BuyCredit'
 import "react-datepicker/dist/react-datepicker.css";
 
-export default function TokensPage({icons, aiUsage, refreshHash, token, user, login, logout, utils, config}) {
+export default function TokensPage({creditBalance, icons, aiUsage, refreshHash, token, user, login, logout, utils, config}) {
 	
 	// search filter
 	const twoWeeksAgo = new Date()
@@ -60,14 +60,14 @@ export default function TokensPage({icons, aiUsage, refreshHash, token, user, lo
 				
 				{!(token && token.access_token) && <Button onClick={function() { login()}} variant="success" >{icons["user"]}</Button>}
 				</span>}
-				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>{aiUsage.getTotal()}</b>
+				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>${creditBalance > 0 && token && token.access_token  ? parseFloat(creditBalance).toFixed(2) : 0}</b>
 				</span></Link>}
 			</div>
 			
 			<div id="body" style={{paddingLeft:'0.3em',paddingRight:'0.3em',textAlign:'left', zIndex:'3',position: 'relative', top: '3em', left: 0, width: '100%',  paddingTop:'0.2em', backgroundColor:'white'}}  >
 							<div>
 		
-		
+							<BuyCredit/>
 		<div style={{borderBottom:'2px solid black', marginBottom:'1em', paddingBottom:'1em'}}>
 			<h4>Search</h4>
 			<b>From:</b> <DatePicker selected={startDate} onChange={(date) => {setStartDate(date); search()}} />

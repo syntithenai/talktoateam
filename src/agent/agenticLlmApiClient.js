@@ -1,10 +1,11 @@
+import { FrameProcessor } from '@ricky0123/vad-web'
 import nlp from 'compromise'
 //const config = require('./config')
 
 //const nlp = window.nlp
-function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart}) {
+function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, abortController}) {
 	// force local api
-	url = import.meta.env.VITE_API_URL
+	// url = import.meta.env.VITE_API_URL
 
 	tools = typeof tools === 'object' ? tools : {}
 	let isStopped = true
@@ -13,7 +14,7 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 
 	let isBusy = false
 	function setIsBusy(v) { isBusy = v}
-	var controller = new AbortController()
+	// var controller = new AbortController()
 	
 	
 	
@@ -21,7 +22,7 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 		isStopped = true
 		if (isBusy) {
 			try {
-				if (controller.current) controller.current.abort('click') 
+				if (abortController.current) abortController.current.abort('click') 
 			} catch (e) {
 				console.log(e)
 			}
@@ -29,13 +30,13 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 		}
 	}
 	
-	function openAIParametersFromConfig(modelConfig) {
+	function openAIParametersFromConfig(modelConfig, url) {
 		let formData = {}
 		if (modelConfig) {
 			if (modelConfig.outputType === 'json')  formData.response_format = { "type": "json_object" }
 			if (modelConfig.temperatureOpenAI) formData.temperature = parseFloat(modelConfig.temperatureOpenAI) > 0 ? parseFloat(modelConfig.temperatureOpenAI) : 0
-			if (modelConfig.topPOpenAI) formData.top_p = parseFloat(modelConfig.topPOpenAI) > 0 ? parseFloat(modelConfig.topPOpenAI) : 0
-			if (modelConfig.maxTokens) formData.max_tokens = parseFloat(modelConfig.maxTokens) > 0 ? parseFloat(modelConfig.maxTokens) : 0
+			if (modelConfig.topPOpenAI) formData.top_p = parseFloat(modelConfig.topPOpenAI) > 0 ? parseFloat(modelConfig.topPOpenAI) : null
+			if (modelConfig.maxTokens) formData.max_tokens = parseFloat(modelConfig.maxTokens) > 0 ? parseFloat(modelConfig.maxTokens) : null
 			if (Array.isArray(modelConfig.stopTokens) && modelConfig.stopTokens.length > 0) formData.stop = modelConfig.stopTokens 
 			// OPENAI ONLY
 			if (modelConfig.frequencyPenalty) formData.frequency_penalty = parseFloat(modelConfig.frequencyPenalty) > -2 ? parseFloat(modelConfig.frequencyPenalty) : 0
@@ -43,6 +44,9 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 		}
 		if (!modelConfig || (modelConfig && modelConfig.outputType !== 'json')) formData.stream = true
 		if ((modelConfig && modelConfig.outputType !== 'json' && url === 'https://api.openai.com')) formData.stream_options = {include_usage: true}
+		if (url.startsWith(import.meta.env.VITE_API_URL) && modelConfig && modelConfig.config && Array.isArray(modelConfig.config.stopTokens)) {
+			formData.stop_tokens = modelConfig.config.stopTokens
+		}
 		return formData
 	}
 	
@@ -155,7 +159,17 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 	}
 	
 	async function start({messages, modelConfig, onUpdate, onComplete,onStart}) {
-		console.log("Persona Start:", messages,modelConfig);
+		let modelType = modelConfig && modelConfig.preferredModel ? modelConfig.preferredModel : 'large'
+		console.log(modelConfig)
+		//let modelObj = modelSelector.getModel(modelType)
+		let modelObj = modelSelector.getModel(modelType)
+		let model = modelSelector.getModelKey(modelType)
+		if (!modelObj) throw new Error('Unable to find a matching model for '+ modelType)
+		let url = modelSelector.getModelUrl(modelObj.provider)
+		if (!url) throw new Error('Unable to find a model url')
+		let key = modelSelector.getModelApiKey(modelObj.provider)
+		console.log("Persona Start:",url, key, messages,modelConfig, modelObj);
+		
 		let startTime = new Date()
 		if (modelConfig && modelConfig.type ==="algorithmic" ) {
 			isStopped = false
@@ -170,12 +184,15 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 					console.log("Function CALL:", message, messages, lastUserMessage);
 					try {
 						let functionResult =   processorFunction(message, messages);
+						console.log("Function res:", functionResult);
 						if (functionResult && functionResult.then && typeof functionResult.then == 'function') {
 							return functionResult.then(function(pRes) {
 								console.log("Function Resultq1:", pRes);
 								let ret = {content: pRes, log: {tokens_in: 0, tokens_out: 0, duration: (new Date() - startTime).valueOf()}}
 								onComplete(pRes, {tokens_in: 0, tokens_out: 0, duration: (new Date() - startTime).valueOf()})
 								return ret
+							}).catch(function(e) {
+								onError("Error evaluating function:"+ e)
 							})
 						} else {
 							console.log("Function Resultss:", functionResult);
@@ -202,14 +219,14 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 		} else { 
 			
 			isStopped = false
-			var signal = controller.signal;
+			var signal = abortController.current.signal;
 			if (onStart) onStart()
 			setIsBusy(true)
 			let formData = {
 				model: model,
 				messages: cleanHistory(messages)
 			}
-			formData = Object.assign(formData,openAIParametersFromConfig(modelConfig))
+			formData = Object.assign(formData,openAIParametersFromConfig(modelConfig, url))
 			let sent = []
 			let buffer = []
 			let lastSentenceCount = 0
@@ -219,7 +236,7 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 			let startTime = new Date()
 			try {
 				console.log("START REQUEST",formData.messages)
-				let response = await fetch(url + '/v1/chat/completions', {
+				let response = await fetch(url + '/chat/completions', {
 					signal,
 					method: 'POST',
 					headers: {
@@ -230,7 +247,7 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 				})
 				if (response.status !== 200) {
 					stop()
-					onError("Error querying model - "+ response.statusText)
+					onError("Error querying model - " + formData.model +'. '+ response.statusText)
 				}
 				// streaming response via onStart, onUpdate, onComplete and resolve promise with complete final result
 				const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
@@ -253,6 +270,7 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 								let newText = n[n.length - 2]
 								let fullText = sent.join("") + newText
 								
+
 								onUpdate(fullText, newText, (new Date() - startTime).valueOf())
 								// push the buffer into sent and clear it
 								let sentCounter = ''
@@ -262,6 +280,7 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 									sent.push(b)
 								}
 								lastSentenceCount = n.length
+								
 							}	
 						}
 						if (j && j.usage) {
@@ -275,6 +294,14 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 					})
 					
 				}
+				// read last token
+				try {
+					const {lastvalue, lastdone} = await reader.read();
+					console.log("LASTVALUE",lastvalue, lastdone)
+				} catch (e) {
+					console.log('LASTVALUE ERROR',e)
+				}
+
 				setIsBusy(false)
 				let logEntry = {tokens_in: tokensIn, tokens_out: tokensOut, model, key, url, duration : ((new Date() - startTime).valueOf())}
 				if (aiUsage) aiUsage.log(logEntry)
@@ -288,24 +315,27 @@ function agenticLlmApiClient({url, key, model, aiUsage, onError, tools , onStart
 					startToolCalls(fullText) 
 					return Promise.all(toolCallPromises).then(function(toolCallResults) { 
 						let final = renderToolCalls(fullText)
-						if (onComplete) onComplete(final, logEntry)
+						onComplete(final, logEntry)
 						return {content: final, log: logEntry}
 					}).catch (function(error) {
 						let logEntry = {tokens_in: tokensIn, tokens_out: tokensOut, model, key, url, duration : (new Date() - startTime).valueOf()}
 						console.error('Stopped:', error);
+						console.log(JSON.stringify(error))
 						stop()
-						onError(error)
-						return {content: sent.join("")+buffer.join(""), log: logEntry}
+						// onError(error)
+						onComplete( sent.join("")+buffer.join(""),  logEntry)
+						return {content: sent.join("")+buffer.join(""), log: logEntry}   //log_usage(user,'llm', get_price(model_key, tokens_in, tokens_out))
 					})
 				} else {
 					let logEntry = {tokens_in: tokensIn, tokens_out: tokensOut, model, key, url, duration : (new Date() - startTime).valueOf()}
+					onComplete( sent.join("")+buffer.join(""), logEntry)
 					return {content: sent.join("")+buffer.join(""), log: logEntry}
 				}
 			} catch (error) {
 				let logEntry = {tokens_in: tokensIn, tokens_out: tokensOut, model, key, url, duration : (new Date() - startTime).valueOf()}
-				console.error('Stopped:', error);
+				console.error('LLM RUN ERROR:', error);
 				stop()
-				onError(error)
+				onComplete(sent.join("")+buffer.join(""), logEntry)
 				return {content: sent.join("")+buffer.join(""), log: logEntry}
 				//return sent.join("")+buffer.join("")
 			}
@@ -433,12 +463,12 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 		}
 		
 		function sendComplete() {
-			onComplete(generated,{ 
+			onComplete( generated, { 
 				tokens_in: tally.tokens_in,
 				tokens_out: tally.tokens_out,
-				model,
-				key,
-				url,
+				//model,
+				// key,
+				// url,
 				duration: (new Date() - startTime).valueOf()
 			})
 		}

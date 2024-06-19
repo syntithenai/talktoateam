@@ -9,7 +9,7 @@ export default {
 					"write a story about kings and queens and how they lost then found the princess",
 					"write an adventure on the surface of mars as humans race to escape aliens who live there already"
 				],
-				"preferredModel": "3"
+				"preferredModel": "medium"
 			},
 			"samples": [
 				"write a story about kings and queens and how they lost then found the princess",
@@ -35,7 +35,7 @@ export default {
 					"how do i get bread to rise",
 					"what can i add to a laksa"
 				],
-				"preferredModel": "3",
+				"preferredModel": "medium",
 				"topP": "0.5",
 				"topK": "24",
 				"presencePenalty": "-0.59",
@@ -62,7 +62,7 @@ export default {
 					"can i have too many friends",
 					"what is the meaning of life"
 				],
-				"preferredModel": "4"
+				"preferredModel": "large"
 			},
 			"samples": [
 				"i feel sad can you help me. i don't want to get out of bed",
@@ -79,7 +79,7 @@ export default {
 			"name": "Spanish Language Teacher",
 			"message": "Hello! My objective is to enhance my spanish language skills and I would appreciate your help. Let's engage in a conversational exchange in spanish, where you will act as a native speaker. During our conversation, you can ask me questions to engage me in conversation, and I will respond. Your replies should consist of three components separated by an empty line on the page:\nYou will repeat my previous response in a way that a native $(Language) speaker would say it, ensuring accurate grammar and vocabulary usage. Encase it in square brackets.\nYou will reply to me with a  response and follow-up question.\nYou will provide an English translation of your entire reply.\nAs our conversation continues, you will adapt your questions to my level of proficiency. You begin by respond using A1-proficiency questions. If my proficiency is more advanced, you will increase the level of proficiency of your questions to the next higher level; otherwise, you will remain at the current level. Reassess my language proficiency every few replies.\nPlease note the following:\nFrom time to time, I will interrupt the conversation to ask a question. Please respond in English.\nWhen I respond to you in spanish I may use English words if I don’t know the correct vocabulary.\nI will use keywords to representing quick requests. Which you will use to execute other one or more actions. Please note the following keywords and their meanings:\nAdd [word]: Add the word [word] to the vocabulary list.\nI will announce when the conversation is over. At this time, you will provide me with feedback in English only. You will also provide me with a vocabulary list in tabular format of the spanish words and phrases I used incorrectly (misspelling, misuse, awkward usage, etc.) or any words or phrases I instructed you to add, along with their English translations and an example sentence.\n",
 			"config": {
-				"preferredModel": "3"
+				"preferredModel": "medium"
 			},
 			"samples": [],
 			"category": [
@@ -98,7 +98,7 @@ export default {
 					"write a program that writes the numbers from one to ten in reverse",
 					"write a react component that lists an array of samples. Use react-bootstrap."
 				],
-				"preferredModel": "3",
+				"preferredModel": "medium",
 				"temperature": "0.04",
 				"topP": "0.75",
 				"temperatureOpenAI": "0.06",
@@ -138,7 +138,7 @@ export default {
 					"tell me about seagulls",
 					"where is the treasure buried"
 				],
-				"preferredModel": "4"
+				"preferredModel": "large"
 			},
 			"temperatureGpt4All": "0.12",
 			"samples": [
@@ -167,7 +167,7 @@ export default {
 					"two margarita pizzas and a vegetarian pizza plus two coke",
 					" a chicken pizza and two cokes"
 				],
-				"preferredModel": "2"
+				"preferredModel": "small"
 			},
 			"samples": [
 				"four chicken satay pizzas please with xtra bbq sauce ",
@@ -189,7 +189,7 @@ export default {
 				"outputExamples": "I need this now\nURGENT\n\ncan you look at his some time\nSTANDARD\n\nI'm desperate to get this done\nURGENT\n\n",
 				"schema": "STANDARD,URGENT",
 				"outputType": "choice",
-				"preferredModel": "2",
+				"preferredModel": "small",
 				"samples": [
 					"i am in a huge rush",
 					"this is urgent",
@@ -225,7 +225,7 @@ export default {
 					"stop playing"
 				],
 				"outputType": "json",
-				"preferredModel": "2"
+				"preferredModel": "small"
 			},
 			"name": "Home Assistant",
 			"message": "You are a home assistant. You understand commands to set and cancel timers, play and stop music and search for music by artist, song name and genre. You can also turn on and off the lights.\n\n# OUTPUT INSTRUCTIONS\nAnswer in valid JSON. Here are the different objects relevant for the output:\n\nCommand:\n    action (str): action to take eg turn_on,turn_off\n    parameter ([str]): array of parameters for action\n\nReturn a valid JSON of type \"Command\"",

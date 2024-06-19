@@ -17,8 +17,9 @@ export default function ModelSelectorModal({ defaultOptions, onChange , value, i
   }
 
   if (!show) {
-	  return <Button size="sm" variant="secondary"  onClick={handleShow} >
-			<span>{icons.brain} {value}</span> 
+	  return <Button style={{maxWidth: '30em', float:'left'}} size="sm" variant="secondary"  onClick={handleShow} >
+			<span style={{float:'left'}} >{icons.brain}</span>
+      <span> {value}</span> 
 		</Button>
      
   } else  {
@@ -27,12 +28,12 @@ export default function ModelSelectorModal({ defaultOptions, onChange , value, i
     <span style={{float:'right'}} >
        
      
-      <Modal show={show} onHide={handleClose}>
+      <Modal className="fullwidthmodal" show={show} onHide={handleClose}>
         <Modal.Header closeButton>
           {<Modal.Title>Select Model</Modal.Title>}
-          
         </Modal.Header>
         <Modal.Body style={{minHeight:'800px'}} >
+        
             <ModelSelector onChange={onChangeWrap}  value={value} defaultOptions={defaultOptions} />
         </Modal.Body>
         <Modal.Footer style={{minHeight:'800px', verticalAlign:'top'}} >

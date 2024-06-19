@@ -581,11 +581,13 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
 					  value={role && role.config && role.config.preferredModel ? role.config.preferredModel : '4'}
 					  onChange={handlePreferredModelChange}
 					>
-						<option value="1" >Basic (under 2G RAM)</option>
-						<option value="2"  >Small(2-4G RAM)</option>
-						<option value="3"  >Medium(4-8G RAM)</option>
-						<option value="4"  >Large (GPT3.5 equivalent (8-16G RAM)</option>
-						<option value="5" >Advanced (GPT4)</option>
+						 <option value="basic" >Basic</option>
+						<option value="small"  >Small</option>
+						<option value="medium"  >Medium</option>
+						<option value="large"  >Large</option>
+						<option value="advanced" >Advanced</option>
+						<option value="instruct" >Instruct</option>
+						<option value="code" >Code </option>
 						
 					</Form.Select>
 				  </Form.Group>

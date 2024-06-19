@@ -2,7 +2,7 @@ import {React} from 'react'
 import {Button, Tabs, Tab} from 'react-bootstrap'
 import {Link} from 'react-router-dom'
  
-export default function PrivacyPage({refreshHash, icons,token, logout, user,login }) {
+export default function PrivacyPage({creditBalance, refreshHash, icons,token, logout, user,login }) {
 	
 	let paraStyle={marginTop:'0.5em'}
 	return (<div className="App" style={{textAlign:'left'}} id={refreshHash} >
@@ -21,7 +21,7 @@ export default function PrivacyPage({refreshHash, icons,token, logout, user,logi
 				
 				{!(token && token.access_token) && <Button onClick={function() { login()}} variant="success" >{icons["user"]}</Button>}
 				</span>}
-				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>{aiUsage.getTotal()}</b>
+				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>${creditBalance > 0 && token && token.access_token  ? parseFloat(creditBalance).toFixed(2) : 0}</b>
 				</span></Link>}
 			</div>
 			

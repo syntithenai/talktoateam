@@ -1,16 +1,22 @@
 // requires config array pistonRuntimes and url pistonCodeRunnerEndpoint
 
-export default function({runtimes, config}) {
+export default function({runtimes, config, token, creditBalance}) {
 	
 
 	function coderunner_load_runtimes() {
 		return new Promise(function(resolve,reject) {
-			fetch(config.piston_url + '/runtimes', {
+			let url =  ''
+			let headers = {'Content-Type': 'application/json'}
+			if (config && config.tools && config.tools.coderunner_url) {
+				url = config.tools.coderunner_url
+				headers['authorization'] = 'Bearer ' +  config.tools.coderunner_key 
+			} else if (creditBalance > 0 && token && token.access_token) {
+				url = import.meta.env.VITE_API_URL + '/websearch'
+				headers['authorization'] = 'Bearer ' +  token.access_token 
+			}
+			fetch(url + '/runtimes', {
 				method: 'GET',
-				headers: {
-					//'Authorization': 'Bearer '+key,
-					'Content-Type': 'application/json'
-				},
+				headers: headers,
 			}).then(function(response) {
 				//console.log("load runtimes",response)
 				response.json().then(function(t) {
@@ -28,6 +34,7 @@ export default function({runtimes, config}) {
 		return new Promise(function(resolve,reject) {
 			if (text) {
 				let parts = text.split("```")
+				console.log("RUNPARETS",parts)
 				if (parts.length > 1) {
 					let iParts = parts[1].split("\n")
 					let language = iParts[0].trim()
@@ -35,9 +42,17 @@ export default function({runtimes, config}) {
 					console.log('language',language, code)
 					runCode(code, language).then(function({response, error} ) {
 						resolve(response + (error ? "\n### ERROR \n"+error : '' ))
+					}).catch(function(e) {
+						reject(e)
 					})
 					
+				} else {
+					console.log("not enough parts", parts, text)
+					resolve('')
 				}
+			} else {
+				console.log("empty code")
+				resolve('')
 			}
 		})
 	}
@@ -73,16 +88,21 @@ export default function({runtimes, config}) {
 					"compile_memory_limit": -1,
 					"run_memory_limit": -1
 				}
+				let url =  ''
+				let headers = {'Content-Type': 'application/json'}
+				if (config && config.tools && config.tools.coderunner_url) {
+					url = config.tools.coderunner_url
+					headers['authorization'] = 'Bearer ' +  config.tools.coderunner_key 
+				} else if (creditBalance > 0 && token && token.access_token) {
+					url = import.meta.env.VITE_API_URL + '/runcode'
+					headers['authorization'] = 'Bearer ' +  token.access_token 
+				}
 				
 				error = ''
 				try {
-					fetch((config.tools && config.tools.piston_url ? config.tools.piston_url : 'https://emkc.org/api/v2/piston') + '/execute', {
+					fetch(url , {
 						method: 'POST',
-						headers: {
-							//'Authorization': 'Bearer '+key,
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify(formData),
+						headers: headers
 					}).then(function(response) {
 						console.log("ai response",response)
 						response.json().then(function(t) {

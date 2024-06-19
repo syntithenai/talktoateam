@@ -22,7 +22,7 @@ import CodeViewer from '../components/CodeViewer'
 import  CopyTextButton from '../components/CopyTextButton'
 import AssistantSelector from '../components/AssistantSelector'
 
-export default function ChatPage({ creditBalance, user, token, login, logout, refresh, doSave,teamLlm, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, selfHostedLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, category, setCategory,exportRoles,importRoles,setSystemMessage,systemMessage,setSystemConfig, systemConfig, init, saveRole, loadRole, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, getLastAssistantMessage, setLastUserMessage,getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, chatHistoryRoles, setChatHistoryRoles, getLastAssistantChatIndex, categories, configManager, runtimes, currentTeam, setCurrentTeam, teams, setTeams,  accordionSelectedKey, setAccordionSelectedKey, simplifiedChat, categoryFilter, setCategoryFilter}) {
+export default function ChatPage({ creditBalance, user, token, login, logout, refresh, doSave,teamLlm, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, category, setCategory,exportRoles,importRoles,setSystemMessage,systemMessage,setSystemConfig, systemConfig, init, saveRole, loadRole, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, getLastAssistantMessage, setLastUserMessage,getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, chatHistoryRoles, setChatHistoryRoles, getLastAssistantChatIndex, categories, configManager, runtimes, currentTeam, setCurrentTeam, teams, setTeams,  accordionSelectedKey, setAccordionSelectedKey, simplifiedChat, categoryFilter, setCategoryFilter}) {
 //console.log("chatpage",config, typeof config)
 	let graphCount = 0;
 	let abcCount = 0;
@@ -34,24 +34,15 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 	let params = useParams()
 	//console.log(params)
 	const hiddenInput = useRef()
+
 	useEffect(function() {
-		//console.log('paramchange',params.id, chatHistories,chatHistoryId)
 		if (!chatHistories) chatHistories = {}
-		
-			
+		// redirect with id if one is missing
 		if (!params.id) {
-			//console.log('paramchange no id')
 			const lastId = localStorage.getItem("voice2llm_last_chat")
 			const id = lastId ? lastId : utils.generateRandomId()
-			//console.log('paramchange new id',lastId, id)
-			//setChatHistoryId(id)
-			//if (!chatHistories.hasOwnProperty(id)) {
-				//chatHistories[id] = []
-				//setChatHistories(chatHistories)
-			//}
 			navigate("/chat/"+id)
 		} else if (params.id) {
-			//console.log('paramchange have id',params.id)
 			setChatHistoryId(params.id)
 			localStorage.setItem("voice2llm_last_chat", params.id)
 			// create new
@@ -75,7 +66,6 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 		//if (window.confirm('Really discard chat messages after this and start with this message?')) {
 			stopLanguageModels()
 			setUserMessage(revertChatHistory(index))
-			aiLlm.isBusy.current = false
 		//}
 	}
 	
@@ -96,7 +86,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 				console.log('transcript TO',v)
 				lastLlmTrigger.current="speech"
 				// stop llm processing, manipulate history and resubmit
-				if (aiLlm.isBusy.current || selfHostedLlm.isBusy.current|| teamLlm.isBusy.current) {
+				if (aiLlm.isBusy.current || teamLlm.isBusy.current) {
 					stopLanguageModels(false)
 					revertChatHistory()
 					let sendMessage = (getLastUserMessage() ? getLastUserMessage() + ' ' : '') + newMessage
@@ -231,19 +221,18 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 		return message && (message.role === "user" || message.role === "assistant")
 	}) : []
 	
-	
+	//<b>${(prices && prices.total > 0) ? prices.total.toFixed(4) : 0 }</b>
 	function chatResourceAccordion(resources,mkey,accordionSelectedKey, setAccordionSelectedKey) {
 		if (Array.isArray(resources) && resources.length > 0) {
 			return <>
 				<div style={{marginTop:'1em'}}  >
 				<Accordion activeKey={accordionSelectedKey} defaultActiveKey={accordionSelectedKey}>
 				{resources.map(function(resource, rk) {
-					let prices = resource && resource.log ? aiUsage.getLlmPrice(resource.log.model, resource.log.tokens_in, resource.log.tokens_out) : {price_in: 0, price_out: 0, total: 0}
 					return <Accordion.Item key={rk} eventKey={rk}  >
 							<Accordion.Header onClick={function() {if (accordionSelectedKey === rk) { setAccordionSelectedKey(''); } else { setAccordionSelectedKey(rk);}}}>
 								<span style={{width:'80%'}} >{resource && resource.name} </span>
 								{!simplifiedChat && <><Button style={{float:'right', marginRight:'1em'}} variant='outline-primary'>{(((resource && resource.log) ? resource.log.duration : 0)/1000).toFixed(2) }s</Button>
-								<Button style={{float:'right', marginRight:'1em'}} variant='outline-primary'>{(resource && resource.log) ? resource.log.tokens_in : 0 }/{(resource && resource.log) ? resource.log.tokens_out : 0 }&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>${(prices && prices.total > 0) ? prices.total.toFixed(4) : 0 }</b></Button></>}
+								<Button style={{float:'right', marginRight:'1em'}} variant='outline-primary'>{(resource && resource.log) ? resource.log.tokens_in : 0 }/{(resource && resource.log) ? resource.log.tokens_out : 0 }</Button></>}
 							</Accordion.Header>
 							<Accordion.Body>
 								{<ButtonGroup style={{float:'right', marginLeft:'1em'}} >
@@ -273,7 +262,6 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 		}
 	}
 	let grandTotals = {}
-	const {openAiBillable, useLlm} = utils.summariseConfig(config)
 	
 	let welcomeMessage = roles && currentRole && roles[currentRole] && roles[currentRole].config && roles[currentRole].config.welcomeMessage ? roles[currentRole].config.welcomeMessage : ''
 	if (currentTeam) welcomeMessage = teams && currentTeam && teams[currentTeam] && teams[currentTeam].config && teams[currentTeam].config.welcomeMessage ? teams[currentTeam].config.welcomeMessage : ''
@@ -338,14 +326,14 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 			<div id="body" style={{zIndex:'3',position: 'fixed', top: '3em', left: 0, width: '100%',  paddingTop:'0.2em', backgroundColor:'white'}}  >
 					
 				<form  onSubmit={function(e) {submitForm(userMessageRef.current,config); e.preventDefault(); return false}} >
-					{!simplifiedChat && <><AssistantSelector {...{categoryFilter, setCategoryFilter, user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, selfHostedLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, category, setCategory,exportRoles,importRoles,setSystemMessage,systemMessage,setSystemConfig, systemConfig, init, saveRole, loadRole, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, getLastAssistantMessage, setLastUserMessage,getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, chatHistoryRoles, setChatHistoryRoles, getLastAssistantChatIndex, categories, configManager, runtimes, currentTeam,  setCurrentTeam, teams, setTeams}}/></>}
+					{!simplifiedChat && <><AssistantSelector {...{categoryFilter, setCategoryFilter, user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, category, setCategory,exportRoles,importRoles,setSystemMessage,systemMessage,setSystemConfig, systemConfig, init, saveRole, loadRole, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, getLastAssistantMessage, setLastUserMessage,getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, chatHistoryRoles, setChatHistoryRoles, getLastAssistantChatIndex, categories, configManager, runtimes, currentTeam,  setCurrentTeam, teams, setTeams}}/></>}
 					
 					
 					
 					
 					<div style={{clear:'both', float:'left'}} />
 					
-					<TextareaAutosize tabIndex="1" disabled={(selfHostedLlm.isBusy.current || aiLlm.isBusy.current || teamLlm.isBusy.current  || isPlaying.current || !llmEnabled)} maxRows={15} style={{minWidth: "65%", fontSize: '1em', float: "left"}} type='text' id="usermessage"  placeholder="Message" onChange={function(e) {setUserMessage(e.target.value); forceRefresh()}} value={userMessageRef.current} onFocus={function() {clearTimeout(utterancesTimeout.current)}} /> 
+					<TextareaAutosize tabIndex="1" disabled={(aiLlm.isBusy.current || teamLlm.isBusy.current  || isPlaying.current || !llmEnabled)} maxRows={15} style={{minWidth: "65%", fontSize: '1em', float: "left"}} type='text' id="usermessage"  placeholder="Message" onChange={function(e) {setUserMessage(e.target.value); forceRefresh()}} value={userMessageRef.current} onFocus={function() {clearTimeout(utterancesTimeout.current)}} /> 
 					<span style={{float:'left'}}>
 						<span style={{float:'right', marginLeft:'0.3em'}} >
 							<Form.Control accept=".txt, .js, .php, .py" type="file" style={{ display: 'none' }} ref={hiddenInput} onChange={injectTextFile} />
@@ -356,13 +344,12 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 						
 						<span style={{float:'right', marginLeft:'0.3em'}}>
 							
-							{!(selfHostedLlm.isBusy.current || aiLlm.isBusy.current || teamLlm.isBusy.current || isPlaying.current) && <Button  tabIndex="2" size="lg" 	id="sendbutton" disabled={!llmEnabled || !userMessage || userMessage.length === 0}  style={{float: 'right', marginRight: '0.2em', color:'black'}} className="btn btn-primary"  onClick={function() {lastLlmTrigger.current="button" ; return false}} type="submit" title="Send" >{icons["send-plane-line"]}</Button>}
+							{!( aiLlm.isBusy.current || teamLlm.isBusy.current || isPlaying.current) && <Button  tabIndex="2" size="lg" 	id="sendbutton" disabled={!llmEnabled || !userMessage || userMessage.length === 0}  style={{float: 'right', marginRight: '0.2em', color:'black'}} className="btn btn-primary"  onClick={function() {lastLlmTrigger.current="button" ; return false}} type="submit" title="Send" >{icons["send-plane-line"]}</Button>}
 							
-							{(selfHostedLlm.isBusy.current || aiLlm.isBusy.current || teamLlm.isBusy.current || isPlaying.current) && <Button  tabIndex="2" size="lg" disabled={!llmEnabled}  style={{float: 'right',marginRight: "0.2em", color:'black'}} className="btn  btn-danger"  id="stopLMMButton" onClick={stopLanguageModels}  title="Stop" >{(aiLlm.isBusy.current ) ? icons["loader-line"] : icons["hexagon-fill"]}</Button>}
+							{( aiLlm.isBusy.current || teamLlm.isBusy.current || isPlaying.current) && <Button  tabIndex="2" size="lg" disabled={!llmEnabled}  style={{float: 'right',marginRight: "0.2em", color:'black'}} className="btn  btn-danger"  id="stopLMMButton" onClick={stopLanguageModels}  title="Stop" >{(aiLlm.isBusy.current ) ? icons["loader-line"] : icons["hexagon-fill"]}</Button>}
 						</span>
 					</span>
 					
-					{!useLlm && <div style={{color:'red'}} >Language Model API is not configured. Fix in <Link to="/settings" ><Button variant="success" >{icons.settings} Settings</Button></Link></div>}
 					
 				</form>
 				
@@ -390,7 +377,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 					
 					return <ListGroup.Item key={mkey} style={{backgroundColor: ((mkey%2 === 0) ? "green" : "blue")}} style={{textAlign:'left'}} >
 					
-						<ButtonGroup style={{float:'right', backgroundColor:'#0d6efd;', marginLeft:'1em'}} >
+						<ButtonGroup style={{float:'right', backgroundColor:'#0d6efd', marginLeft:'1em'}} >
 							{!Array.isArray(message.content) && <MessageEditorDialog value={message.content} onChange={function(e) {
 								
 								if (chatHistoryIdRef.current && chatHistories && chatHistories[chatHistoryIdRef.current] && chatHistories[chatHistoryIdRef.current][mkey]) {
@@ -411,13 +398,13 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 						<b style={{marginBottom:'2em'}} >{message.role === "user" ? 'USER:' : 'ASSISTANT:'}</b> 
 						
 						<span>
-							{(!simplifiedChat && message.role === "assistant") && <Button variant="outline-primary" style={{fontSize:'1.1em', float:'right'}} >
-								<b>Cost</b>&nbsp;&nbsp;{tally_in}/{tally_out}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>${parseFloat(aiUsage.getLlmPrice(config && config.llm && config.llm.openai_model ? config.llm.openai_model : '', tally_in, tally_out).total).toFixed(4)}</b>
-							</Button>}
+							{(!simplifiedChat && message.role === "assistant") &&  <ButtonGroup style={{float:'right', marginRight:'0.5em'}} >{(message && message.log && message.log.model) && <Button variant="outline-primary" >{message.log.model}</Button>}<Button>{(message && message.log && message.log.tokens_in > 0)  ? parseInt(message.log.tokens_in) : 0}/{(message && message.log && message.log.tokens_out > 0)  ? parseInt(message.log.tokens_out) : 0}</Button></ButtonGroup>
+							}
 							
 							{!simplifiedChat && (Array.isArray(message.content) && (message.role === "assistant") && (message && message.log && message.log.duration))  && <Button style={{float:'right', marginRight:'0.5em'}} variant="outline-primary" >{(message && message.log && message.log.duration) ? (message.log.duration/1000).toFixed(2) + 's' : '' }</Button>}
 							
 							{(!simplifiedChat && (message.role === "assistant") && !Array.isArray(message.content))  && <>{(message && message.log && message.log.duration) ? <Button style={{float:'right', marginRight:'0.5em' }} variant="outline-primary" >{(message && message.log && message.log.duration) ? (message.log.duration/1000).toFixed(2) + 's' : '' }</Button>: null}{text2Html(message.content)}</>}
+							
 							<div style={{clear:'both'}}></div>		
 							
 							{Array.isArray(message.content)  && chatResourceAccordion(message.content,mkey, accordionSelectedKey, setAccordionSelectedKey)}
@@ -427,7 +414,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 							
 						</span>  
 						
-						{(mkey === chatHistoryFiltered.length - 1 && (aiLlm.isBusy.current || selfHostedLlm.isBusy.current || teamLlm.isBusy.current)) && <b><img style={{height:'6em'}} src="/spinner.svg" /></b>}
+						{(mkey === chatHistoryFiltered.length - 1 && (aiLlm.isBusy.current || teamLlm.isBusy.current)) && <b><img style={{height:'6em'}} src="/spinner.svg" /></b>}
 						
 					</ListGroup.Item>
 				})}
