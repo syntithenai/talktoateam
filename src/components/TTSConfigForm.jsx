@@ -48,25 +48,34 @@ const TTSConfigForm = ({configIn, setConfig, forceRefresh}) => {
 			</Form.Group>
 			
 			<Form.Group controlId="ttsUrl" style={{marginTop:'0.2em'}}>
-			  <FormCheck
+			<Form.Label>Self Hosted URL</Form.Label>
+			<FormCheck
 					style={{display:'inline', marginRight:'0.2em'}} 
 					type="checkbox"
 					checked={config && config.tts && config.tts.use === 'self_hosted'}
 					onChange={(e) => {setConfigValue('use',!(config && config.tts && config.tts.use === 'self_hosted')? 'self_hosted' : '')}}
 			  />
-			  <Form.Label>Self Hosted URL</Form.Label>
-			  <Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >eg https://192.168.1.56:5002</span></Form.Text>
+			  <Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See https://github.com/syntithenai/coqui-tts-ssl</span></Form.Text>
 			<Form.Control
 				type="text"
 				value={config && config.tts && config.tts.self_hosted_url}
 				onChange={(e) => {setConfigValue('self_hosted_url',e.target.value); setConfigValue('use','self_hosted')}}
 			  />
 			</Form.Group>
-			<div style={{border:'1px solid grey', padding:'0.5em', marginTop:'1em' }} >
+			
+		  </Row>
+		 </div>
+     
+    </Form>
+  );
+};
+
+export default TTSConfigForm;
+{/* <div style={{border:'1px solid grey', padding:'0.5em', marginTop:'1em' }} >
 				<h6>Offline</h6>
 				<Form.Group controlId="ttsWebSpeech" style={{marginTop:'0.2em'}}>
 					  <FormCheck
-							style={{display:'inline', marginRight:'0.2em'}} 
+							style={{display:'inline', marginRight:'0.2em', marginLeft:'0.5em'}} 
 							type="checkbox"
 							checked={config && config.tts && config.tts.use === 'web_speech'}
 							onChange={(e) => {setConfigValue('use',!(config && config.tts && config.tts.use === 'web_speech') ? 'web_speech' : '')}}
@@ -80,7 +89,7 @@ const TTSConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				</Form.Group>
 				<Form.Group controlId="ttsMeSpeech" style={{marginTop:'0.2em'}}>
 					  <FormCheck
-							style={{display:'inline', marginRight:'0.2em'}} 
+							style={{display:'inline', marginRight:'0.2em', marginLeft:'0.5em'}} 
 							type="checkbox"
 							checked={config && config.tts && config.tts.use === 'me_speak'}
 							onChange={(e) => {setConfigValue('use',!(config && config.tts && config.tts.use === 'me_speak') ? 'me_speak' : '')}}
@@ -89,12 +98,4 @@ const TTSConfigForm = ({configIn, setConfig, forceRefresh}) => {
 					  
 					
 				</Form.Group>
-			</div>
-		  </Row>
-		 </div>
-     
-    </Form>
-  );
-};
-
-export default TTSConfigForm;
+			</div> */}

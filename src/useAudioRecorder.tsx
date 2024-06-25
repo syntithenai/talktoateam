@@ -9,16 +9,17 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 	let noSpeechTimeout = useRef()
 	const haveSpeech = useRef(false)
 	const isInitialised = useRef(true)
-	
+	//console.log("useMicVAD")
+		
 	const vad = useMicVAD({
 		startOnLoad: true,
 		// start
 		onFrameProcessed: (probs, audio) => {
-			//console.log("FFF",probs,audio)
+			console.log("FFF",probs,audio)
 		},
 		onSpeechStart: () => {
 			if (!isPlaying.current) { 
-				//console.log("User started talking")
+				console.log("User started talking")
 				stopNoSpeechTimeout()
 			}
 			isSpeaking.current = true
@@ -26,13 +27,13 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 		},
 		// stop
 		onVADMisfire: () => {
-		  //console.log("User stopped talking")
+		  console.log("User stopped talking")
 		  startNoSpeechTimeout()
 		  isSpeaking.current = false
 		  forceRefresh()
 		},
 		onSpeechEnd: (audio) => {
-		  //console.log("User stopped talking", audio, isEnabled.current)
+		  console.log("User stopped talking", audio, isEnabled.current)
 		  startNoSpeechTimeout()
 		  isSpeaking.current = false
 		  if (isEnabled.current) {
@@ -40,7 +41,7 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 				console.log("Submit audio", duration, new Blob([encodeWAV(audio)],{type:'audio/wav'}),audio,config)
 				let b = new Blob([encodeWAV(audio)],{type:'audio/wav'})
 				//downloadBlobAsWav(b)
-				playBlob(b)
+				//playBlob(b)
 				onRecordingComplete(duration, b,audio,config)
 				
 		  }
@@ -66,6 +67,7 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 	}
 
      const startRecording = async (forceHaveSpeech) => {
+		if (vad.loading) return
 		//console.log("start rec")
 		isEnabled.current = true
 		//console.log("start rec done ")
@@ -205,7 +207,7 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 	function init(){} 
 	
 	
-    return {startRecording, stopRecording, handleToggleRecording, isSpeaking, isEnabled, isInitialised, init}
+    return {startRecording, stopRecording, handleToggleRecording, isSpeaking, isEnabled, isInitialised: vad.loading, init}
 }
 
 
@@ -268,23 +270,7 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 		//wavArray[offset++] = blockAlign;
 		//wavArray[offset++] = 0x00; // 
 		//// BitsPerSample
-		//wavArray[offset++] = bitsPerSample;
-		//wavArray[offset++] = 0x00; // 
-		//// data
-		//wavArray[offset++] = 0x64; // d
-		//wavArray[offset++] = 0x61; // a
-		//wavArray[offset++] = 0x74; // t
-		//wavArray[offset++] = 0x61; // a
-		//// DataSize
-		//wavArray[offset++] = dataSize & 0xFF;
-		//wavArray[offset++] = (dataSize >> 8) & 0xFF;
-		//wavArray[offset++] = (dataSize >> 16) & 0xFF;
-		//wavArray[offset++] = (dataSize >> 24) & 0xFF;
-
-		//// Copy the audio data
-		//for (let i = 0; i < int16Array.length; i++) {
-		//wavArray[offset++] = int16Array[i] & 0xFF;
-		//wavArray[offset++] = (int16Array[i] >> 8) & 0xFF;
+		//wavArray[offset++] = bitsPerSample;if (isInitialised.current) return
 		//}
 
 		//// Create a Blob from the WAV file data

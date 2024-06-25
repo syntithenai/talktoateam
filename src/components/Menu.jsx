@@ -54,7 +54,7 @@ export default function Menu({setAutoStopMicrophone, autoStopMicrophone, stopLan
 								{(!simplifiedChat &&  isSpeaking) && <button  style={{marginRight: "0.2em", color:'black'}} className="btn btn-success"  id="playingButton" onClick={stopPlaying}  title="Stop Playing" >{icons["speak"]}</button>}
 							</>}
 
-							{(usingStt && pathname.startsWith('/chat'))  && <span style={{marginLeft:'0.5em'}} ><SpeechButton 
+							{<span style={{marginLeft:'0.5em', display: (usingStt && pathname.startsWith('/chat')) ? 'inline' : 'inline'}} ><SpeechButton 
 								lastLlmTrigger={lastLlmTrigger}
 								config={config}
 								aiUsage={aiUsage}

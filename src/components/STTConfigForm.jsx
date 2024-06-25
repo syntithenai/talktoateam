@@ -58,20 +58,7 @@ const STTConfigForm = ({configIn, setConfig, forceRefresh}) => {
 			  />
 			</Form.Group>
 			
-			<Form.Group as={Col} controlId="groqcloudKey">
-			  <FormCheck
-			    style={{display:'inline', marginRight:'0.2em'}} 
-				type="checkbox"
-				checked={config && config.stt && config.stt.use === 'groq' ? true : false}
-				onChange={(e) => {setConfigValue('use',!(config && config.stt && config.stt.use === 'groq') ? 'groq' : '')}}
-			  />
-			  <Form.Label>GroqCloud API Key</Form.Label>
-			  <Form.Control
-				type="text"
-				value={config && config.stt && config.stt.groq_key ? config.stt.groq_key : ''}
-				onChange={(e) => {setConfigValue('groq_key',e.target.value);  setConfigValue('use','groq')}}
-			  />
-			</Form.Group>
+			
 			
 			<Form.Group controlId="sttUrl" style={{marginTop:'0.2em'}} >
             <FormCheck
@@ -81,7 +68,7 @@ const STTConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				onChange={(e) => {setConfigValue('use',!(config && config.stt && config.stt.use === 'self_hosted') ? 'self_hosted' : '') }}
 			  />
 		  <Form.Label>Self Hosted URL</Form.Label>
-		  
+		  <Form.Text>See https://github.com/syntithenai/whisper-websocket-streaming</Form.Text>
           <Form.Control
             type="text"
             value={config && config.stt && config.stt.self_hosted_url ? config.stt.self_hosted_url : ''}
@@ -100,7 +87,20 @@ const STTConfigForm = ({configIn, setConfig, forceRefresh}) => {
 
 export default STTConfigForm;
 
-
+{/* <Form.Group as={Col} controlId="groqcloudKey">
+			  <FormCheck
+			    style={{display:'inline', marginRight:'0.2em'}} 
+				type="checkbox"
+				checked={config && config.stt && config.stt.use === 'groq' ? true : false}
+				onChange={(e) => {setConfigValue('use',!(config && config.stt && config.stt.use === 'groq') ? 'groq' : '')}}
+			  />
+			  <Form.Label>GroqCloud API Key</Form.Label>
+			  <Form.Control
+				type="text"
+				value={config && config.stt && config.stt.groq_key ? config.stt.groq_key : ''}
+				onChange={(e) => {setConfigValue('groq_key',e.target.value);  setConfigValue('use','groq')}}
+			  />
+			</Form.Group> */}
  //<div style={{border:'1px solid grey', padding:'0.5em', marginTop:'1em' }} >
 			//<h6>Offline</h6>
         //<Form.Group as={Col} controlId="openaiKey">

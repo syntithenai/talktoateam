@@ -1,6 +1,6 @@
 import {React, useEffect, useState} from 'react'  
 //import useHotwordManager from './hotword/useHotwordManager'
-import {useLocalTranscriber} from '../useLocalTranscriber.ts'
+// import {useLocalTranscriber} from '../useLocalTranscriber.ts'
 import useWebsocketTranscriber from '../useWebsocketTranscriber.ts'
 import useOpenAITranscriber from '../useOpenAITranscriber.ts'
 import useGroqTranscriber from '../useGroqTranscriber.ts'
@@ -60,32 +60,33 @@ export default function SpeechButton(props) {
 		config: props.config,
 		isPlaying: props.isPlaying,
 		onRecordingComplete: function (duration, blob, data, config) {
-			//console.log("REC COMPLETE",duration, blob, data, config, typeof config	)
+			console.log("REC COMPLETE",duration, blob, data, config, typeof config	)
 			let useOpenAi = (config && config.stt && config.stt.use === "openai" && config.stt.openai_key)? true : false
 			let useSelfHosted = (config && config.stt && config.stt.use === "self_hosted" && config.stt.self_hosted_url)? true : false
 			let useGroq = (props.config && props.config.stt && props.config.stt.use === "groq" && props.config.stt.groq_key)? true : false
-			let useLocal = (config && config.stt && config.stt.use === "local" && config.stt.local_whisper_model) ? true : false
-			//console.log("REC COMPLETE",useLocal,useSelfHosted,useOpenAi, useGroq, config.stt.use, config.stt.openai_key)
-			if (useLocal) {
-				//console.log("TSstart")
-				function blobToAudioBuffer(blob) {
-					return new Promise(function(resolve,reject) {
-						//console.log("TSstart b", blob)
-						const audioContext = new AudioContext();
-						blob.arrayBuffer().then(function(arrayBuffer) {
-							//console.log("TSstart ab", arrayBuffer)
-							audioContext.decodeAudioData(arrayBuffer).then(function(audioBuffer) {
-								//console.log("TSstart aab", audioBuffer)
-								resolve(audioBuffer)
-							})
-						})
-					})
-				}
-				blobToAudioBuffer(blob).then(function(b) {
-					//console.log("TSstart got",b)
-					localTranscriber.start(b)
-				})
-			} else if (useSelfHosted) {
+			// let useLocal = (config && config.stt && config.stt.use === "local" && config.stt.local_whisper_model) ? true : false
+			// //console.log("REC COMPLETE",useLocal,useSelfHosted,useOpenAi, useGroq, config.stt.use, config.stt.openai_key)
+			// if (useLocal) {
+			// 	//console.log("TSstart")
+			// 	function blobToAudioBuffer(blob) {
+			// 		return new Promise(function(resolve,reject) {
+			// 			//console.log("TSstart b", blob)
+			// 			const audioContext = new AudioContext();
+			// 			blob.arrayBuffer().then(function(arrayBuffer) {
+			// 				//console.log("TSstart ab", arrayBuffer)
+			// 				audioContext.decodeAudioData(arrayBuffer).then(function(audioBuffer) {
+			// 					//console.log("TSstart aab", audioBuffer)
+			// 					resolve(audioBuffer)
+			// 				})
+			// 			})
+			// 		})
+			// 	}
+			// 	blobToAudioBuffer(blob).then(function(b) {
+			// 		//console.log("TSstart got",b)
+			// 		localTranscriber.start(b)
+			// 	})
+			// } else 
+			if (useSelfHosted) {
 				//console.log("WS start")
 				selfHostedTranscriber.start(blob)
 			} else if (useOpenAi) {
@@ -104,19 +105,19 @@ export default function SpeechButton(props) {
 			//hotwordManager.start()
 		},
 		onRecordingStarted: function() {
-			//console.log("REC Start")
+			console.log("REC Start")
 			hotwordManager.stop()
 		},
 		onRecordingStopped: function() {
-			//console.log("REC Stop")
+			console.log("REC Stop")
 			if (useHotword) hotwordManager.start()
 		},
 		onReady: function() {
-			//console.log("REC Ready")
+			console.log("REC Ready")
 			props.forceRefresh()
 		},
 		onDataAvailable: function(d) {
-			//console.log("DATAAVAIL",d)
+			console.log("DATAAVAIL",d)
 			if (useLocal) {
 				//console.log("TSFEED")
 				//localTranscriber.feed(d)
@@ -133,29 +134,29 @@ export default function SpeechButton(props) {
 		}
 	})
 	
-	let localTranscriber = useLocalTranscriber({
-		whisperModel: props.config && props.config.stt && props.config.stt.local_whisper_model ? props.config.stt.local_whisper_model : '',
-		onStart: function() {
-			props.startWaiting()
-		},
-		onReady: function(v) {
-			//console.log("wsTRANSCRIBER READY")
-			audioRecorder.init()
-		},
-		onUpdate: function(v) {
-			//console.log('U',v)
-			if (props.onPartialTranscript) props.onPartialTranscript(v)
-		},
-		onComplete: function(v) {
-			//console.log('C',v,props.config)
-			if (props.onTranscript) props.onTranscript(v)
-			props.stopWaiting()
-			//if (props.allowRestart) audioRecorder.startRecording()
-		},
-		onError: function(e) {
-			props.stopWaiting()
-		}
-	})
+	// let localTranscriber = useLocalTranscriber({
+	// 	whisperModel: props.config && props.config.stt && props.config.stt.local_whisper_model ? props.config.stt.local_whisper_model : '',
+	// 	onStart: function() {
+	// 		props.startWaiting()
+	// 	},
+	// 	onReady: function(v) {
+	// 		//console.log("wsTRANSCRIBER READY")
+	// 		audioRecorder.init()
+	// 	},
+	// 	onUpdate: function(v) {
+	// 		//console.log('U',v)
+	// 		if (props.onPartialTranscript) props.onPartialTranscript(v)
+	// 	},
+	// 	onComplete: function(v) {
+	// 		//console.log('C',v,props.config)
+	// 		if (props.onTranscript) props.onTranscript(v)
+	// 		props.stopWaiting()
+	// 		//if (props.allowRestart) audioRecorder.startRecording()
+	// 	},
+	// 	onError: function(e) {
+	// 		props.stopWaiting()
+	// 	}
+	// })
 	
 	let websocketTranscriber = useWebsocketTranscriber({
 		onReady: function(v) {
@@ -337,11 +338,11 @@ export default function SpeechButton(props) {
 	
 	let buttonStyle
 	let onClick = audioRecorder.handleToggleRecording
-	//console.log('SB',useOpenAi, useSelfHosted, useLocal, transcriber.isBusy, transcriber.isModelLoading, audioRecorder.isInitialised.current)
+	//console.log('SB',useOpenAi, useSelfHosted, useLocal, transcriber.isBusy, transcriber.isModelLoading, audioRecorder.isInitialised)
 	//websocketTranscriber.isBusy || openAITranscriber.isBusy || localTranscriber.isBusy
 	//||  localTranscriber.isModelLoading
-	//console.log("AA",(!useOpenAi && !useSelfHosted && !useLocal && !useGroq) ,audioRecorder.isInitialised.current)
-	if (((!useOpenAi && !useSelfHosted && !useLocal && !useGroq)  || !audioRecorder.isInitialised.current)) {
+	//console.log("AA",(!useOpenAi && !useSelfHosted && !useLocal && !useGroq) ,audioRecorder.isInitialised)
+	if (((!useOpenAi && !useSelfHosted && !useLocal && !useGroq)  || !audioRecorder.isInitialised)) {
 		buttonStyle = buttonStyleLoading
 		
 		//|| localTranscriber.isBusy.current

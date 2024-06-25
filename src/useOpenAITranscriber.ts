@@ -16,7 +16,7 @@ export default function useOpenAITranscriber({aiUsage, onUpdate, onComplete, onR
 	function start(data, duration) {
 		setIsBusy(true)
 		if (onStart) onStart()
-		//console.log('START WST',data)
+		console.log('START WST',data)
 		const formData = new FormData();
 		formData.append('file', new File([data],'transcribe_me.wav'));
 		formData.append('model', 'whisper-1');
