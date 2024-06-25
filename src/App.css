@@ -24,6 +24,10 @@
   color: white;
 }
 
+.form-label {
+  float:left;
+}
+
 .App-link {
   color: #61dafb;
 }
@@ -39,6 +43,7 @@
 
 body {
   font-family: Helvetica, sans-serif;
+  text-align: left;
 }
 
 #dmermaidrenderer_1 {
@@ -49,8 +54,7 @@ body {
 .custom-file-input::-webkit-file-upload-button {
   visibility: hidden;
 }
-.custom-file-input::before {
-  content: 'Select files';
+.custom-file-input::before {style={{float:'right',marginTop:'0.2em',marginLeft:'0.2em'}}
   display: inline-block;
   background: -webkit-linear-gradient(top, #f9f9f9, #e3e3e3);
   border: 1px solid #999;
@@ -122,4 +126,11 @@ body {
 }
 .custom-folder-input:active::before {
   background: -webkit-linear-gradient(top, #e3e3e3, #f9f9f9);
+}
+
+
+
+.bg-body-tertiary {
+  background-color: rgb(121 80 237) !important;
+  
 }

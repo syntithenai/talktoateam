@@ -2,7 +2,7 @@ import {useState, useRef	} from 'react'
 import nlp from 'compromise'
 import agenticLlmApiClient from './agent/agenticLlmApiClient'
 
-export default function useTeamLlm({modelSelector, abortController, onReady, aiUsage, tools, config, engines, onUpdate, onComplete, onStart, onError, teams, roles, utils}) {
+export default function useTeamLlm({token, modelSelector, abortController, onReady, aiUsage, tools, config, engines, onUpdate, onComplete, onStart, onError, teams, roles, utils}) {
     //console.log("AI LLM INI ",url)
     const isBusy = useRef(false);
     function setIsBusy(v) {
@@ -11,7 +11,7 @@ export default function useTeamLlm({modelSelector, abortController, onReady, aiU
     const aiKey = useRef('')
     const eventSource = useRef()
     // var controller = useRef(new AbortController())
-   	var client = agenticLlmApiClient({modelSelector, onReady, aiUsage, onError, tools , onStart , abortController})
+   	var client = agenticLlmApiClient({token, modelSelector, onReady, aiUsage, onError, tools , onStart , abortController})
 
 	function stop() {
 		//console.log("ai stop")

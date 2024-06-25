@@ -175,7 +175,7 @@ export default function ConfigWizard({user, token, login, logout, config, setCon
 	<Row style={{borderTop:'2px solid black', marginTop:'1em', marginBottom:'1em'}} >
 		<Col>
 			<Form.Text className="text-muted">
-				  <span style={{ color:'black', fontWeight:'bold'}}  >This an Open Source project released under an MIT licence, the <a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black', borderRadius:'50px'}}  >	source code is available on Github</a><a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black', borderRadius:'50px'}}  >{icons["github"]}  </a>
+				  <span style={{ color:'black', fontWeight:'bold'}}  >This an Open Source project released under an MIT licence, the <a target='new' href="https://github.com/syntithenai/talktoateam" style={{color:'black', borderRadius:'50px'}}  >	source code is available on Github</a><a target='new' href="https://github.com/syntithenai/talktoateam" style={{color:'black', borderRadius:'50px'}}  >{icons["github"]}  </a>
 				  
 				  </span>
 				  <span  >

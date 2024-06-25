@@ -7,8 +7,7 @@ import {Link  } from 'react-router-dom'
 
 import ConfirmDialog from './ConfirmDialog'
 
-export default function ChatHistories({currentChatHistory, utils, stopLanguageModels, chatHistories,chatHistoriesRef, setChatHistories, setSystemConfig, setSystemMessage, setCategory, setCurrentRole, newChat, setChatHistoryId, chatHistoryId, deleteChatHistory, duplicateChatHistory}) {
-	const icons = useIcons()
+export default function ChatHistories({ allowRestart, onCancel, onTranscript, onPartialTranscript, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logou, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}) {
 	const hiddenInput = useRef()
 	const [refresh,setRefresh] = useState()
 	const [filter, setFilter] = useState('')
@@ -51,7 +50,7 @@ export default function ChatHistories({currentChatHistory, utils, stopLanguageMo
 					  }).map(function(chatHistoryKey, hKey) {
 						  let chatHistory = chatHistoriesRef.current[chatHistoryKey]
 						 return <ListGroup.Item key={hKey} >
-						 <Link to={"/chat/"+chatHistoryKey} ><Button variant="outline-primary" style={{textAlign:'left',width:'70%'}}  >{chatHistory && chatHistory[0] && chatHistory[0].content && chatHistory[0].content.split ? chatHistory[0].content.split(' ').slice(0,20).join(' ') : ''}</Button></Link>
+						 <Link to={"/chat/"+chatHistoryKey}  ><Button variant="outline-primary" style={{textAlign:'left',width:'70%'}}  >{chatHistory && chatHistory[0] && chatHistory[0].content && chatHistory[0].content.split ? chatHistory[0].content.split(' ').slice(0,20).join(' ') : ''}</Button></Link>
 						 <Button style={{float:'right'}} variant="danger" onClick={function() {toDelete.current = chatHistoryKey; setShowConfirm(true)}} >{icons.bin}</Button> 
 						 <Button style={{float:'right', marginRight:'0.5em'}} variant="warning" onClick={function() {duplicateChatHistory(chatHistoryKey)}} >{icons.filecopy}</Button></ListGroup.Item> 
 					  })}

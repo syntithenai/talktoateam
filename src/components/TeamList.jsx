@@ -114,7 +114,7 @@ export default function TeamList({onChange, chatHistoryId, teams, setTeams , min
 							
 							
 							
-							<Link to={"/team/"+teamKey } onClick={function() {setCurrentTeam(teamKey, chatHistoryId);if (handleClose) handleClose() ; forceRefresh(); }} ><Button variant="outline-primary" style={{textAlign:'left'}}  > 
+							<Link to={"/team/"+teamKey } style={{float:'left'}} onClick={function() {setCurrentTeam(teamKey, chatHistoryId);if (handleClose) handleClose() ; forceRefresh(); }} ><Button variant="outline-primary" style={{textAlign:'left'}}  > 
 								{team.name} &nbsp;&nbsp;&nbsp;
 								<Badge style={{float:'right', marginLeft:'0.5em'}} >{icons.palette} {team && team.samples ? team.samples.length : 0}</Badge>
 							</Button></Link>

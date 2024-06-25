@@ -2,10 +2,12 @@ import {React, useState, useEffect, useRef} from 'react'
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {Button, ListGroup, ButtonGroup, Form, Dropdown, Accordion} from 'react-bootstrap'
-
+import Footer from '../components/Footer';
 import useUtils from '../useUtils'
+import Menu from '../components/Menu';
+
 import TextareaAutosize from 'react-textarea-autosize';
-import SpeechButton from '../SpeechButton'
+// import SpeechButton from '../components/SpeechButton'
 //import SystemMessageEditorModal from '../components/SystemMessageEditorModal'
 import useSystemMessageManager from '../useSystemMessageManager' 
 import SelectSampleModal from '../components/SelectSampleModal'
@@ -22,7 +24,7 @@ import CodeViewer from '../components/CodeViewer'
 import  CopyTextButton from '../components/CopyTextButton'
 import AssistantSelector from '../components/AssistantSelector'
 
-export default function ChatPage({ creditBalance, user, token, login, logout, refresh, doSave,teamLlm, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, category, setCategory,exportRoles,importRoles,setSystemMessage,systemMessage,setSystemConfig, systemConfig, init, saveRole, loadRole, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, getLastAssistantMessage, setLastUserMessage,getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, chatHistoryRoles, setChatHistoryRoles, getLastAssistantChatIndex, categories, configManager, runtimes, currentTeam, setCurrentTeam, teams, setTeams,  accordionSelectedKey, setAccordionSelectedKey, simplifiedChat, categoryFilter, setCategoryFilter}) {
+export default function ChatPage({isOnlineRef,onPartialTranscript, allowRestart, category, setCategory, setSystemMessage, systemMessage, systemConfig, setSystemConfig, saveRole, loadRole,  simplifiedChat, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}) {
 //console.log("chatpage",config, typeof config)
 	let graphCount = 0;
 	let abcCount = 0;
@@ -135,7 +137,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 	}
 	const [showConfirm, setShowConfirm] = useState(false)
 	const toRestart = useRef()
-	const preStyle = {border:'1px dashed blue', padding:'0.3em'}
+	const preStyle = {border:'1px dashed blue', padding:'0.3em', width:'100%', height:'12em'}
 	
 	function preTemplate(text) {
 		return <div style={{position:'relative'}} >
@@ -194,7 +196,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 				} else if (part.startsWith('python')) { 
 					final.push(<><CodeViewer submitForm={submitForm} runtimes={runtimes} pistonCodeRunnerEndpoint={configManager.codeRunnerEndpoint()} language='python' code={part.slice(6)}  icons={icons} /></>)
 				} else if (part.startsWith('javascript')) { 
-					final.push(<><CodeViewer submitForm={submitForm}  runtimes={runtimes}  pistonCodeRunnerEndpoint={configManager.codeRunnerEndpoint()} language='javascript' code={part.slice(9)}  icons={icons}   /></>)
+					final.push(<><CodeViewer submitForm={submitForm}  runtimes={runtimes}  pistonCodeRunnerEndpoint={configManager.codeRunnerEndpoint()} language='javascript' code={part.slice(10)}  icons={icons}   /></>)
 				} else if (runtimeKeys.indexOf(language) !== -1) {
 					final.push(<><CodeViewer submitForm={submitForm}  runtimes={runtimes}  pistonCodeRunnerEndpoint={configManager.codeRunnerEndpoint()} language={language} code={partLines.slice(language.length).join("\n")}  icons={icons}   /></>)
 					
@@ -270,70 +272,19 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 	return	<div className="App" id={refreshHash} >
 		<ConfirmDialog forceShow={showConfirm} setForceShow={setShowConfirm} title="Revert Chat History" message="Really discard chat messages after this and start with this message?" onCancel={function() {setShowConfirm(false)}} onConfirm={function() {restartFromChatMessage(toRestart.current); setShowConfirm(false)}}  />
 		{<>
-			<div id="menu" style={{zIndex:'9', backgroundColor:'lightgrey', border:'1px solid grey', position: 'fixed', top: 0, left: 0, width: '100%', height:'3em'}}  >
-				
-				{!simplifiedChat && <span style={{float:'left',marginTop:'0.2em',marginLeft:'0.2em'}} >
-					<Link to="/menu"><Button>{icons.menu}</Button></Link>
-				</span>}
-				{simplifiedChat && <span style={{float:'left',marginTop:'0.2em',marginLeft:'0.2em'}} ><Link to="/" onClick={function() {localStorage.setItem("voice2llm_last_chat",''); localStorage.setItem("voice2llm_last_role",'')}} ><Button>{icons.home}</Button></Link></span>}
-					
-					
-				<Link  to={"/chat/"+newChatId}><Button onClick={stopLanguageModels} disabled={!newChatId} style={{float:'left',marginTop:'0.2em',marginLeft:'0.2em'}}  variant="primary"  >{icons["newchat"]}</Button></Link>
-				
-				<span style={{float:'right',marginTop:'0.2em',marginRight:'0.2em'}} >
-					{(!simplifiedChat &&  usingTts) && <>
-					{(!simplifiedChat &&  !isSpeaking && !isMuted) && <button  style={{marginRight: '0.2em', color:'black'}} className="btn  btn-success"  id="muteButton" onClick={function() {mute(); stopAllPlaying()}} title="Mute"  >{icons["volume-vibrate-fill"]}</button>}
-					{(!simplifiedChat &&  !isSpeaking && isMuted) && <button  style={{marginRight: "0.2em", color:'black'}} className="btn btn-secondary"  id="unmuteButton" onClick={unmute}  title="UnMute" >{icons["volume-off-vibrate-fill"]}</button>}
-					{(!simplifiedChat &&  isSpeaking) && <button  style={{marginRight: "0.2em", color:'black'}} className="btn btn-success"  id="playingButton" onClick={stopPlaying}  title="Stop Playing" >{icons["speak"]}</button>}
-					</>}
-				
-					{usingStt && <SpeechButton 
-						lastLlmTrigger={lastLlmTrigger}
-						config={config}
-						aiUsage={aiUsage}
-						forceRefresh={forceRefresh}
-						stopLanguageModels={stopLanguageModels}
-						autoStartMicrophone={autoStartMicrophone}
-						setAutoStartMicrophone={setAutoStartMicrophone}
-						autoStopMicrophone={autoStopMicrophone}
-						setAutoStopMicrophone={setAutoStopMicrophone}
-						isPlaying={isPlaying}
-						allowRestart={true}
-						isWaiting={isWaiting}
-						startWaiting={startWaiting}
-						stopWaiting={stopWaiting}
-						onCancel={onCancel}
-						isReady={isReady} setIsReady={setIsReady}
-						onTranscript = {onTranscript}
-						onPartialTranscript = {function(v) {
-							//console.log('P:',v)
-							setUserMessage(v)
-						}}
-						
-					/>}
-				</span>
-				{!simplifiedChat && <>
-				{import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID && <span style={{float:'right',marginTop:'0.3em',marginLeft:'0.2em',marginRight:'01em'}} >	
-				{(token && token.access_token) && <Button onClick={function() { logout()}} variant="danger" >{!(user && user.picture) && icons["user_logout"]} {(user && user.picture) && <img height="28" width="28" src={user.picture + '?access_token='+token.access_token + '&not-from-cache-please'} />}</Button>}
-				
-				{!(token && token.access_token) && <Button onClick={function() { login()}} variant="success" >{icons["user"]}</Button>}
-				</span>}
-				
-				{<Link to="/tokens" ><span style={{color:'black', float:'right', marginTop:'0.7em',marginRight:'1em'}}> <b>${parseFloat(creditBalance).toFixed(2)}</b>
-				</span></Link>}
-				</>}
-			</div>
-			<div id="body" style={{zIndex:'3',position: 'fixed', top: '3em', left: 0, width: '100%',  paddingTop:'0.2em', backgroundColor:'white'}}  >
-					
+			<Menu {...{isOnlineRef,bodyStyle, creditBalance, refreshHash, token, logout, user,login, utils, usingStt, usingTts, isSpeaking, isMuted, mute, stopAllPlaying, icons, unmute, stopPlaying, lastLlmTrigger, config, aiUsage, forceRefresh, autoStartMicrophone, setAutoStartMicrophone, isPlaying, allowRestart, isWaiting, startWaiting, stopWaiting, onCancel, isReady, setIsReady, onTranscript, onPartialTranscript, setUserMessage}} />
+			<div id="body" style={bodyStyle}  >
+			<Link  to={"/chat/"+newChatId} style={{float:'right',marginTop:'0.2em',marginRight:'0.7em'}}><Button onClick={stopLanguageModels} disabled={!newChatId}   variant="primary"  >{icons["newchat"]}</Button></Link>	
 				<form  onSubmit={function(e) {submitForm(userMessageRef.current,config); e.preventDefault(); return false}} >
 					{!simplifiedChat && <><AssistantSelector {...{categoryFilter, setCategoryFilter, user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, category, setCategory,exportRoles,importRoles,setSystemMessage,systemMessage,setSystemConfig, systemConfig, init, saveRole, loadRole, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, getLastAssistantMessage, setLastUserMessage,getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, chatHistoryRoles, setChatHistoryRoles, getLastAssistantChatIndex, categories, configManager, runtimes, currentTeam,  setCurrentTeam, teams, setTeams}}/></>}
 					
 					
 					
 					
+					
 					<div style={{clear:'both', float:'left'}} />
 					
-					<TextareaAutosize tabIndex="1" disabled={(aiLlm.isBusy.current || teamLlm.isBusy.current  || isPlaying.current || !llmEnabled)} maxRows={15} style={{minWidth: "65%", fontSize: '1em', float: "left"}} type='text' id="usermessage"  placeholder="Message" onChange={function(e) {setUserMessage(e.target.value); forceRefresh()}} value={userMessageRef.current} onFocus={function() {clearTimeout(utterancesTimeout.current)}} /> 
+					<TextareaAutosize autoFocus={true} tabIndex="1" disabled={(aiLlm.isBusy.current || teamLlm.isBusy.current  || isPlaying.current || !llmEnabled)} maxRows={15} style={{minWidth: "65%", fontSize: '1em', float: "left"}} type='text' id="usermessage"  placeholder="Message" onChange={function(e) {setUserMessage(e.target.value); forceRefresh()}} value={userMessageRef.current} onFocus={function() {clearTimeout(utterancesTimeout.current)}} /> 
 					<span style={{float:'left'}}>
 						<span style={{float:'right', marginLeft:'0.3em'}} >
 							<Form.Control accept=".txt, .js, .php, .py" type="file" style={{ display: 'none' }} ref={hiddenInput} onChange={injectTextFile} />
@@ -344,7 +295,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 						
 						<span style={{float:'right', marginLeft:'0.3em'}}>
 							
-							{!( aiLlm.isBusy.current || teamLlm.isBusy.current || isPlaying.current) && <Button  tabIndex="2" size="lg" 	id="sendbutton" disabled={!llmEnabled || !userMessage || userMessage.length === 0}  style={{float: 'right', marginRight: '0.2em', color:'black'}} className="btn btn-primary"  onClick={function() {lastLlmTrigger.current="button" ; return false}} type="submit" title="Send" >{icons["send-plane-line"]}</Button>}
+							{!( aiLlm.isBusy.current || teamLlm.isBusy.current || isPlaying.current) && <Button  tabIndex="2" size="lg" 	id="sendbutton" disabled={!isOnlineRef.current ||!llmEnabled || !userMessage || userMessage.length === 0}  style={{float: 'right', marginRight: '0.2em', color:'black'}} className="btn btn-primary"  onClick={function() {lastLlmTrigger.current="button" ; return false}} type="submit" title="Send" >{icons["send-plane-line"]}</Button>}
 							
 							{( aiLlm.isBusy.current || teamLlm.isBusy.current || isPlaying.current) && <Button  tabIndex="2" size="lg" disabled={!llmEnabled}  style={{float: 'right',marginRight: "0.2em", color:'black'}} className="btn  btn-danger"  id="stopLMMButton" onClick={stopLanguageModels}  title="Stop" >{(aiLlm.isBusy.current ) ? icons["loader-line"] : icons["hexagon-fill"]}</Button>}
 						</span>
@@ -355,7 +306,10 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 				
 			</div>
 			
-			<div id="responseContainer" style={{marginTop:'10em',clear:'both',position:'relative', width:'98%', fontSize: '1em', marginLeft:'0.1em', marginRight:'0.1em'}} >
+			<div id="responseContainer" style={{marginTop:'12em',clear:'both',position:'relative', width:'98%', fontSize: '1em', marginLeft:'0.1em', marginRight:'0.1em'}} >
+			{(!token || !token.access_token) && <div style={{clear:'both', paddingTop:'0.3em', paddingBottom:'0.3em'}} >
+						Chatting to a free language model from <a href="https://groq.com/" target="+new" style={{textDecoration:'none', color:'black'}}><img src="/grokcloud.ico"  style={{height:'24px', width:'24px'}} /> GroqCloud </a>
+					</div>}
 				<div style={{fontWeight:'bold',textAlign:'left', width:'100%'}} >{Array.isArray(chatHistory) && chatHistory.filter(function(v) {return (v.role === 'system')}).map(function(v) {return v.content}).join("/n")}</div>
 				<ListGroup>
 				
@@ -375,7 +329,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 						tally_out += ((message && message.log) ? message.log.tokens_out : 0)
 					}
 					
-					return <ListGroup.Item key={mkey} style={{backgroundColor: ((mkey%2 === 0) ? "green" : "blue")}} style={{textAlign:'left'}} >
+					return <ListGroup.Item key={mkey} style={{textAlign:'left', backgroundColor: ((mkey%2 === 0) ? "#3d6cda0f" : "#3d94da1f")}}  >
 					
 						<ButtonGroup style={{float:'right', backgroundColor:'#0d6efd', marginLeft:'1em'}} >
 							{!Array.isArray(message.content) && <MessageEditorDialog value={message.content} onChange={function(e) {
@@ -389,7 +343,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 							
 				
 							
-							{message.role === "user" && <Button style={{borderRight:'1px solid black', marginRight:'1px'}}  size="sm" variant="primary" onClick={function() {if ((import.meta.env.NODE_ENV === 'development') || window.confirm('Are you sure you want to DELETE the chat history and restart the conversation from here.')) {restartFromChatMessage(mkey)} /*toRestart.current = mkey; setShowConfirm(true)*/}} >{icons.history}</Button>}
+							{message.role === "user" && <Button style={{borderRight:'1px solid black', marginRight:'1px'}}  size="sm" variant="primary" onClick={function() {if ((import.meta.env.mode === 'development') || window.confirm('Are you sure you want to DELETE the chat history and restart the conversation from here.')) {restartFromChatMessage(mkey)} /*toRestart.current = mkey; setShowConfirm(true)*/}} >{icons.history}</Button>}
 							
 							<CopyTextButton text={(message && Array.isArray(message.content)) ? message.content.map(function(m) {return m && m.content ? m.content : ''}).join("\n") : (message && message.content ? message.content : '')} icons={icons} />
 							
@@ -397,7 +351,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 						
 						<b style={{marginBottom:'2em'}} >{message.role === "user" ? 'USER:' : 'ASSISTANT:'}</b> 
 						
-						<span>
+						<div style={{clear:'both'}} >
 							{(!simplifiedChat && message.role === "assistant") &&  <ButtonGroup style={{float:'right', marginRight:'0.5em'}} >{(message && message.log && message.log.model) && <Button variant="outline-primary" >{message.log.model}</Button>}<Button>{(message && message.log && message.log.tokens_in > 0)  ? parseInt(message.log.tokens_in) : 0}/{(message && message.log && message.log.tokens_out > 0)  ? parseInt(message.log.tokens_out) : 0}</Button></ButtonGroup>
 							}
 							
@@ -412,7 +366,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 							
 							{((message.role === "user") && !Array.isArray(message.content))  && <>{text2Html(message.content)}</>}
 							
-						</span>  
+						</div>  
 						
 						{(mkey === chatHistoryFiltered.length - 1 && (aiLlm.isBusy.current || teamLlm.isBusy.current)) && <b><img style={{height:'6em'}} src="/spinner.svg" /></b>}
 						
@@ -421,9 +375,7 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 				</ListGroup>
 				<hr/>
 			</div>
-			<div style={{position: 'fixed', bottom: 5, right:5, backgroundColor: 'white', height: '2em', width:'2em', borderRadius:'50px'}} >
-				<a target='new' href="https://github.com/syntithenai/syntithenai_agents" style={{color:'black'}}  >{icons["github"]}</a>
-			</div> 
+			<Footer icons={icons} />
 			<>{[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20].map(function(a) {
 				return <div key={a} id={"mermaidrenderer_"+a} style={{position: 'fixed', top:-1000, left: -1000, height:'200px', width:'200px', border:'2px solid green', zIndex: 20}} /> 
 			})}</>
@@ -435,3 +387,27 @@ export default function ChatPage({ creditBalance, user, token, login, logout, re
 	</div>
 }
 //10000,left:-1000}} />
+// {usingStt && <SpeechButton 
+// 	lastLlmTrigger={lastLlmTrigger}
+// 	config={config}
+// 	aiUsage={aiUsage}
+// 	forceRefresh={forceRefresh}
+// 	stopLanguageModels={stopLanguageModels}
+// 	autoStartMicrophone={autoStartMicrophone}
+// 	setAutoStartMicrophone={setAutoStartMicrophone}
+// 	autoStopMicrophone={autoStopMicrophone}
+// 	setAutoStopMicrophone={setAutoStopMicrophone}
+// 	isPlaying={isPlaying}
+// 	allowRestart={true}
+// 	isWaiting={isWaiting}
+// 	startWaiting={startWaiting}
+// 	stopWaiting={stopWaiting}
+// 	onCancel={onCancel}
+// 	isReady={isReady} setIsReady={setIsReady}
+// 	onTranscript = {onTranscript}
+// 	onPartialTranscript = {function(v) {
+// 		//console.log('P:',v)
+// 		setUserMessage(v)
+// 	}}
+	
+// />}

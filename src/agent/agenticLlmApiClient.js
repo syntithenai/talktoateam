@@ -3,10 +3,10 @@ import nlp from 'compromise'
 //const config = require('./config')
 
 //const nlp = window.nlp
-function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, abortController}) {
+function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , onStart, abortController}) {
 	// force local api
 	// url = import.meta.env.VITE_API_URL
-
+	// console.log("AGENTIC",token)
 	tools = typeof tools === 'object' ? tools : {}
 	let isStopped = true
 	
@@ -47,6 +47,9 @@ function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, 
 		if (url.startsWith(import.meta.env.VITE_API_URL) && modelConfig && modelConfig.config && Array.isArray(modelConfig.config.stopTokens)) {
 			formData.stop_tokens = modelConfig.config.stopTokens
 		}
+		if (url.startsWith(import.meta.env.VITE_API_URL) && modelConfig && modelConfig.config && Array.isArray(modelConfig.config.maxSentences)) {
+			formData.max_sentences = modelConfig.config.maxSentences
+		}
 		return formData
 	}
 	
@@ -84,12 +87,14 @@ function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, 
 	
 	function startToolCalls(fullText) {
 		let sections = (fullText ? fullText : '').split("```")
-		
+		console.log("startToolCalls", tools)
 		sections.forEach(function(section) {
 			if (section.trim().startsWith('tool')) {
+				console.log("startToolCalls TOOL SECTION",section)
 				// replace tools in this section
-				section.trim().split("\n").forEach(function(line) {
+				section.trim().slice(4).split("\n").forEach(function(line) {
 					let functionName = line.split("(")[0].trim()
+					console.log("startToolCalls TOOL fn",functionName, line)
 					if (tools.hasOwnProperty(functionName) && !toolCalls.hasOwnProperty(line.trim()))  {
 						toolCalls[line.trim()] = null
 						toolCallPromises.push(runToolCall(line.trim()))
@@ -97,15 +102,17 @@ function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, 
 				})
 			}
 		})
+		console.log("TOOLcalls",toolCalls)
 		return toolCalls
 	}
 	
 	function renderToolCalls(fullText) {
+		console.log("rednerToolCalls")
 		let sections = (fullText ? fullText : '').split("```")
 		sections.forEach(function(section,sk) {
 			if (section.trim().startsWith('tool')) {
 				// replace tools in this section
-				let final = section.trim().split("\n").map(function(line) {
+				let final = section.trim().slice(4).split("\n").map(function(line) {
 					if (line.trim() === 'tool') {
 						return ''
 					} else if (toolCalls[line.trim()])  {
@@ -159,17 +166,7 @@ function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, 
 	}
 	
 	async function start({messages, modelConfig, onUpdate, onComplete,onStart}) {
-		let modelType = modelConfig && modelConfig.preferredModel ? modelConfig.preferredModel : 'large'
-		console.log(modelConfig)
-		//let modelObj = modelSelector.getModel(modelType)
-		let modelObj = modelSelector.getModel(modelType)
-		let model = modelSelector.getModelKey(modelType)
-		if (!modelObj) throw new Error('Unable to find a matching model for '+ modelType)
-		let url = modelSelector.getModelUrl(modelObj.provider)
-		if (!url) throw new Error('Unable to find a model url')
-		let key = modelSelector.getModelApiKey(modelObj.provider)
-		console.log("Persona Start:",url, key, messages,modelConfig, modelObj);
-		
+		console.log("AGENTIC START",token)	
 		let startTime = new Date()
 		if (modelConfig && modelConfig.type ==="algorithmic" ) {
 			isStopped = false
@@ -217,7 +214,19 @@ function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, 
 			}
 				
 		} else { 
-			
+			let modelType = modelConfig && modelConfig.preferredModel ? modelConfig.preferredModel : 'large'
+			console.log("MT",modelType, modelConfig)
+			//let modelObj = modelSelector.getModel(modelType)
+			let modelObj = modelSelector.getModel(modelType)
+			let model = modelSelector.getModelKey(modelType)
+			if (!modelObj) throw new Error('Unable to find a matching model for '+ modelType)
+			let url = modelSelector.getModelUrl(modelObj.provider)
+			if (!url) throw new Error('Unable to find a model url')
+			// key could be provider key for direct cors supported calls
+			// OR google access_token for this service
+			let key = modelSelector.getModelApiKey(modelObj.provider)
+			console.log("Persona Start:",url, key, messages,modelConfig, modelObj);
+			if (!key) key = token && token.access_token ? token.access_token : ''
 			isStopped = false
 			var signal = abortController.current.signal;
 			if (onStart) onStart()
@@ -234,8 +243,9 @@ function agenticLlmApiClient({modelSelector, aiUsage, onError, tools , onStart, 
 			let tokensIn = 0
 			let tokensOut = 0
 			let startTime = new Date()
+			
 			try {
-				console.log("START REQUEST",formData.messages)
+				console.log("START REQUEST",key, formData.messages)
 				let response = await fetch(url + '/chat/completions', {
 					signal,
 					method: 'POST',

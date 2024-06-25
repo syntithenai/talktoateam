@@ -2,7 +2,7 @@ import {React, useState, useEffect, useRef} from 'react'
 
 import useUtils from './useUtils'
 import useIcons from './useIcons'
-
+import isOnline from 'is-online';
 export default function useAppState(props) {
 
 	const {scrollTo, generateRandomId} = useUtils()
@@ -22,7 +22,18 @@ export default function useAppState(props) {
 		props.doSave()
 	}
 	
-	
+	const isOnlineRef = useRef(false)
+	let onlineIntervalRef = useRef()
+	useEffect(function() {
+		onlineIntervalRef.current = setInterval(function() {
+			isOnline().then(function(res) {isOnlineRef.current=res; forceRefresh()})
+		},10000)
+		isOnline().then(function(res) {isOnlineRef.current=res; forceRefresh()})
+		// return function() {
+		// 	clearInterval(onlineIntervalRef.current)
+		// }
+	},[])
+
 	const [autoStartMicrophone, setAutoStartMicrophone] = useState(false)
 	const [autoStopMicrophone, setAutoStopMicrophone] = useState(false)
 	
@@ -47,12 +58,44 @@ export default function useAppState(props) {
 	const [isSpeaking, setIsSpeaking] = useState(false)
 	const [config, setConfigInner] = useState()
 	function setConfig(v) {
-		console.log("appstate set config",v)
+		// console.log("appstate set config",v)
 		setConfigInner(v)
 		localStorage.setItem("voice2llm_config",JSON.stringify(v))
 		props.doSave()
 	}
 
+	const [exchangeRate, setExchangeRate] = useState(0)
+	function updateExchangeRate(access_token) {
+		// console.log('rate update',access_token)	
+		if (access_token) {
+			fetch(import.meta.env.VITE_API_URL + '/rate', {
+				method: 'GET',
+				headers: {
+					'authorization': 'Bearer '+access_token
+				}
+			}).then(function(response) {
+				// console.log("bill respon l", response)
+				if (!response.ok) {
+					throw new Error('Failed to load rate');
+				}
+				response.text().then(function(data) {
+					// console.log("rate respon DATA", data)
+					if (parseFloat(data.replace('"', '')) > 0) {
+						// console.log("SETrate respon DATA", parseFloat(data.replace('"', '')))
+						setExchangeRate(parseFloat(data.replace('"', '')))
+					} else {
+						setExchangeRate(0)
+					}
+				})
+			})
+		} else {
+			setExchangeRate(0)
+		}
+	}
+	useEffect(function() {
+		if (props.token && props.token.access_token ) updateExchangeRate(props.token.access_token)
+	},[props.token && props.token.access_token])
+	
 	const [creditBalance, setCreditBalance] = useState(0)
 	function updateCreditBalance(access_token) {
 		console.log('balance update',access_token)
@@ -84,7 +127,7 @@ export default function useAppState(props) {
 
 	const [availableModels, setAvailableModels]  = useState([])
 	useEffect(function() {
-		console.log("appstate load models", creditBalance, config, props.token)
+		// console.log("appstate load models", creditBalance, config, props.token)
 		if (configRef.current) {
 			fetch(import.meta.env.VITE_API_URL + '/pricing', {
 				method: 'GET',
@@ -92,30 +135,36 @@ export default function useAppState(props) {
 					'authorization': 'Bearer '+ (props.token && props.token.access_token ? props.token.access_token : '')
 				}
 			}).then(function(response) {
-				console.log("bill respon l", response)
+				// console.log("bill respon l", response)
 				if (!response.ok) {
 					throw new Error('Failed to load pricing');
 				}
 				response.json().then(function(data) {
-					console.log("bill respon DATA", data)
+					// console.log("bill respon DATA", data)
 					if (data && data.llm) {
 						let availableModels = data.llm.map(function(model) {
 							model.id = utils.generateRandomId()
 							return model
 						})
 						let allowedProviders = []
-						if (creditBalance > 0 && props.token && props.token.access_token) {
-							// all the models OK
-							allowedProviders = ['openai','groqcloud','togetherai','deepinfra']
+							
+						if (props.token && props.token.access_token ) {
+							if (creditBalance > 0 && props.token && props.token.access_token) {
+								// all the models OK
+								allowedProviders = ['openai','groqcloud','togetherai','deepinfra']
+							} else {
+								if (configRef.current && configRef.current.llm && configRef.current.llm.openai_key) {
+									allowedProviders.push('openai')
+								}
+								if (configRef.current && configRef.current.llm && configRef.current.llm.groqcloud_key) {
+									allowedProviders.push('groqcloud')
+								}
+							}
 						} else {
-							if (configRef.current && configRef.current.llm && configRef.current.llm.openai_key) {
-								allowedProviders.push('openai')
-							}
-							if (configRef.current && configRef.current.llm && configRef.current.llm.groqcloud_key) {
-								allowedProviders.push('groqcloud')
-							}
+							allowedProviders.push('groqcloud')
 						}
-						console.log("providers", allowedProviders)
+						
+						// console.log("providers", allowedProviders)
 						let models = availableModels.filter(function(model) {
 							// console.log(model.provider, allowedProviders)
 							if (model.provider && allowedProviders.indexOf(model.provider) !== -1) {
@@ -133,7 +182,7 @@ export default function useAppState(props) {
 							}
 						}
 						setAvailableModels(models)
-						console.log("LOADED MODELS",models, allowedProviders)
+						// console.log("LOADED MODELS",models, allowedProviders)
 					}
 				})
 			})
@@ -214,5 +263,5 @@ export default function useAppState(props) {
 		setRefreshHash(new Date().getTime())
 	}
 
-	return {abortController, creditBalance, updateCreditBalance, availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
+	return {isOnlineRef, exchangeRate, setExchangeRate,updateExchangeRate, abortController, creditBalance, updateCreditBalance, availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
 }

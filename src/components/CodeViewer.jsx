@@ -99,7 +99,7 @@ export default function CodeViewer({pistonCodeRunnerEndpoint, language, code, ic
      return (
       <div style={{position:'relative'}} >
 			
-			<pre style={{border:'1px dashed green', padding:'0.3em'}} >
+			<pre style={{border:'1px dashed green', padding:'0.3em', clear:'both'}} >
 				<Button style={{marginLeft:'0.3em',float:'right'}}  onClick={function() {navigator.clipboard.writeText(code)}} >{icons['filecopy']}</Button>
 				<Button variant="success" style={{marginLeft:'0.3em',float:'right'}}  onClick={function() {runCode(language, code)}} >{icons['play']}</Button>
 				

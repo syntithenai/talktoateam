@@ -103,9 +103,9 @@ export default function RoleList({onChange, chatHistoryId, roles,deleteRole, set
 							
 						</span>
 						:
-						<div key={roleKey}  >
-							<div style={{border:'1px solid blue', padding:'0.1em'}} >
-								<Link to={"/role/"+roleKey }  onClick={function() {setCurrentRole(roleKey, chatHistoryId); setCurrentTeam(null);  forceRefresh()}} >
+						<div key={roleKey}  style={{ backgroundColor:'white', borderBottom:'1px solid lightgrey'}}>
+							<div style={{padding:'0.1em', backgroundColor:'white' }} >
+								<Link to={"/role/"+roleKey } style={{float:'left'}}   onClick={function() {setCurrentRole(roleKey, chatHistoryId); setCurrentTeam(null);  forceRefresh()}} >
 									<Button variant="outline-primary" style={{ textAlign:'left'}}  ><Badge >{icons.palette} {role && role.samples ? role.samples.length : 0}</Badge> {role.name} </Button>
 								</Link>
 								<ButtonGroup style={{float:'right', marginLeft:'0.3em'}} >
@@ -114,7 +114,7 @@ export default function RoleList({onChange, chatHistoryId, roles,deleteRole, set
 								</ButtonGroup>
 								
 								<span style={{clear:'both'}}  >{Array.isArray(role.category) && role.category.map(function(c) {
-									return <Badge variant="secondary" size="sm" onClick={function(e) {setCategoryFilter([c]); e.stopPropagation(); return false}} bg="secondary" style={{ float:'right', marginLeft:'0.2em'}} >{c}</Badge>
+									return <Badge key={c} variant="secondary" size="sm" onClick={function(e) {setCategoryFilter([c]); e.stopPropagation(); return false}} bg="secondary" style={{ float:'right', marginLeft:'0.2em'}} >{c}</Badge>
 								})	}</span>
 								
 							</div>

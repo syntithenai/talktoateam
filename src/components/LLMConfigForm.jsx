@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Row, Col, Button, FormCheck } from 'react-bootstrap';
+import {Link} from 'react-router-dom'
 //import TextDropdownComponent  from './TextDropdownComponent'
 
 const LLMConfigForm = ({login, user, creditBalance, icons, aiUsage, configIn, setConfig, forceRefresh, useLlm}) => {
@@ -23,11 +24,13 @@ const LLMConfigForm = ({login, user, creditBalance, icons, aiUsage, configIn, se
 		<h5>Language Model</h5>
 	
 		<div className="border p-3 mb-3">
+		<Link style={{float:'right', marginRight:'1em', marginTop:'1em'}} to="/payment" ><Button variant="success" size="lg" >Buy Credit</Button></Link>
+                
 			<h5  >Your Plan</h5>
 			{!user && <Form.Text>Buy credit for quick and easy access to a range of providers and other services through our endpoints.<br/><br/><Button variant="success" onClick={login} >Login</Button> &nbsp;&nbsp;to see your credit.</Form.Text>}
 			{user && <Row className="mb-3">
 				<span style={{fontWeight:'bold', marginBottom:'1em'}} >Balance: ${parseFloat(creditBalance).toFixed(2)}</span>
-
+				            
 				{creditBalance > 0 && <div>You have access to a wide range of language models from providers OpenAI, Groqcloud, TogetherAI and DeepInfra. Allocate your preferred models, then set the preferred model for various <i>Personas </i> in your <i>Teams</i>  to enable workflows encompassing a range of providers.</div>}
 			</Row>}
 		</div>

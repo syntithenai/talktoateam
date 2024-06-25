@@ -106,7 +106,7 @@ export default function CategoriesSelector({defaultOptions, onChange , value }) 
            <div style={{clear:'both', marginTop:'1em'}} /> 
            
           <div>{Array.isArray(value) && value.map(function(selectedCategory) {
-              return <Button key={selectedCategory} style={{marginRight:'0.2em'}} variant="info" onClick={function(e) {deselectCategory(selectedCategory)}} >{icons.bin}&nbsp;{selectedCategory}</Button>
+              return <Button key={selectedCategory} style={{marginRight:'0.2em'}} variant="secondary" onClick={function(e) {deselectCategory(selectedCategory)}} >{icons.bin}&nbsp;{selectedCategory}</Button>
             })}</div>
           
         </div>

@@ -2,14 +2,14 @@ import agenticLlmApiClient from './agent/agenticLlmApiClient'
 import {useState, useRef} from 'react'
 
 
-export default function useLlm({modelSelector, abortController, onUpdate, onComplete, onReady, onError,onStart, forceRefresh, aiUsage, currentChatHistory, tools, nlp}) {
+export default function useLlm({token, modelSelector, abortController, onUpdate, onComplete, onReady, onError,onStart, forceRefresh, aiUsage, currentChatHistory, tools, nlp}) {
     //console.log("AI LLM INI ",url)
     const isBusy = useRef(false);
     function setIsBusy(v) {
 		isBusy.current = v
 	}
 
-	var client = agenticLlmApiClient({modelSelector, onReady, aiUsage, onError, tools , onStart, abortController })
+	var client = agenticLlmApiClient({token, modelSelector, onReady, aiUsage, onError, tools , onStart, abortController })
 
     const aiKey = useRef('')
     const eventSource = useRef()

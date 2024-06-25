@@ -31,7 +31,6 @@ import ChatHistoriesModal from './components/ChatHistoriesModal'
 import ChatHistoryPage from './pages/ChatHistoryPage'
 
 import SettingsPage from './pages/SettingsPage'
-import MenuPage from './pages/MenuPage'
 import ChatPage from './pages/ChatPage'
 import RolesPage from './pages/RolesPage'
 import RolePage from './pages/RolePage'
@@ -40,10 +39,15 @@ import PrivacyPage from './pages/PrivacyPage'
 import TermsPage from './pages/TermsPage'
 import TeamPage from './pages/TeamPage'
 import TokensPage from './pages/TokensPage'
+import PricingPage from './pages/PricingPage'
+import PaymentPage from './pages/PaymentPage'
+import HomePage from './pages/HomePage'
+import TransactionsPage from './pages/TransactionsPage';
 import FilesPage from './pages/FilesPage'
 import useTools from './useTools'
 import useModelSelector from './useModelSelector'
-	
+
+
 function App({nlp}) {
 
 	// when document is loaded from google because of change elsewhere
@@ -56,7 +60,8 @@ function App({nlp}) {
 			setMergeData(d)
 		}
 	}
-	
+	let bodyStyle = {zIndex:'3',position: 'relative', top: '5em', left: 0, width: '100%',  paddingTop:'0.2em',paddingLeft:'0.5em', height:'100%'}
+
 	const utils = useUtils()
 	var {user, token, login, logout, refresh,loadCurrentUser, loadUserImage, breakLoginToken} = useGoogleLogin({clientId:import.meta.env.VITE_GOOGLE_OAUTH_CLIENT_ID, usePrompt: false, loginButtonId: 'google_login_button', scopes:['https://www.googleapis.com/auth/drive.file']})
 	
@@ -75,16 +80,15 @@ function App({nlp}) {
 			let id = localStorage.getItem("voice2llm_last_saved_id") ? localStorage.getItem("voice2llm_last_saved_id") : generateRandomId()
 			localStorage.setItem("voice2llm_last_saved_id", id)
 			let toSave = {id, currentRole,roles,chatHistoryId, chatHistories, chatHistoryRoles,chatHistoryTeams, currentTeam, config, logs: aiUsage.logs, categories, teams}
-			console.log("DOSAVE",id,toSave)
+			// console.log("DOSAVE",id,toSave)
 			save(JSON.stringify(toSave))
 		}
 	}
 	
 	const {scrollTo, generateRandomId} = useUtils()
-	const { abortController, creditBalance, updateCreditBalance, availableModels ,utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter} = useAppState({doSave, token})
-	let modelSelector = useModelSelector({config, creditBalance, token, availableModels})
+	const {isOnlineRef, exchangeRate, setExchangeRate,updateExchangeRate,abortController, creditBalance, updateCreditBalance, availableModels ,utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter} = useAppState({doSave, token})
+	let modelSelector = useModelSelector({configString: JSON.stringify(config), creditBalance, token, availableModels})
 
-	
 	
 	const {files, fileManager} = useFileManager({storeName:'files', token, logout, allowMimeTypes : ['.txt'], loadData : false, onError : function(e) {window.alert(e)}, forceRefresh})
 	
@@ -118,7 +122,7 @@ function App({nlp}) {
 			newChatHistory()
 		}
 	}
-	
+ 	
 	const aiTts = useOpenAiTts({aiUsage})
 	const webSpeechTts = useWebSpeechTts({forceRefresh})
 	const meSpeakTts = useMeSpeakTts({})
@@ -183,6 +187,7 @@ function App({nlp}) {
 			if (lastLlmTrigger.current === 'speech') {
 				setAutoStartMicrophone(true)
 			}
+			updateCreditBalance(token ? token.access_token : '')
 			forceRefresh()
 			utils.scrollTo('endofdocument')
 		},
@@ -204,7 +209,8 @@ function App({nlp}) {
 		currentChatHistory,
 		tools,
 		nlp,
-		abortController
+		abortController,
+		token
 	})
 	
 	
@@ -233,6 +239,7 @@ function App({nlp}) {
 			//console.log("SET ACCORD",d.length -1)
 			setAccordionSelectedKey(d.length - 1)
 			doSave()
+			updateCreditBalance(token ? token.access_token : '')
 			forceRefresh()
 			utils.scrollTo('endofdocument')
 		},
@@ -251,7 +258,8 @@ function App({nlp}) {
 		forceRefresh,
 		aiUsage,
 		tools,
-		abortController
+		abortController,
+		token
 	}) 
 	
 
@@ -322,16 +330,16 @@ function App({nlp}) {
 	}
 	
 	
-	let allProps = {  modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}
+	let allProps = {isOnlineRef, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}
 	
-	return (<>
+	return (<div style={{position:'relative'}}>
 		{mergeData && <MergeWarningModal chatHistoryId={chatHistoryId} chatHistories={chatHistories} setChatHistories={setChatHistories} logs={aiUsage.logs} setLogs={aiUsage.setLogs} doSave={doSave} config={config} setConfig={setConfig} forceRefresh={forceRefresh} mergeData={mergeData} setMergeData={setMergeData} roles={roles} setRoles={setRoles}  currentRole={currentRole} setCurrentRole={setCurrentRole} setChatHistoryRoles={setChatHistoryRoles} chatHistoryRoles={chatHistoryRoles} />}
 		{!mergeData && 
 			<>
 				{!hasRequiredConfig(config) && <ConfigWizard login={login} logout={logout} user={user} token={token} config={config} setConfig={setConfig} forceRefresh={forceRefresh} />}
 				{hasRequiredConfig(config) && <Router >
 						<Routes>
-							<Route  path={`/`}   element={<ChatPage {...allProps}  />} />
+							<Route  path={`/`}   element={<HomePage {...allProps}  />} />
 							<Route  path={`/menu`}   element={<ChatHistoryPage {...allProps}  />} />
 							<Route  path={`/help`}   element={<HelpPage {...allProps}  />} />
 							<Route  path={`/chat/:id`}   element={<ChatPage {...allProps}  />} />
@@ -351,24 +359,23 @@ function App({nlp}) {
 							<Route path={`/team`} element={<TeamPage {...allProps}  />} />
 							<Route path={`/tokens`} element={<TokensPage {...allProps}  />} />
 							<Route path={`/files`} element={<FilesPage {...allProps}  />} />
+							<Route path={`/payment`} element={<PaymentPage {...allProps}  />} />
+							<Route path={`/pricing`} element={<PricingPage {...allProps}  />} />
+							<Route path={`/transactions`} element={<TransactionsPage {...allProps}  />} />
+							
 						</Routes>    
 					</Router >
 				}
-		
+		<div id="endofdocument" >
 			
-			<div id="endofdocument" ></div>
-			<span style={{position: 'fixed', bottom: 3, right:40, backgroundColor: 'white', height: '2em', width:'2em'}}  >
-            <form action="https://www.paypal.com/donate" method="post" target="_new">
-              <input type="hidden" name="hosted_button_id" value="3YUZQ4TGLEVCE" />
-              <input type="image" style={{transform: 'rotate(20deg)', height:'30px', width:'25px'}} src="https://pics.paypal.com/00/s/OGVmNmM4NTQtMGQ0MS00NGVhLWI0NDgtNzMxYWRkMDY5NzIy/file.PNG" border="0" name="submit" title="Buy me a beer!" alt="Buy me a beer!" />
-              <img alt="" border="0" src="https://www.paypal.com/en_AU/i/scr/pixel.gif" width="1" height="1" />
-            </form>
-         </span>
+		</div>
 			</>
 			
 		}
-	</>);
+	</div>);
 }
 
 export default App;
 
+//<Route path={`/payment`} element={<PaypalPaymentPage {...allProps}  />} />
+							

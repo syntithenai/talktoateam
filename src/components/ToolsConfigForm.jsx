@@ -35,7 +35,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				<Form.Label>Tavily Web Search URL</Form.Label>
 				<Form.Control
 					type="text"
-					value={config && config.tools && config.tools.tavily_url}
+					value={config && config.tools && config.tools.tavily_url ? config.tools.tavily_url : ''}
 					onChange={(e) => {setConfigValue('tavily_url',e.target.value);  }}
 				  />
 				  
@@ -43,7 +43,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://app.tavily.com/" target="new" >https://app.tavily.com/</a></span></Form.Text>
 				<Form.Control
 					type="text"
-					value={config && config.tools && config.tools.tavily_key}
+					value={config && config.tools && config.tools.tavily_key ? config.tools.tavily_key : ''}
 					onChange={(e) => {setConfigValue('tavily_key',e.target.value);  }}
 				  />
 				
@@ -65,7 +65,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				
 				<Form.Control
 					type="text"
-					value={config && config.tools && config.tools.cors_key}
+					value={config && config.tools && config.tools.cors_key ? config.tools.cors_key : ''}
 					onChange={(e) => {setConfigValue('cors_key',e.target.value);  }}
 				  />
 				  
@@ -82,7 +82,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				<Form.Label>Piston Code Runner Key</Form.Label>
 				<Form.Control
 					type="text"
-					value={config && config.tools && config.tools.piston_key > 0 ? config.tools.piston_key : ''}
+					value={config && config.tools && config.tools.piston_key  ? config.tools.piston_key : ''}
 					onChange={(e) => {setConfigValue('piston_key',e.target.value);  }}
 				  />
 			</Form.Group>}

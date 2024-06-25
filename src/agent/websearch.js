@@ -2,7 +2,7 @@
 export default function ({config, token, creditBalance, abortController}) {
 	// console.log("websearch", config, token, creditBalance)
 	async function tavilySearch(query, maxResults = 5)  {
-		if (config) {
+		if (config || creditBalance > 0) {
 			// url and headers can be 
 			// - all provided in config (optionally with proxy url and key)
 			// - local websearch proxy (if logged in and credit > 0)
@@ -13,7 +13,7 @@ export default function ({config, token, creditBalance, abortController}) {
 				url = config.tools.tavily_url
 				headers['authorization'] = 'Bearer ' +  config.tools.tavily_key 
 				if (config && config.tools && config.tools.cors_url) {
-					url = config.tools.cors_url
+					url = config.tools.cors_url + config.tools.tavily_url
 					if (config && config.tools && config.tools.cors_key) {
 						headers['x-cors-api-key'] = (config && config.tools && config.tools.cors_key ? config.tools.cors_key : '')
 					}
@@ -21,30 +21,35 @@ export default function ({config, token, creditBalance, abortController}) {
 			} else if (creditBalance > 0 && token && token.access_token) {
 				url = import.meta.env.VITE_API_URL + '/websearch'
 				headers['authorization'] = 'Bearer ' +  token.access_token 
+			} else {
+				window.alert("Login  and buy credit or provide Tavily credentials in Tools settings to enable web search.")
+				return JSON.stringify({error:'No access'})
 			}
-			console.log(url,headers)
-			if (url) {} 
+			// JSON.stringify(console.log(url,headers))
+			if (url && url.trim().length > 0) {
 				let response = await fetch(url, {
 					signal: abortController.current ? abortController.current.signal : null,
 					method: 'POST',
 					headers: headers,
 					body: JSON.stringify({
-					"api_key": (config && config.tools && config.tools.tavily_key ? config.tools.tavily_key : ''),
+					"api_key": (config && config.tools && config.tools.tavily_key && config.tools.tavily_url ? config.tools.tavily_key : ''),
 					"query": query,
 					"search_depth": "basic",
-					"include_answer": true,
-					"include_images": false,
-					"include_raw_content": true,
+					"include_answer": "true",
+					"include_images": "false",
+					"include_raw_content": "true",
 					"max_results": maxResults,
 					"include_domains": [],
 					"exclude_domains": []
 					})
 				})
 				return response.json()
+			} 
 		} else {
-			return {error:'No access'}
+			window.alert("Login and buy credit or provide Tavily credentials in Tools settings to enable web search.")
+			return JSON.stringify({error:'No access'})
 		}
-		return ''
+		return {}
 	}
 	function websearch_tavily(message) {
 		console.log("START SEARCH", config)
@@ -53,7 +58,7 @@ export default function ({config, token, creditBalance, abortController}) {
 			// if (!config.tools || !config.tools.tavily_key) {
 			// 	resolve("A key is required to access the tavily web search API. Check your tools configuration.")
 			// }
-			tavilySearch(message, 5).then(function(results1) {
+			tavilySearch(message.join(' '), 5).then(function(results1) {
 				try {
 					let results = JSON.parse(results1)
 					console.log("TTRES",results)
@@ -63,7 +68,9 @@ export default function ({config, token, creditBalance, abortController}) {
 					if (results && results.detail && results.detail.error) {
 						return reject(results.detail.error)
 					}
-					let final = [results && results.answer ? results.answer : (results && Array.isArray(results.results) ? results.results.map(function(r) {return r.content}).join("\n") : '')]
+					console.log(results)
+					let final = [results.answer]
+					// let final = [results && results.answer ? results.answer : (results && Array.isArray(results.results) ? results.results.map(function(r) {return r.content}).join("\n") : '')]
 					return resolve(final.join("\n"))
 				} catch (e) {
 					console.log(e)

@@ -47,13 +47,13 @@ const STTConfigForm = ({configIn, setConfig, forceRefresh}) => {
 			  <FormCheck
 			    style={{display:'inline', marginRight:'0.2em'}} 
 				type="checkbox"
-				checked={config && config.stt && config.stt.use === 'openai'}
+				checked={config && config.stt && config.stt.use === 'openai' ? true : false}
 				onChange={(e) => {setConfigValue('use',!(config && config.stt && config.stt.use === 'openai') ? 'openai' : '')}}
 			  />
 			  <Form.Label>OpenAI API Key</Form.Label>
 			  <Form.Control
 				type="text"
-				value={config && config.stt && config.stt.openai_key}
+				value={config && config.stt && config.stt.openai_key ? config.stt.openai_key : ''}
 				onChange={(e) => {setConfigValue('openai_key',e.target.value);  setConfigValue('use','openai')}}
 			  />
 			</Form.Group>
@@ -62,13 +62,13 @@ const STTConfigForm = ({configIn, setConfig, forceRefresh}) => {
 			  <FormCheck
 			    style={{display:'inline', marginRight:'0.2em'}} 
 				type="checkbox"
-				checked={config && config.stt && config.stt.use === 'groq'}
+				checked={config && config.stt && config.stt.use === 'groq' ? true : false}
 				onChange={(e) => {setConfigValue('use',!(config && config.stt && config.stt.use === 'groq') ? 'groq' : '')}}
 			  />
 			  <Form.Label>GroqCloud API Key</Form.Label>
 			  <Form.Control
 				type="text"
-				value={config && config.stt && config.stt.groq_key}
+				value={config && config.stt && config.stt.groq_key ? config.stt.groq_key : ''}
 				onChange={(e) => {setConfigValue('groq_key',e.target.value);  setConfigValue('use','groq')}}
 			  />
 			</Form.Group>
@@ -77,14 +77,14 @@ const STTConfigForm = ({configIn, setConfig, forceRefresh}) => {
             <FormCheck
 			    style={{display:'inline', marginRight:'0.2em'}} 
 				type="checkbox"
-				checked={config && config.stt && config.stt.use === 'self_hosted'}
+				checked={config && config.stt && config.stt.use === 'self_hosted' ? true : false}
 				onChange={(e) => {setConfigValue('use',!(config && config.stt && config.stt.use === 'self_hosted') ? 'self_hosted' : '') }}
 			  />
 		  <Form.Label>Self Hosted URL</Form.Label>
 		  
           <Form.Control
             type="text"
-            value={config && config.stt && config.stt.self_hosted_url}
+            value={config && config.stt && config.stt.self_hosted_url ? config.stt.self_hosted_url : ''}
             onChange={(e) => {setConfigValue('self_hosted_url',e.target.value); setConfigValue('use','self_hosted')}}
           />
         </Form.Group>

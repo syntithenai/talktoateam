@@ -279,7 +279,7 @@ export default function useGoogleDocument(googleFileName, token, logout, refresh
   
   function exportDocument(id) {
     return new Promise(function(resolve,reject) {
-      console.log('export rec',id ,accessToken)
+      // console.log('export rec',id ,accessToken)
       //var useToken = accessToken ? accessToken : access_token
       if (id && accessToken) {
         axios({

@@ -1,5 +1,12 @@
-export default function useModelSelector({config, creditBalance, token, availableModels}) {
+export default function useModelSelector({configString, creditBalance, token, availableModels}) {
     // type can be - basic, small, medium, large, advanced, instruct, code
+    
+    // console.log("MS",configString, token)
+    let config = {}
+    try {
+        config = JSON.parse(configString)
+    } catch (e) {}
+    // console.log("MS",config)
     
     function getModelScore(type) {
         let lookups = {
@@ -182,10 +189,13 @@ export default function useModelSelector({config, creditBalance, token, availabl
             return getProviderUrl(provider)
         } else if (hasCredit()) {
             return import.meta.env.VITE_API_URL
+        } else if (provider === 'groqcloud') {
+            return import.meta.env.VITE_API_URL
         }
     }
 
     function getModelApiKey(provider) {
+        console.log("GETLEU",provider, config)
         switch (provider) {
             case 'openai':
                 return config && config.llm && config.llm.openai_key ? config.llm.openai_key : '' ;

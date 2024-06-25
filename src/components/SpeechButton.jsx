@@ -1,14 +1,14 @@
 import {React, useEffect, useState} from 'react'  
 //import useHotwordManager from './hotword/useHotwordManager'
-import {useLocalTranscriber} from './useLocalTranscriber.ts'
-import useWebsocketTranscriber from './useWebsocketTranscriber.ts'
-import useOpenAITranscriber from './useOpenAITranscriber.ts'
-import useGroqTranscriber from './useGroqTranscriber.ts'
-import useSelfHostedTranscriber from './useSelfHostedTranscriber'
-import useAudioRecorder from './useAudioRecorder.tsx'
+import {useLocalTranscriber} from '../useLocalTranscriber.ts'
+import useWebsocketTranscriber from '../useWebsocketTranscriber.ts'
+import useOpenAITranscriber from '../useOpenAITranscriber.ts'
+import useGroqTranscriber from '../useGroqTranscriber.ts'
+import useSelfHostedTranscriber from '../useSelfHostedTranscriber'
+import useAudioRecorder from '../useAudioRecorder.tsx'
 import {Button, Modal} from 'react-bootstrap'
-import useIcons from './useIcons'  
-import useIsOnline from './useIsOnline'  
+import useIcons from '../useIcons'  
+import useIsOnline from '../useIsOnline'  
   
 export default function SpeechButton(props) {
 	//console.log("SBC",props.config, typeof props.config)

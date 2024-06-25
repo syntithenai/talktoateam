@@ -555,11 +555,12 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
       <Row>
         <Col>
           <Form.Group controlId="maxTokens">
-            <Form.Label>Max Tokens: <Form.Control
+            <Form.Label>Max Tokens: </Form.Label>
+			<Form.Control
               type="text"
               value={role && role.config && role.config.maxTokens ? role.config.maxTokens : '' }
               onChange={handleMaxTokensChange}
-            /></Form.Label>
+            />
             <Form.Control
               type="range"
               min={0}
@@ -567,6 +568,19 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
               value={role && role.config && role.config.maxTokens ? role.config.maxTokens : ''}
               onChange={handleMaxTokensChange}
             />
+          </Form.Group>
+        </Col>
+      </Row>
+	  <Row>
+        <Col>
+          <Form.Group controlId="maxSentences">
+            <Form.Label>Max Sentences:</Form.Label>
+			 <Form.Control
+              type="text"
+              value={role && role.config && role.config.maxSentences ? role.config.maxSentences : '' }
+              onChange={function(e) {handleConfigChange('maxSentences',e) }}
+            />
+           
           </Form.Group>
         </Col>
       </Row>
