@@ -113,15 +113,13 @@ function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , on
 			if (section.trim().startsWith('tool')) {
 				// replace tools in this section
 				let final = section.trim().slice(4).split("\n").map(function(line) {
-					if (line.trim() === 'tool') {
-						return ''
-					} else if (toolCalls[line.trim()])  {
-						return "\n###RESULT\n" + toolCalls[line.trim()]
+					if (toolCalls[line.trim()])  {
+						return toolCalls[line.trim()]
 					} else {
-						return line
+						return ''
 					}
 				}).join("\n")
-				sections[sk] = final
+				sections[sk] = 'markdown' + final
 			}
 		})
 		const final = sections.map(function(s) {return s.trim()}).join("```")

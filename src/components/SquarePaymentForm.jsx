@@ -75,7 +75,6 @@ export default function SquarePaymentForm ({user, token, exchangeRate}) {
         <div style={{marginBottom:'2em', fontSize:'1.1em', fontStyle:'italic'}}>How much do you want to spend?.</div>
 
         <div style={{marginBottom:'1em', paddingBottom:'2em', borderBottom:'2px solid black'}}>
-        <Button style={{marginRight:'1em'}}  onClick={function() {setAmount(0.01)}} >$0.01 Credit</Button>
             <Button style={{marginRight:'1em'}}  onClick={function() {setAmount(5); setIsComplete(false)}} >$5 Credit</Button>
             <Button style={{marginRight:'1em'}} onClick={function() {setAmount(10); setIsComplete(false)}} >$10 Credit</Button>
             <Button style={{marginRight:'1em'}} onClick={function() {setAmount(20); setIsComplete(false)}} >$20 Credit</Button>

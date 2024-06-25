@@ -32,6 +32,7 @@ export default function Menu({setAutoStopMicrophone, autoStopMicrophone, stopLan
 							<NavDropdown.Item ><Link style={{color:'black', textDecoration:'none'}}  to="/pricing">Pricing</Link></NavDropdown.Item>
 							<NavDropdown.Item ><Link style={{color:'black', textDecoration:'none'}}  to="/terms">Terms And Conditions</Link></NavDropdown.Item>
 							<NavDropdown.Item ><Link style={{color:'black', textDecoration:'none'}}  to="/payment">Buy Credit</Link></NavDropdown.Item>
+							{(user && user.email && user.email === 'syntithenai@gmail.com' ) && <NavDropdown.Item ><Link style={{color:'black', textDecoration:'none'}}  to="/admin">Admin</Link></NavDropdown.Item>}
 						</NavDropdown></span>
 						</Nav>
 					</Navbar.Collapse>

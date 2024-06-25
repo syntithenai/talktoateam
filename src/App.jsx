@@ -43,6 +43,7 @@ import PricingPage from './pages/PricingPage'
 import PaymentPage from './pages/PaymentPage'
 import HomePage from './pages/HomePage'
 import TransactionsPage from './pages/TransactionsPage';
+import AdminTransactionsPage from './pages/AdminTransactionsPage';
 import FilesPage from './pages/FilesPage'
 import useTools from './useTools'
 import useModelSelector from './useModelSelector'
@@ -362,7 +363,7 @@ function App({nlp}) {
 							<Route path={`/payment`} element={<PaymentPage {...allProps}  />} />
 							<Route path={`/pricing`} element={<PricingPage {...allProps}  />} />
 							<Route path={`/transactions`} element={<TransactionsPage {...allProps}  />} />
-							
+							<Route path={`/admin`} element={<AdminTransactionsPage {...allProps}  />} />
 						</Routes>    
 					</Router >
 				}
