@@ -98,7 +98,7 @@ export default function useAppState(props) {
 	
 	const [creditBalance, setCreditBalance] = useState(0)
 	function updateCreditBalance(access_token) {
-		console.log('balance update',access_token)
+		// console.log('balance update',access_token)
 		
 		if (access_token) {
 			fetch(import.meta.env.VITE_API_URL + '/balance', {

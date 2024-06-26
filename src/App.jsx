@@ -91,7 +91,7 @@ function App({nlp}) {
 	let modelSelector = useModelSelector({configString: JSON.stringify(config), creditBalance, token, availableModels})
 
 	
-	const {files, fileManager} = useFileManager({storeName:'files', token, logout, allowMimeTypes : ['.txt'], loadData : false, onError : function(e) {window.alert(e)}, forceRefresh})
+	const {files, fileManager} = useFileManager({config, storeName:'files', token, logout, allowMimeTypes : ['.txt','text/plain'], loadData : false, onError : function(e) {window.alert(e)}, forceRefresh})
 	
 	
 	const {chatHistoriesRef, chatHistoryId,chatHistoryIdRef,  setChatHistoryId, chatHistories, setChatHistories, newChatHistory, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage,  currentChatHistory, revertChatHistory, deleteChatHistory, duplicateChatHistory, getLastAssistantChatIndex, getLastAssistantMessage} = useChatHistoryManager({utils,forceRefresh, doSave, utils})

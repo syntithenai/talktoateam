@@ -4,7 +4,7 @@ import {useEffect, useRef, useState} from 'react'
 export default function useSpeechDetector({onSpeech, onStopSpeech})  {
 
 	const [isSpeaking, setIsSpeaking] = useState(false)
-	const isInitialised = useRef(false)
+	const isInitialised = useRef(true)
 	
 	useEffect(function() {
 		if (!isInitialised.current) {

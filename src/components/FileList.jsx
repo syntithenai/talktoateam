@@ -6,13 +6,17 @@ import useIcons from '../useIcons'
 import {Link  } from 'react-router-dom'
 import GoogleDriverPickerButton from './GoogleDriverPickerButton'
 
-export default function FileList({files, fileManager, categoryFilter, setCategoryFilter, mini, categories, onChange, handleClose, forceRefresh, exportDocument}) {
+export default function FileList({files, fileManager, categoryFilter, setCategoryFilter, mini, categories, onChange, handleClose, forceRefresh, exportDocument, utils}) {
 //{onChange, chatHistoryId, roles,deleteRole, setRoles, loadRole, importRoles, exportRoles, newRole, mini, handleClose, setCurrentRole, setCurrentTeam,  categories, duplicateRole, forceRefresh, categoryFilter, setCategoryFilter}) {
 	const icons = useIcons()
 	const [search, setSearch] = useState('')
-	const [searchType, setSearchType] = useState('')
-	const [filtered, setFiltered] = useState([])
-	const [vectorFiltered, setVectorFiltered] = useState([])
+	const [searchType, setSearchType] = useState('vector')
+	const [filtered, setFilteredI] = useState([])
+	function setFiltered(i) {
+		setFilteredI(i)
+		console.log("SETFILTERED",i)
+	}
+	// const [vectorFiltered, setVectorFiltered] = useState([])
 	const filterChangeTimeout = useRef()
 	const hiddenInput = useRef()
 	const [previewFile, setPreviewFile] = useState('')
@@ -31,17 +35,21 @@ export default function FileList({files, fileManager, categoryFilter, setCategor
 	function updateFiltered() {
 		console.log("update filtered",searchType, files)
 		if (searchType === 'vector') {
-			if (files) {
+			if (files && search && search.trim()) {
 				fileManager.searchVectorFiles(search, files).then(function(results)  {
 					console.log("VEERCTOR RES",results)
-					setVectorFiltered(results)
+					setFiltered(Object.values(results))
+					// forceRefresh()
 				})
-			}
-		} else { 
-			if (files) {
-				setFiltered(files.filter(searchFilterFunction).sort(sortFunction))
+			} else {
+				setFiltered(files)
 			}
 		}
+		// else { 
+		// 	if (files) {
+		// 		setFiltered(files.filter(searchFilterFunction).sort(sortFunction))
+		// 	}
+		// }
 	}
 	
 	function preview(file) {
@@ -50,12 +58,21 @@ export default function FileList({files, fileManager, categoryFilter, setCategor
 		})
 	}
 			
-	function addFile() {
-		let a = String(Math.random(111))
-		
-		fileManager.save({id:'testfiles'+a, name:"test file"+a, data:'this is a test'+a }).then(function(file) {
-			console.log("saved", file)
-			files.push(file)
+	function addFiles(documents) {
+		console.log('addf',documents)
+		let promises = []
+		if (Array.isArray(documents)) {
+			documents.forEach(function(doc) {
+				promises.push(fileManager.save(doc))
+			})
+		}
+		console.log('addf',promises)
+		Promises.all(promises).then(function(files) {
+			console.log("saved", files)
+			files.forEach(function(f) {
+				files.push(f)
+			})
+			console.log('addf DONE',files)
 			fileManager.setFiles(files)
 			forceRefresh()
 		})
@@ -154,7 +171,9 @@ export default function FileList({files, fileManager, categoryFilter, setCategor
 					{!mini && <ButtonGroup>
 						<span style={{marginRight:'1em', width:'4em', overflow:'hidden', float:'right'}} ><input multiple={true} type='file'  className='custom-file-input-button' accept={(fileManager && Array.isArray(fileManager.allowMimeTypes)) ? fileManager.allowMimeTypes.join(",") : '*'}  onChange={fileManager.filesSelected} /></span>
 						<Button variant="outline-success" size="sm"  onClick={fileManager.pasteFiles} >{icons.filecopy}</Button>
-						<Button variant="outline-success" size="sm"  onClick={function() {}} >{icons.googledrive}</Button>
+						<GoogleDriverPickerButton exportDocument={exportDocument} icons={icons} onSelect={function(documents) {
+							addFiles(documents)
+						}} />
 					</ButtonGroup>}
 				</span>}
 				{fileManager.isBusy && <span style={{marginLeft:'1em', border:'1px solid green', float:'right', width: '18em', height:'3em', padding:'0.5em', borderRadius:'5px', marginBottom:'0.5em'}} >
@@ -162,22 +181,14 @@ export default function FileList({files, fileManager, categoryFilter, setCategor
 				</span>}
 				
 				
-		<GoogleDriverPickerButton exportDocument={exportDocument} />
-				<Form.Select
-				  style={{width:'12em', marginLeft:'0.3em', float:'left'}} 
-						  value={searchType}
-						  onChange={function(e) {setSearchType(e.target.value)}}
-						>
-							<option value="string" >Name Match</option>
-							<option value="vector"  >Vector Similarity</option>
-						</Form.Select>
+				
+				
 				<Form.Control style={{width:'40%', float:'left', marginLeft:'1em'}} placeholder="Search" type="search" value={search} onChange={function(e) {setSearch(e.target.value)}} />
 				
-				{searchType !== 'vector' && <span style={{float:'left', marginLeft:'1em'}} ><CategoriesSelectorModal  allowNew={false} value={categoryFilter} onChange={function(e) {setCategoryFilter(e)}}  defaultOptions={categories ? Object.keys(categories) : []} /></span>}
+				{<span style={{float:'left', marginLeft:'1em'}} ><CategoriesSelectorModal  allowNew={false} value={categoryFilter} onChange={function(e) {setCategoryFilter(e)}}  defaultOptions={categories ? Object.keys(categories) : []} /></span>}
 				  
 				  <div style={{clear:'both', marginBottom:'0.4em'}} />
-				   {searchType === 'vector' && <b>{JSON.stringify(vectorFiltered)}</b>}
-				   {searchType !== 'vector' && <ListGroup >
+				  <ListGroup >
 					  {filtered.map(function(file, fileKey) {
 						return mini ? 
 							<span>
@@ -192,9 +203,9 @@ export default function FileList({files, fileManager, categoryFilter, setCategor
 								
 							</span>
 							:
-							<div key={fileKey}  >
-								<div style={{border:'1px solid blue', padding:'0.1em'}} >
-									<ButtonGroup>
+							<div key={fileKey} style={{borderTop:'1px solid black', marginTop:'0.5em'}} >
+								<div style={{padding:'0.1em', marginTop:'0.3em'}} >
+									<ButtonGroup style={{float:'left'}}>
 										<FileEditorDialog fileManager={fileManager} name={file.name} id={file.id} onChangeName={function(e) {file.name = e; fileManager.save(file)}} onChangeData={function(e) {file.data = e; fileManager.save(file)}} />
 										<CategoriesSelectorModal blockDeselectAll={true} allowNew={false} value={file.category} onChange={function(e) {file.category = e; fileManager.save(file)}}  defaultOptions={categories ? Object.keys(categories) : []} />
 										<Button variant="outline-primary" style={{ textAlign:'left'}}  onClick={function() {preview(file)}} >{file && file.name} </Button>
@@ -207,14 +218,24 @@ export default function FileList({files, fileManager, categoryFilter, setCategor
 									<span style={{clear:'both'}}  >{file && Array.isArray(file.category) && file.category.map(function(c) {
 										return <Badge variant="secondary" size="sm" onClick={function(e) {setCategoryFilter([c]); e.stopPropagation(); return false}} bg="secondary" style={{ float:'right', marginLeft:'0.2em'}} >{c}</Badge>
 									})	}</span>
-									
+									{Array.isArray(file.matches) && <div style={{clear:'both'}}>{file.matches.map(function(m) {
+										return  <div>{m.fragment.slice(0,80)}{m.fragment.length > 80 ? '...' : ''}</div>
+									})}</div>}
 								</div>
 								
 							</div> 
 					  })}
 					  
-					</ListGroup>}
+					</ListGroup>
 			</>
 		)
 	}	
 }
+{/* <Form.Select
+				  style={{width:'12em', marginLeft:'0.3em', float:'left'}} 
+						  value={searchType}
+						  onChange={function(e) {setSearchType(e.target.value)}}
+						>
+							<option value="string" >Name Match</option>
+							<option value="vector"  >Vector Similarity</option>
+						</Form.Select> */}

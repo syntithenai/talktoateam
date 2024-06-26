@@ -153,7 +153,7 @@ export default function RoleOrTeamSelector(props) {
         return role
     }) : []
     let items = [].concat(Object.values(rolesPlus).filter(filterStarred).map(function(i) {return Object.assign({},i,{list_type: 'role'})}), Object.values(teamsPlus).filter(filterStarred).map(function(i) {return Object.assign({},i,{list_type: 'team'})}))
-   	console.log(teamOptions, teamsPlus, items)
+   	// console.log(teamOptions, teamsPlus, items)
 		//let aa = teams && currentTeam && teams[currentTeam] && Array.isArray(teams[currentTeam].category) && teams[currentTeam].category.length > 0 ? teams[currentTeam].category[0] : null
 	//aa ? "/team/" + randomId + "/" + aa : "/team"
 	return (

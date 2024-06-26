@@ -141,7 +141,9 @@ export default function HomePage({loadRole,  isOnlineRef,allowRestart, onCancel,
                           <Card.Title style={{fontSize:'0.9em'}} >Graphs</Card.Title>
                           <Card.Img variant="top" src="/home/world_graph.png" style={{width:'12rem'}}  />
                           <Card.Text>
-                          Ask for a graph to explain things. <br/>
+                          Ask for a graph to explain things using Mermaid Charts. <br/><br/>
+
+
                           </Card.Text>
                           
                         </Card.Body>
@@ -169,7 +171,9 @@ export default function HomePage({loadRole,  isOnlineRef,allowRestart, onCancel,
                           <Card.Title style={{fontSize:'0.9em'}} >Music</Card.Title>
                           <Card.Img variant="top" src="/home/music_notation.png" style={{width:'12rem'}}  />
                           <Card.Text>
-                          Most language models have an understanding of ABC notation for music. <br/>
+                          Most language models have an understanding of ABC notation for music. <br/><br/>
+                          Explore theory and harmony, transcribe, compose and more.
+                          <br/>
                           </Card.Text>
                           
                         </Card.Body>

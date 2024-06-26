@@ -5,11 +5,12 @@ import useUtils from './useUtils'
 //import { TextModel } from "@visheratin/web-ai";
 import localforage from 'localforage';
 //const { Voy } = await import("voy-search");
-import useEmbeddingsWorker from './useEmbeddingsWorker'
+// import useEmbeddingsWorker from './useEmbeddingsWorker'
+import useEmbeddings from './useEmbeddings'
 import nlp from 'compromise'
 import {split} from 'sentence-splitter'
 		
-export default function useFileManager({storeName, token, logout, allowMimeTypes, loadData, onError, googleFolderName, forceRefresh}) {
+export default function useFileManager({config, storeName, token, logout, allowMimeTypes, loadData, onError, googleFolderName, forceRefresh}) {
 	if (!storeName) storeName = 'files'
   //console.log(storeName, allowMimeTypes)
 	var [files, setFiles] = useState([])
@@ -28,9 +29,10 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 		refresh()
 	},[])
 
-	const embedder = useEmbeddingsWorker({workerUrl: './embeddings_worker.js'})
+	const embedder = useEmbeddings() //Worker({workerUrl: './embeddings_worker.js'})
    
     function generateFragments(inputString, chunkSize = 20, overlapSize = 3) {
+		console.log('gen frag')
 		const words = inputString.split(/\s+/);
 		const result = [];
 		
@@ -46,33 +48,53 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 		// return split(inputString).filter(function(a) { return (a.type === 'Sentence') }).map(function(a) {return a.raw})
 	}
 	
-	async function generateEmbeddings(text) {
-		return await embedder.run(text)
+	async function generateEmbeddings(fragments) {
+		console.log('gen embed')
+		if (!(config && config.llm && config.llm.openai_key)) throw new Exception("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
+		return await embedder.run(fragments, config.llm.openai_key)
 		//Promise.all(fragments.map((q) => embedder.run(q)));
 	}
 	//embedder.run(fragments) //
 
     async function searchVectorFiles(text, files, topK=5) {
-		console.log("SEARCH VEC", text, files)
-		let queryEmbedding = await embedder.run(text)
+		// console.log("SEARCH VEC", text, files)
+		if (!(config && config.llm && config.llm.openai_key)) throw new Error("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
+		let embedderResponse = await embedder.run([text], config.llm.openai_key)
+		// console.log(embedderResponse)
 		let comparisons = []
-		if (Array.isArray(files)) {
-			files.forEach(function(file, fileKey) {
-				if (file && Array.isArray(file.embeddings)) {
-					file.embeddings.forEach(function(embedding, embeddingKey) {
-						if (file.fragments && file.fragments[embeddingKey]) {
-							console.log("sims",queryEmbedding, embedding)
-							comparisons.push({
-								similarity: utils.cosineSimilarity(queryEmbedding, embedding),
-								file: file.id,
-								fragment: file.fragments[embeddingKey],
-							})
-						}
-					})
-				}
-			})
+		if (embedderResponse  && embedderResponse[0] && embedderResponse[0].embedding) {
+			// console.log('HAVE QUERY EMBEDD', embedderResponse[0].embedding)
+			let queryEmbedding = embedderResponse[0].embedding
+			if (Array.isArray(files)) {
+				files.forEach(function(file, fileKey) {
+					// console.log("file" ,file)
+					if (file && Array.isArray(file.embeddings)) {
+						// console.log(file.embeddings, file.fragments)
+						file.embeddings.forEach(function(embedding, embeddingKey) {
+							// console.log(file.fragments[embeddingKey])
+							if (file.fragments && file.fragments[embeddingKey]) {
+								// console.log("sims",queryEmbedding, embedding)
+								comparisons.push({
+									similarity: utils.cosineSimilarity(queryEmbedding, embedding),
+									file: file.id,
+									fragment: file.fragments[embeddingKey],
+								})
+							}
+						})
+					}
+				})
+			}
+			// console.log("COMPS",comparisons)
 		}
-		console.log("COMPS",comparisons)
+		
+		function findFile(id) {
+			let found = null
+			files.forEach(function(f) {
+				if (f.id === id) found = f
+			})
+			return found
+		}
+
 		// .filter((object) =>
 		// 	Object.keys(filter).every((key) => object[key] === filter[key]),
 		// )
@@ -82,10 +104,20 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 		// }));
 		
 		// Sort by similarity and return topK results
-		return comparisons
+		let sample = comparisons
 		.sort((a, b) => b.similarity - a.similarity)
 		.slice(0, topK);
-		
+
+		let collatedFiles = []
+		sample.forEach(function(s) {
+			if (collatedFiles.hasOwnProperty(s.file)) {
+				collatedFiles[s.file].matches.push(s)
+			} else {
+				collatedFiles[s.file] = findFile(s.file)
+				collatedFiles[s.file].matches = [s]
+			}
+		})
+		return collatedFiles
 	}
     
     
@@ -102,27 +134,32 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 	
 	
 	function addFiles(filesToAdd, resetFilter = true) {
-		// console.log('add', filesToAdd, resetFilter)
+		console.log('add', filesToAdd, resetFilter)
 		if (Array.isArray(filesToAdd)) {
 			var newFiles = files
 			filesToAdd.forEach(function(file) {
 				if (file) newFiles.push(file)
 			})
 			setFiles(newFiles)
-			forceRefresh()
+			refresh().then(function() {
+				forceRefresh()
+			})
+			
 		}
 		return files
 	}
 	
 	function updateFiles(files, resetFilter = true) {
-		// console.log('updatefiles',files,resetFilter)
+		console.log('updatefiles',files,resetFilter)
 		setFiles(files)
-		forceRefresh()
+		refresh().then(function() {
+			forceRefresh()
+		})
 		return files
 	}
 	
 	async function doDeleteFile(file) {
-		//console.log("DOdelete", file)
+		console.log("DOdelete", file)
 		if (file && file.id) {
 			file.deleted = true
 			file.data  = null
@@ -134,7 +171,9 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 					return true
 				}
 			}))
-			forceRefresh()
+			refresh().then(function() {
+				forceRefresh()
+			})
 			//search(null, tuneId).then(function(res) {
 				//setFiles(res)
 				//return null;
@@ -146,7 +185,7 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 	}
 	
 	async function deleteFile(file){
-		//console.log("delete", file,fileKey,JSON.parse(JSON.stringify(files)))
+		console.log("delete", file,JSON.parse(JSON.stringify(files)))
 		var m = file.name ? "Really delete the file " + file.name : 'Really delete this file?'
 		if (window.confirm(m)) {
 			doDeleteFile(file).then(function() {})
@@ -192,7 +231,9 @@ export default function useFileManager({storeName, token, logout, allowMimeTypes
 					return f
 				}
 			}))
-			forceRefresh()
+			refresh().then(function() {
+				forceRefresh()
+			})
 			resolve()
           }
         }).catch(function (err) {
@@ -235,13 +276,19 @@ function save(file) {
 				file.createdTimestamp = new Date()
 			}
 			if (file.data) {
+				console.log("have file data, gen embds")
 				file.fragments = generateFragments(file.data)
-				generateEmbeddings(file.fragments).then(function(embeddings) {
+				generateEmbeddings(file.fragments.map(function(fragment) {
+					return file.name + ' ' + fragment
+				} )).then(function(embeddings) {
 					console.log("got emb",embeddings)
-					file.embeddings = embeddings
+					file.embeddings = Array.isArray(embeddings) ? embeddings.map(function(e) {
+						return e.embedding
+					}) : []
 					finishSave(file)
 				})
 			} else {
+				console.log("have NO file data, skip embds")
 				finishSave(file)
 			}
 			
@@ -255,7 +302,7 @@ function save(file) {
 
 
 	function search(titleFilter = null, noData = true) {
-		// console.log('search', titleFilter)
+		console.log('search', titleFilter)
 		return new Promise(function(resolve,reject) {
 			var final = []
 			store.iterate(function(value, key, iterationNumber) {
@@ -359,14 +406,16 @@ function save(file) {
 									item.getType(type).then(function(t) {
 										// TODO currently ignored  || type === 'text/html'
 										if (type === 'text/plain' ) {
+											console.log("TEXT SEEK LINKS")
 											utils.blobToText(t).then(function(a) {
+												console.log("TEXT SEEK LINKS tt")
 												var foundLink = false
 												a.split("/n").forEach(function(line) {
 													if (line.trim().startsWith('http://') || line.trim().startsWith('https://')) {
 														foundLink = true
-														console.log("FFFFFFFFFFFFF PRE",line)
+														console.log("SCRAPE",line)
 														scrapeUrl(line.trim()).then(function(f) {
-															console.log("FFFFFFFFFFFFF",f)
+															console.log("SCRAPED",f)
 															if (f) {
 																resolve2({id: utils.generateRandomId(), name: line, type: f.type, data: f.b64})
 															} else {
@@ -377,19 +426,23 @@ function save(file) {
 													
 													}
 												})
+												console.log("TEXT SEEK LINKS done",foundLink, allowMime('text/plain'))
 												if (!foundLink && allowMime('text/plain')) {
+													console.log("TEXT SEEK LINKS fail, just  paste text")
 													const id = utils.generateRandomId()
 													resolve2({id: id, name: 'pasted text ' + id , type: type, data: a})
 												}
 											})
 													
 										} else if (type.indexOf('image/') === 0 && allowMime('image/')) {
+											console.log("IMAGE")
 											utils.blobToBase64(t).then(function(a) {
 												const id = utils.generateRandomId()
 												resolve2({id: id, name: 'pasted image ' + id , type: type, data: a})
 											})
 										
 										} else if (type !== 'text/html' && allowMime(type)) {
+											console.log("html")
 											utils.blobToBase64(t).then(function(a) {
 												const id = utils.generateRandomId()
 												resolve2({id: id, name: 'pasted file ' + id , type: type, data: a})
@@ -400,7 +453,7 @@ function save(file) {
 								})
 							}))
 						})
-						
+						console.log("PROM",promises)
 						Promise.all(promises).then(function(newFiles) {
 							console.log("PPP",newFiles)
 							if (Array.isArray(newFiles)) {
@@ -482,7 +535,9 @@ function save(file) {
 				Promise.all(savePromises).then(function(finalFiles) {
 					console.log("add selected files", finalFiles)
 					addFiles(finalFiles)
-					forceRefresh()
+					refresh().then(function() {
+						forceRefresh()
+					})
 				})
 			})
 		}

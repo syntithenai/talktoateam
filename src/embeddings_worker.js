@@ -1,7 +1,7 @@
 
 import { pipeline , env} from '@xenova/transformers';
 import { getEmbedding, EmbeddingIndex } from 'client-vector-search';
-// console.log("WORKER")
+console.log("WORKER")
 
 env.allowLocalModels = false;
 env.useBrowserCache = true;
@@ -37,6 +37,7 @@ class MyEmbeddingPipeline {
         if (this.instance === null) {
             this.instance = await pipeline('feature-extraction', this.model, { progress_callback });
         }
+        console.log("GET INST",this.instance)
         return this.instance;
     }
 }
@@ -57,7 +58,7 @@ function generateFragments(inputString, chunkSize = 20, overlapSize = 3) {
 	}
 // Listen for messages from the main thread
 self.addEventListener('message', async (event) => {
-	 //console.log("WORKER mesage",event)
+	 console.log("WORKER mesage",event)
     // Retrieve the translation pipeline. When called for the first time,
     // this will load the pipeline and save it for future use.
     let embedder = await MyEmbeddingPipeline.getInstance(x => {

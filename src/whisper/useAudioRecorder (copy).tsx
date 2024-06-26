@@ -73,10 +73,10 @@ export default function useAudioRecorder({isPlaying, config, onRecordingComplete
 		},8000)
 	}
 	
-	useEffect(function() {
-		//console.log('config change',JSON.stringify(config))
-		if (config) configRef.current = JSON.parse(JSON.stringify(config))
-	},[JSON.stringify(config)])
+	// useEffect(function() {
+	// 	//console.log('config change',JSON.stringify(config))
+	// 	if (config) configRef.current = JSON.parse(JSON.stringify(config))
+	// },[JSON.stringify(config)])
 
 	const speechDetector = useSpeechDetector({
 		onSpeech: function() {
@@ -214,7 +214,7 @@ export default function useAudioRecorder({isPlaying, config, onRecordingComplete
 	
 	const finaliseRecording = async (config) => {
 		console.log(haveSpeech.current,chunksRef.current.length)
-		console.log("AR F",configRef.current)
+		console.log("CHECK FOR CONFIG HERE AR F",configRef.current, config)
 		if (haveSpeech.current && chunksRef.current.length > 1) {    
 			// Received a stop event
 			let blob = await combineWavBlobs(chunksRef.current)
@@ -233,6 +233,7 @@ export default function useAudioRecorder({isPlaying, config, onRecordingComplete
 				const decoded = await audioCTX.decodeAudioData(arrayBuffer);
 				console.log("AR FS",configRef.current, decoded)
 				if (onRecordingComplete) {
+					console.log("CHECK 2 FOR CONFIG HERE AR F",configRef.current, config)
 					calculateAudioDuration(blob).then(function(duration) {
 						console.log("AR FS",configRef.current, decoded, blob)
 						onRecordingComplete(duration, blob, decoded, configRef.current);

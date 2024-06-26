@@ -8,18 +8,18 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 	const isEnabled = useRef(false)
 	let noSpeechTimeout = useRef()
 	const haveSpeech = useRef(false)
-	const isInitialised = useRef(true)
+	const isInitialised = useRef(false)
 	//console.log("useMicVAD")
 		
 	const vad = useMicVAD({
 		startOnLoad: true,
-		// start
 		onFrameProcessed: (probs, audio) => {
 			console.log("FFF",probs,audio)
 		},
 		onSpeechStart: () => {
+			isInitialised.current = true
 			if (!isPlaying.current) { 
-				console.log("User started talking")
+				// console.log("User started talking")
 				stopNoSpeechTimeout()
 			}
 			isSpeaking.current = true
@@ -27,18 +27,18 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 		},
 		// stop
 		onVADMisfire: () => {
-		  console.log("User stopped talking")
+		  //   console.log("User stopped talking")
 		  startNoSpeechTimeout()
 		  isSpeaking.current = false
 		  forceRefresh()
 		},
 		onSpeechEnd: (audio) => {
-		  console.log("User stopped talking", audio, isEnabled.current)
+		//   console.log("User stopped talking", audio, isEnabled.current)
 		  startNoSpeechTimeout()
 		  isSpeaking.current = false
 		  if (isEnabled.current) {
 				let duration = audio ? audio.length/16000 : 0
-				console.log("Submit audio", duration, new Blob([encodeWAV(audio)],{type:'audio/wav'}),audio,config)
+				// console.log("Submit audio", duration, new Blob([encodeWAV(audio)],{type:'audio/wav'}),audio,config)
 				let b = new Blob([encodeWAV(audio)],{type:'audio/wav'})
 				//downloadBlobAsWav(b)
 				//playBlob(b)
@@ -207,7 +207,7 @@ export default function useAudioRecorder({isPlaying, onRecordingComplete, onReco
 	function init(){} 
 	
 	
-    return {startRecording, stopRecording, handleToggleRecording, isSpeaking, isEnabled, isInitialised: vad.loading, init}
+    return {startRecording, stopRecording, handleToggleRecording, isSpeaking, isEnabled, isInitialised, init}
 }
 
 

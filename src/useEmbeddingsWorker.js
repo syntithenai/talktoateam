@@ -10,15 +10,17 @@ export default function useEmbeddingsWorker({workerUrl, onReady, onProgress}) {
   const [output, setOutput] = useState('');
   
   const worker = useRef(null);
-
+  const workerInitialised = useRef(false)
     
   useEffect(() => {
-    // console.log("usework INIT",worker.current)
-    if (!worker.current) {
+   // console.log("usework INIT",worker.current)
+    if (!workerInitialised.current) {
       // Create the worker if it does not yet exist.
+      console.log("usework INIT create", workerUrl)
       worker.current = new Worker(new URL(workerUrl, import.meta.url), {
         type: 'module'
       });
+      workerInitialised.current = true
     }
 
     
@@ -29,7 +31,7 @@ export default function useEmbeddingsWorker({workerUrl, onReady, onProgress}) {
   const run = (input) => {
     return new Promise(function(resolve,reject) {
         const onMessageReceived = (e) => {
-            // console.log("usework MSG",e)
+            console.log("usework MSG",e)
             switch (e.data.status) {
                 case 'initiate':
                 // Model file start load: add a new progress item to the list.
@@ -76,13 +78,13 @@ export default function useEmbeddingsWorker({workerUrl, onReady, onProgress}) {
 
         // Attach the callback function as an event listener.
         worker.current.addEventListener('message', onMessageReceived);  
-        console.log("usework  RUN",input)
+        console.log("usework  RUN",input, worker.current)
 
-        setDisabled(true);
+        // setDisabled(true);
         worker.current.postMessage({
           text: input,
         });
-        // console.log("usework  sent")      
+        console.log("usework  sent", input)      
     })
 
    

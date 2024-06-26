@@ -8,6 +8,7 @@ import STTConfigForm from '../components/STTConfigForm'
 import LLMConfigForm from '../components/LLMConfigForm'
 import ToolsConfigForm from '../components/ToolsConfigForm'
 import PreferredModelsConfigForm from '../components/PreferredModelsConfigForm'
+import EmbeddingsConfigForm from '../components/EmbeddingsConfigForm'
 //import SystemMessageForm from '../components/SystemMessageForm'
 import Menu from '../components/Menu'
 import Footer from '../components/Footer';
@@ -84,6 +85,10 @@ export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTra
 				<Tab eventKey="tools" title="Tools">
 					<ToolsConfigForm  configIn={config} setConfig={setConfig}  forceRefresh={forceRefresh} />
 				</Tab>
+				<Tab eventKey="embeddings" title="Embeddings">
+					<EmbeddingsConfigForm  configIn={config} setConfig={setConfig}  forceRefresh={forceRefresh} />
+				</Tab>
+				
 				<Tab eventKey="stt" title="Speech To Text">
 					<STTConfigForm  configIn={config} setConfig={setConfig}  forceRefresh={forceRefresh} />
 				</Tab>

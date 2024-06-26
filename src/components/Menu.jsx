@@ -48,13 +48,13 @@ export default function Menu({setAutoStopMicrophone, autoStopMicrophone, stopLan
 						</span>}
 
 						<span style={{marginTop:'0.2em',marginRight:'0.2em'}} >
-							{(!simplifiedChat &&  usingTts && pathname.startsWith('/chat')) && <>
+							{(!simplifiedChat &&  usingTts && pathname.startsWith('/chat')) && <span style={{marginLeft:'0.5em'}}>
 								{(!simplifiedChat &&  !isSpeaking && !isMuted) && <button  style={{marginRight: '0.2em', color:'black'}} className="btn  btn-success"  id="muteButton" onClick={function() {mute(); stopAllPlaying()}} title="Mute"  >{icons["volume-vibrate-fill"]}</button>}
 								{(!simplifiedChat &&  !isSpeaking && isMuted) && <button  style={{marginRight: "0.2em", color:'black'}} className="btn btn-secondary"  id="unmuteButton" onClick={unmute}  title="UnMute" >{icons["volume-off-vibrate-fill"]}</button>}
 								{(!simplifiedChat &&  isSpeaking) && <button  style={{marginRight: "0.2em", color:'black'}} className="btn btn-success"  id="playingButton" onClick={stopPlaying}  title="Stop Playing" >{icons["speak"]}</button>}
-							</>}
+							</span>}
 
-							{<span style={{marginLeft:'0.5em', display: (usingStt && pathname.startsWith('/chat')) ? 'inline' : 'inline'}} ><SpeechButton 
+							{<span style={{marginLeft:'0.5em', visibility: (usingStt && pathname.startsWith('/chat')) ? 'visible' : 'hidden'}} ><SpeechButton 
 								lastLlmTrigger={lastLlmTrigger}
 								config={config}
 								aiUsage={aiUsage}

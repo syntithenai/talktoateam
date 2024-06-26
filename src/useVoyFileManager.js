@@ -10,8 +10,10 @@ export default function useVoyFileManager({file}) {
 
     useEffect(() => {
         const init = async () => {
+            console.log('init')
             // Initialize the text model for embeddings
             const textModel = await (await TextModel.create("gtr-t5-quant")).model;
+            console.log('init',model)
             setModel(textModel);
 
             // Initialize IndexedDB
@@ -28,6 +30,7 @@ export default function useVoyFileManager({file}) {
                 }));
                 setIndex(new Voy({ embeddings: data }));
                 setFragments(data);
+                console.log('inited',data)
             }
         };
 

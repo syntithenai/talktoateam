@@ -157,11 +157,11 @@ export default function SpeechButton(props) {
 	// 		props.stopWaiting()
 	// 	}
 	// })
-	
+	// 
 	let websocketTranscriber = useWebsocketTranscriber({
 		onReady: function(v) {
 			//console.log("wsTRANSCRIBER READY")
-			audioRecorder.init()
+			// audioRecorder.init()
 		},
 		onUpdate: function(v) {
 			//console.log('U',v)
@@ -192,7 +192,7 @@ export default function SpeechButton(props) {
 		aiUsage: props.aiUsage,
 		onReady: function(v) {
 			//console.log("aiTRANSCRIBER READY")
-			audioRecorder.init()
+			// audioRecorder.init()
 		},
 		onUpdate: function(v) {
 			//console.log('aiU',v)
@@ -254,7 +254,7 @@ export default function SpeechButton(props) {
 		aiUsage: props.aiUsage,
 		onReady: function(v) {
 			//console.log("aiTRANSCRIBER READY")
-			audioRecorder.init()
+			// audioRecorder.init()
 		},
 		onUpdate: function(v) {
 			//console.log('aiU',v)
@@ -338,11 +338,11 @@ export default function SpeechButton(props) {
 	
 	let buttonStyle
 	let onClick = audioRecorder.handleToggleRecording
-	//console.log('SB',useOpenAi, useSelfHosted, useLocal, transcriber.isBusy, transcriber.isModelLoading, audioRecorder.isInitialised)
+	//console.log('SB',useOpenAi, useSelfHosted, useLocal, transcriber.isBusy, transcriber.isModelLoading, audioRecorder.isInitialised.current)
 	//websocketTranscriber.isBusy || openAITranscriber.isBusy || localTranscriber.isBusy
 	//||  localTranscriber.isModelLoading
-	//console.log("AA",(!useOpenAi && !useSelfHosted && !useLocal && !useGroq) ,audioRecorder.isInitialised)
-	if (((!useOpenAi && !useSelfHosted && !useLocal && !useGroq)  || !audioRecorder.isInitialised)) {
+	//console.log("AA",(!useOpenAi && !useSelfHosted && !useLocal && !useGroq) ,audioRecorder.isInitialised.current)
+	if (((!useOpenAi && !useSelfHosted && !useLocal && !useGroq) )) { // || !audioRecorder.isInitialised.current
 		buttonStyle = buttonStyleLoading
 		
 		//|| localTranscriber.isBusy.current
