@@ -4,10 +4,11 @@ import useIcons from '../useIcons'
 import TextareaAutosize from 'react-textarea-autosize';
 //import CategoryAutosuggest from './CategoryAutosuggest'
 import CategoriesSelector from './CategoriesSelector'
+import FileList from './FileList'
 
 
-export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, forceRefresh, utils, playSpeech, config, categories, setCategories, files})  {
-	
+export default function RoleForm (props)  {
+	const {roleId, roles, rolesJSON, setRoles, icons, forceRefresh, utils, playSpeech, config, categories, setCategories, files} = props
 	const [role, setRole] = useState({})
 	let [refresh, setRefresh] = useState('')
 	let [samples, setSamplesInner] = useState([])
@@ -17,6 +18,7 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
 	}
 	let [addSample, setAddSample] = useState('')
 	let [generateSchemaErrorMessage, setGenerateSchemaErrorMessage] = useState('')
+	
 	function save(field, value) {
 		//console.log('save', field, value)
 		if (roles && roleId && field) {
@@ -32,15 +34,16 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
 	
 	function saveConfig(field, value) {
 		//console.log('savec', field, value, roleId, roles)
-		if (!roles) roles = {}
+		let newRoles = roles
+		if (!newRoles) newRoles = {}
 		if (roleId && field) {
-			if (!roles[roleId])  {
-				roles[roleId] = {}
+			if (!newRoles[roleId])  {
+				newRoles[roleId] = {}
 			}
-			roles[roleId].config = roles[roleId].config ? roles[roleId].config : {} 
-			roles[roleId].config[field] = value
-			//console.log('save', roles)
-			setRoles(roles)
+			newRoles[roleId].config = newRoles[roleId].config ? newRoles[roleId].config : {} 
+			newRoles[roleId].config[field] = value
+			//console.log('save', newRoles)
+			setRoles(newRoles)
 			setRefresh(utils.generateRandomId())
 			//forceRefresh()
 		}
@@ -97,11 +100,12 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
     save('category',e)
     // add category
     let toAdd = Array.isArray(e) ? e : []
-    if (!categories) categories={}
+	let newCats = categories
+    if (!newCats) newCats={}
 	toAdd.forEach(function(c) {
-    	categories[c] = 1
+    	newCats[c] = 1
     })
-    setCategories(categories)
+    setCategories(newCats)
   };
   
   const handleMessageChange = (e) => {
@@ -213,11 +217,11 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
 	let [stopTokens, setStopTokens] = useState(role && role.config && role.config.stopTokens ? role.config.stopTokens : [])
 	let [addStopToken, setAddStopToken] = useState('')
 	// <CategoryAutosuggest categories={categories}  onChange={(e) => handleCategoryChange(e)} value={role && role.category ? role.category : ''}/>
-					
+	//  <Button onClick={function() {utils.downloadText(JSON.stringify(roles[roleId]), roles[roleId].name + '.js')}} style={{float:'right'}} variant="success" >{icons.save}</Button>
+    				
   return (
     <>
     <Form id={refresh} onSubmit={function(e) {e.preventDefault(); return false}}>
-      <Button onClick={function() {utils.downloadText(JSON.stringify(roles[roleId]), roles[roleId].name + '.js')}} style={{float:'right'}} variant="success" >{icons.save}</Button>
       <div className="border p-3 mb-3">
 		 <Tabs
 		  defaultActiveKey="Basics"
@@ -322,14 +326,14 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
 				{(role && role.config && role.config.type ==='algorithmic') && 	
 						<Form.Group  controlId="backstory">
 					<Form.Label>Processing Function</Form.Label>
-						<div style={{fontSize:'1.2em', fontWeight:'bold'}} >{'function(message, messages) {'}</div>
+						<div style={{fontSize:'1.2em', fontWeight:'bold'}} >{'function(message, messages, files) {'}</div>
 					  <TextareaAutosize 
 					   minRows={'12'}
 					   style={{width:'100%'}}
 						onChange={(e) => saveConfig('processingFunction',e.target.value)}
 						value={role && role.config && role.config.processingFunction ? role.config.processingFunction : 'return '}
 					  ></TextareaAutosize>
-					<div style={{fontSize:'1.2em', fontWeight:'bold'}} >}</div>
+					<div style={{fontSize:'1.2em', fontWeight:'bold'}} >{'}'}</div>
 					</Form.Group>}
 					</Col>
 			</Row>
@@ -741,7 +745,17 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
 		  <Tab eventKey="Files" title="Files" >
 				 <Row>
         <Col>
-			
+		{JSON.stringify(role && role.config ? role.config.files : [])}
+			<FileList {...props} value={role && role.config && Array.isArray(role.config.files) ? role.config.files : []} onChange={function(fileIds) {
+				console.log("ROLE FILES change",fileIds)
+				let final = []
+				let filesIndex = {}
+				files.forEach(function(f) {
+					filesIndex[f.id] = f
+				})
+				saveConfig('files',utils.uniquifyArray(fileIds.filter(function(id) { return filesIndex.hasOwnProperty(id)})))
+				forceRefresh()
+			}} />
         </Col>
       </Row>
 		  </Tab>
@@ -823,18 +837,11 @@ export default function RoleForm ({roleId, roles, rolesJSON, setRoles, icons, fo
 
 
 	
-		  //<Tab eventKey="Files" title="Files" >
-			//TODO Files
-		  //</Tab>
+		  
 //<option>HTML</option>
 					//<option>Markdown</option>
 					//<option>YAML</option>
-					//<option>XML</option>
-					//<option>Python</option>
-					//<option>JavaScript</option>
-					
-  //<Row>
-					  //<Col>
+					//<option>XML</option>{role && role.config && role.config.ttsSelfHostedVoice ? role.config.ttsSelfHostedVoice : '
 						  //<Form.Group  controlId="openaiKey">
 							//<Form.Label>Comments</Form.Label>
 							  //<TextareaAutosize 

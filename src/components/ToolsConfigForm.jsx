@@ -55,7 +55,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				
 				<Form.Control
 					type="text"
-					value={config && config.tools && config.tools.cors_url ? config.tools.cors_url : 'https://proxy.cors.sh/'}
+					value={config && config.tools && config.tools.cors_url ? config.tools.cors_url : ''}
 					onChange={(e) => {setConfigValue('cors_url',e.target.value);  }}
 				  />
 				  

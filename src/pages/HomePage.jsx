@@ -38,12 +38,14 @@ export default function HomePage({loadRole,  isOnlineRef,allowRestart, onCancel,
             <Card>
               <Card.Img variant="top" src="/home/office_team.png"   />
               <Card.Body>
-                <Card.Title>AI For People</Card.Title>
+              <Card.Title>AI For People</Card.Title>
                 <Card.Text>
                 A range of expert teams to bring you accurate, relevant information with depth.<br/><br/>
+                <LoadRoleModal isHomePage={true} {...{forceRefresh, categoryFilter, setCategoryFilter, roles, currentRole, newRole, importRoles, exportRoles, loadRole, setRoles, setCurrentRole, chatHistoryId, categories, setUserMessage, icons,teams, setTeams, currentTeam, setCurrentTeam, teams, chatHistoryId}}  />
+                <br/><br/>
                 A simple chat interface hides a flow of queries to language models, web search and code execution putting state of the art tools into the hands of beginners.
                 </Card.Text>
-                <LoadRoleModal isHomePage={true} {...{forceRefresh, categoryFilter, setCategoryFilter, roles, currentRole, newRole, importRoles, exportRoles, loadRole, setRoles, setCurrentRole, chatHistoryId, categories, setUserMessage, icons,teams, setTeams, currentTeam, setCurrentTeam, teams, chatHistoryId}}  />
+                
 			
               </Card.Body>
             </Card>

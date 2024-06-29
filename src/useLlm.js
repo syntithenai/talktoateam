@@ -2,14 +2,14 @@ import agenticLlmApiClient from './agent/agenticLlmApiClient'
 import {useState, useRef} from 'react'
 
 
-export default function useLlm({token, modelSelector, abortController, onUpdate, onComplete, onReady, onError,onStart, forceRefresh, aiUsage, currentChatHistory, tools, nlp}) {
+export default function useLlm({files, fileManager, token, modelSelector, abortController, onUpdate, onComplete, onReady, onError,onStart, forceRefresh, aiUsage, currentChatHistory, tools, nlp}) {
     //console.log("AI LLM INI ",url)
     const isBusy = useRef(false);
     function setIsBusy(v) {
 		isBusy.current = v
 	}
 
-	var client = agenticLlmApiClient({token, modelSelector, onReady, aiUsage, onError, tools , onStart, abortController })
+	var client = agenticLlmApiClient({files, fileManager, token, modelSelector, onReady, aiUsage, onError, tools , onStart, abortController })
 
     const aiKey = useRef('')
     const eventSource = useRef()
@@ -40,7 +40,7 @@ export default function useLlm({token, modelSelector, abortController, onUpdate,
 		//controller.current = new AbortController()
 		//var signal = controller.current.signal;
 		let messages = client.prependSystemMessage(persona, chatHistory)
-		console.log(chatHistory,messages, persona)
+		// console.log(chatHistory,messages, persona)
 		setIsBusy(true)
 		onStart()
 		client.start({
@@ -48,7 +48,7 @@ export default function useLlm({token, modelSelector, abortController, onUpdate,
 				modelConfig: persona ? persona.config : {}, 
 				onUpdate, 
 				onComplete: function(content, log) {
-					console.log("AI LLM complete",content,log)
+					// console.log("AI LLM complete",content,log)
 					setIsBusy(false); 
 					onComplete(content, log)
 				}

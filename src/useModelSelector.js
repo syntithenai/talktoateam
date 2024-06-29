@@ -51,7 +51,7 @@ export default function useModelSelector({configString, creditBalance, token, av
     }
 
     function getModel(type) {
-        // console.log("getmodel",type,config, availableModels,creditBalance, token)
+        console.log("getmodel",type,config, availableModels,creditBalance, token)
         let seekModel = null
         let seekModelObj = null
         if (config && config.llm && config.llm[type + "_model"]) {
@@ -75,7 +75,7 @@ export default function useModelSelector({configString, creditBalance, token, av
         })
         // early exit if fixed choice in place
         if (seekModel && seekModelObj) {
-            // console.log("seek from selection",seekModel)
+            console.log("seek from selection",seekModel)
             return seekModelObj
         }
         Object.keys(modelTagIndex).forEach(function(tag) {
@@ -95,7 +95,7 @@ export default function useModelSelector({configString, creditBalance, token, av
                 }
             })
         })
-        // console.log(modelTagIndex)
+        console.log(modelTagIndex)
         if (type === 'basic') {
             if (Array.isArray(modelTagIndex['basic']) && modelTagIndex['basic'].length > 0) {
                 return modelTagIndex['basic'][0]

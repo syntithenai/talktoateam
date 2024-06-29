@@ -9,7 +9,7 @@ export default function useGoogleLogin({clientId, scopes, usePrompt, loginButton
     const [user,setUser] = useState(null)
     const [accessToken,setAccessToken] = useState(null)
     const [responseToken, setResponseToken] = useState(null)
-    var loginRefreshTimeout = null
+    var loginRefreshTimeoutRef = useRef(null)
      
 
     function initClient(extraScopes) {
@@ -33,8 +33,8 @@ export default function useGoogleLogin({clientId, scopes, usePrompt, loginButton
           // auto renew tokens
           if (tokenResponse.expires_in > 0) {
 			  // console.log("SETUP RENEW LOGIN IN ",tokenResponse.expires_in)
-                clearTimeout(loginRefreshTimeout)
-                loginRefreshTimeout = setTimeout(function() {
+                clearTimeout(loginRefreshTimeoutRef.current)
+                loginRefreshTimeoutRef.current = setTimeout(function() {
 					//console.log("RENEW LOGIN IN ",tokenResponse.expires_in * 999)
                   refresh()
                 }, (tokenResponse.expires_in * 999))

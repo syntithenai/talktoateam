@@ -25,11 +25,21 @@ export default function EmbeddingsConfigForm ({configIn, setConfig, forceRefresh
   
   return (
     <Form onSubmit={handleSubmit}>
+
+
+
 		<div className="border p-3 mb-3">
 			<h5>Embeddings</h5>
-		 
-		
 		<Row className="mb-3">
+			<Form.Group as={Row} controlId="openaiKey">
+				<Form.Label>Max Fragment Length (tokens)</Form.Label>
+				<Form.Control
+					type="text"
+					value={config && config.embeddings && config.embeddings.max_length ? config.embeddings.max_length : '8191'}
+					onChange={(e) => {setConfigValue('max_length',e.target.value);}}
+			  />
+			</Form.Group>
+			<hr style={{marginTop:'1em', marginBottom:'1em'}} />
 			<Form.Group as={Col} controlId="openaiKey">
 			  <FormCheck
 			    style={{display:'inline', marginRight:'0.2em'}} 

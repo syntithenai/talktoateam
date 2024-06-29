@@ -114,7 +114,6 @@ export default function usePollingGoogleDocument(props) {
 	}
     
     
-    
-    return {  save, exportDocument: docs.exportDocument }
+    return {  save, exportDocument: docs.exportDocument , getDocument: docs.getDocument}
         
 }

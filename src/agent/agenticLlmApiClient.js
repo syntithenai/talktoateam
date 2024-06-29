@@ -3,7 +3,7 @@ import nlp from 'compromise'
 //const config = require('./config')
 
 //const nlp = window.nlp
-function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , onStart, abortController}) {
+function agenticLlmApiClient({files, fileManager, token, modelSelector, aiUsage, onError, tools , onStart, abortController}) {
 	// force local api
 	// url = import.meta.env.VITE_API_URL
 	// console.log("AGENTIC",token)
@@ -126,24 +126,31 @@ function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , on
 		return final
 	}
 	
-	function cleanHistory (chatHistory) {
+	function cleanHistoryAndAddSystemMessage (chatHistory, addToSystemMessage) {
 		let systemMessage = null
 		let firstElement = null
+		console.log("TO CLENED",JSON.parse(JSON.stringify(chatHistory)))
 		// clear messages from the beginning until we find the first user message, save the systemMessage
 		while ((!firstElement || firstElement.role !== 'user') && chatHistory.length > 0) {
 			firstElement = chatHistory.shift()
 			if (firstElement && firstElement.role === 'system') {
-				systemMessage = firstElement
+				systemMessage = firstElement 
 			} else if (firstElement && firstElement.role === 'assistant') {
 				// discard it
 			} else if (firstElement && firstElement.role === 'user') {
 				chatHistory.unshift(firstElement)
 			} 
 		}
-		if (systemMessage)  chatHistory.unshift(systemMessage)
+		if (systemMessage)  {
+			systemMessage.content = systemMessage.content ? systemMessage.content + addToSystemMessage : addToSystemMessage
+			chatHistory.unshift(systemMessage)
+		} else {
+			chatHistory.unshift({role:'system', 'content': addToSystemMessage})
+		}
 		chatHistory = chatHistory.map(function(h) {
 			return {'role':h.role, 'content': h.content}
 		})
+		console.log("CLENED",chatHistory)
 		return chatHistory
 	}
 	
@@ -164,7 +171,20 @@ function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , on
 	}
 	
 	async function start({messages, modelConfig, onUpdate, onComplete,onStart}) {
-		console.log("AGENTIC START",token)	
+		console.log("AGENTIC START",modelConfig, fileManager)	
+		let final = {}
+		let filesIndex = {}
+		if (Array.isArray(files)) files.forEach(function(f) {
+			if (f && f.id) filesIndex[f.id] = f
+		})
+		if (modelConfig && Array.isArray(modelConfig.files)) {
+			modelConfig.files.forEach(function(id) {
+				if (filesIndex[id]) {
+					final[id] = filesIndex[id]
+				}
+			})
+		}
+		console.log("AGENTIC START files", files, final, filesIndex)	
 		let startTime = new Date()
 		if (modelConfig && modelConfig.type ==="algorithmic" ) {
 			isStopped = false
@@ -173,12 +193,12 @@ function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , on
 			if (modelConfig && modelConfig.processingFunction) {
 				if (true || modelConfig.processingFunctionType === 'evaljavascript') {
 					//const AsyncFunction = async function () {}.constructor;
-					let processorFunction = new Function('message','messages', modelConfig.processingFunction);
+					let processorFunction = new Function('message','messages','files', modelConfig.processingFunction);
 					let lastUserMessage = getLastUserMessage(messages)
 					let message = lastUserMessage ? lastUserMessage.content : ''
 					console.log("Function CALL:", message, messages, lastUserMessage);
 					try {
-						let functionResult =   processorFunction(message, messages);
+						let functionResult =   processorFunction(message, messages, files);
 						console.log("Function res:", functionResult);
 						if (functionResult && functionResult.then && typeof functionResult.then == 'function') {
 							return functionResult.then(function(pRes) {
@@ -213,7 +233,7 @@ function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , on
 				
 		} else { 
 			let modelType = modelConfig && modelConfig.preferredModel ? modelConfig.preferredModel : 'large'
-			console.log("MT",modelType, modelConfig)
+			console.log("MT",modelType, modelConfig, messages)
 			//let modelObj = modelSelector.getModel(modelType)
 			let modelObj = modelSelector.getModel(modelType)
 			let model = modelSelector.getModelKey(modelType)
@@ -229,9 +249,30 @@ function agenticLlmApiClient({token, modelSelector, aiUsage, onError, tools , on
 			var signal = abortController.current.signal;
 			if (onStart) onStart()
 			setIsBusy(true)
+			// hack final messages to inject RAG results from files
+			let ragData = []
+			let text = Array.isArray(messages) && messages.length > 0 && messages[messages.length -1].content ? messages[messages.length -1].content : ''
+			// console.log("RAG SESARCH",text)
+			if (text && Array.isArray(files)) {
+				let vectorResults = await fileManager.searchVectorFiles(text, files)
+				// console.log("VECRESSSSS", vectorResults)
+				if (Array.isArray(vectorResults)) {
+					// console.log("VECRESSSSS os array", vectorResults, vectorResults.length, vectorResults[0])
+					vectorResults.forEach(function(file) {
+						// console.log("FOB",file, file.matches)
+						if (file && Array.isArray(file.matches)) {
+							// console.log("FOB2",file, file.matches)
+							file.matches.forEach(function(match) {
+								ragData.push((match && match.file ? match.file : '') + ' ' +  (match && match.fragment ? match.fragment : ''))
+							})
+						}
+					})
+				}
+			}
+			// console.log("VECRESSSSS", ragData)
 			let formData = {
 				model: model,
-				messages: cleanHistory(messages)
+				messages: cleanHistoryAndAddSystemMessage(messages, ragData.length > 0 ? "\n\n" + ragData.join("\n") : '')
 			}
 			formData = Object.assign(formData,openAIParametersFromConfig(modelConfig, url))
 			let sent = []

@@ -277,14 +277,14 @@ export default function useGoogleDocument(googleFileName, token, logout, refresh
     })
   }
   
-  function exportDocument(id) {
+  function exportDocument(id, mimeType = 'text/plain') {
     return new Promise(function(resolve,reject) {
       // console.log('export rec',id ,accessToken)
       //var useToken = accessToken ? accessToken : access_token
       if (id && accessToken) {
         axios({
           method: 'get',
-          url: 'https://www.googleapis.com/drive/v3/files/'+id+'/export?mimeType=text/plain',
+          url: 'https://www.googleapis.com/drive/v3/files/'+id+'/export?mimeType='+mimeType,
           headers: {'Authorization': 'Bearer '+accessToken},
         }).then(function(postRes) {
           //console.log("export GOT DOC",postRes)

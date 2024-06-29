@@ -2,7 +2,7 @@ import  { useEffect } from 'react';
 import useDrivePicker from 'react-google-drive-picker'
 import {Button} from 'react-bootstrap'
 import useUtils from '../useUtils'
-export default function GoogleDriverPickerButton({exportDocument, onSelect, icons}) {
+export default function GoogleDriverPickerButton({exportDocument, getDocument, onSelect, icons}) {
   const [openPicker, authResponse] = useDrivePicker();  
   // const customViewsArray = [new google.picker.DocsView()]; // custom view
   const utils = useUtils()
@@ -27,7 +27,29 @@ export default function GoogleDriverPickerButton({exportDocument, onSelect, icon
         let promises = []
         if (data && data.action === 'picked' && Array.isArray(data.docs)) {
           data.docs.forEach(function(d) {
-            promises.push(exportDocument(d.id))
+            // how to get doc from google
+            // either export or get raw content
+            // where type == document, export   
+            // application/vnd.google-apps.spreadsheet => text/csv
+            // application/vnd.google-apps.document => text/plain
+            // application/vnd.google-apps.drawing => ERR
+            // application/vnd.google-apps.presentation => text/plain
+
+            if (d.type === 'document') {
+              if (d.mimeType === 'application/vnd.google-apps.spreadsheet') {
+                promises.push(exportDocument(d.id, 'text/csv'))
+              } else {
+                promises.push(exportDocument(d.id))
+              }
+              
+            } else {
+              if (d.type.startsWith('text/')) {
+                promises.push(getDocument(d.id))
+              } else {
+                alert("Invalid document type "+ d.mimeType)
+              }
+              
+            }
           })
 
         } 

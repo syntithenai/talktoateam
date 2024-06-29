@@ -1,6 +1,22 @@
-function exportTeam(teams,teamId, roles) {
+function exportTeam(teams,teamId, roles, files = null) {
+	let filesIndex = {}
+	if (Array.isArray(files)) {
+		files.forEach(function(f) {
+			filesIndex[f.id] = f
+		})
+	}
+	let allRoles = []
 	let useTeam = JSON.parse(JSON.stringify(teams[teamId]))
 		console.log("EXPORT TEAM",useTeam && useTeam.name, useTeam)
+		if (Array.isArray(teams[teamId].files)) {
+			let files = []
+			teams[teamId].files.forEach(function(fileId) {
+				if (filesIndex[fileId]) {
+					files.push(filesIndex[fileId])
+				}
+			})
+			useTeam.files = files
+		}
 		if (Array.isArray(teams[teamId].members)) {
 			let members = []
 			teams[teamId].members.forEach(function(memberId) {
@@ -275,6 +291,21 @@ export default function useUtils() {
 				readFile(f)
 			})
 		},
+		base64UrlToText: function  (base64Url) {
+			// Extract the Base64-encoded part
+			const base64String = base64Url.split(',')[1];
+		
+			// Decode the Base64 string to a binary string
+			const binaryString = atob(base64String);
+		
+			// Convert binary string to text
+			let text = '';
+			for (let i = 0; i < binaryString.length; i++) {
+				text += String.fromCharCode(binaryString.charCodeAt(i));
+			}
+		
+			return text;
+		},
 		blobToBase64: function(blob) {
 			return new Promise(function(resolve,reject) {
 				var reader = new FileReader();
@@ -324,6 +355,17 @@ export default function useUtils() {
 			let openAiBillable = useOpenAi || usingOpenAiTts || usingOpenAiStt
 			//console.log(openAiBillable, useOpenAi,  usingOpenAiTts,  usingOpenAiStt)
 			return {useGroq, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, useOpenAi, useSelfHosted, useLlm, openAiBillable}
+		},
+		uniquifyArray: function(a) {
+			if (Array.isArray(a)) {
+				var index = {}
+				a.forEach(function(value) {
+					index[value] = true 
+				})
+				return Object.keys(index)
+			} else {
+				return []
+			}
 		},
 		
 		renderPrompt: function(format, systemMessage, chatHistory, modelConfig, addGenerationPrompt = false) {

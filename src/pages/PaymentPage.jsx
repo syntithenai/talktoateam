@@ -12,7 +12,7 @@ export default function PaymentPage({ isOnlineRef,allowRestart, onCancel, onTran
 			
 			<div id="body" style={bodyStyle}  >
 			<div style={{marginLeft:'0.5em'}}>
-				<SquarePaymentForm user={user} token={token} exchangeRate={exchangeRate} />
+				<SquarePaymentForm updateCreditBalance={updateCreditBalance} user={user} token={token} exchangeRate={exchangeRate} />
 
 			</div>
 							

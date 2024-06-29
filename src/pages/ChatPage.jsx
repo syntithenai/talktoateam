@@ -313,7 +313,7 @@ export default function ChatPage({isOnlineRef,onPartialTranscript, allowRestart,
 				<div style={{fontWeight:'bold',textAlign:'left', width:'100%'}} >{Array.isArray(chatHistory) && chatHistory.filter(function(v) {return (v.role === 'system')}).map(function(v) {return v.content}).join("/n")}</div>
 				<ListGroup>
 				
-				{welcomeMessage &&  <ListGroup.Item key={-1} style={{backgroundColor:  "green" }} style={{textAlign:'left'}} ><b style={{marginBottom:'2em'}} >ASSISTANT:</b> {welcomeMessage}</ListGroup.Item>}
+				{welcomeMessage &&  <ListGroup.Item key={-1}  style={{backgroundColor:  "green" , textAlign:'left'}} ><b style={{marginBottom:'2em'}} >ASSISTANT:</b> {welcomeMessage}</ListGroup.Item>}
 				{chatHistoryFiltered.map(function(message,mkey) {
 					let tally_in = 0
 					let tally_out = 0
@@ -331,7 +331,7 @@ export default function ChatPage({isOnlineRef,onPartialTranscript, allowRestart,
 					
 					return <ListGroup.Item key={mkey} style={{textAlign:'left', backgroundColor: ((mkey%2 === 0) ? "#3d6cda0f" : "#3d94da1f")}}  >
 					
-						<ButtonGroup style={{float:'right', backgroundColor:'#0d6efd', marginLeft:'1em'}} >
+						<ButtonGroup style={{float:'right', backgroundColor:'#0d6efd', marginLeft:'1em', marginBottom:'0.3em'}} >
 							{!Array.isArray(message.content) && <MessageEditorDialog value={message.content} onChange={function(e) {
 								
 								if (chatHistoryIdRef.current && chatHistories && chatHistories[chatHistoryIdRef.current] && chatHistories[chatHistoryIdRef.current][mkey]) {

@@ -70,7 +70,6 @@ export default function HelpPage({isOnlineRef, allowRestart, onCancel, onTranscr
                 <li>TheSession.org tunes database</li>
             </ul>
 
-            <p>This software provides many of the features of Langchain, the dominant solution for chained workflows with language models.</p>
             <p>The software supports tool use and comes with tools for web search and code execution. The injection of recent hard data into the messages we send to language models significantly improves their truthfulness.</p>
 
 

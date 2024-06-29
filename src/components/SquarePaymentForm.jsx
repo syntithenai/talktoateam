@@ -13,7 +13,7 @@ if (import.meta.env.VITE_STAGE === 'dev') {
     LOCATION_ID = import.meta.env.VITE_SQUARE_SANDBOX_LOCATION_ID    
 }
 
-export default function SquarePaymentForm ({user, token, exchangeRate}) {
+export default function SquarePaymentForm ({user, token, exchangeRate, updateCreditBalance}) {
     const [amount, setAmount] = React.useState(0)
     const [firstName, setFirstName] = React.useState('')
     const [lastName, setLastName] = React.useState('')
@@ -50,6 +50,7 @@ export default function SquarePaymentForm ({user, token, exchangeRate}) {
             if (data && data.success === true) {
                 setIsComplete(true)
                 setErrors(null)
+                updateCreditBalance()
             } else {
                 setErrors(data.errors.map(function(e) {return e.detail}))
             }

@@ -74,7 +74,7 @@ export default function RolePage(props) {
 					save("isStarred", (roles && currentRole && roles[currentRole] && roles[currentRole].isStarred) ? false : true)
 				}} variant={(roles && currentRole && roles[currentRole] && roles[currentRole].isStarred) ? "warning"  : 'disabled'} >{icons.star}</Button>
 				<h3>Edit Persona {roles && currentRole && roles[currentRole] && roles[currentRole].name ? " - " + roles[currentRole].name : ''}</h3>
-				<RoleForm config={config} roleId={params.id} rolesJSON={JSON.stringify(roles)} roles={roles} setRoles={setRoles} icons={icons} forceRefresh={forceRefresh} utils={utils} playSpeech={playSpeech} categories={categories} setCategories={setCategories} />
+				<RoleForm {...props} roleId={params.id} rolesJSON={JSON.stringify(roles)}  />
 			</div>
 			
 			<Footer icons={icons} />

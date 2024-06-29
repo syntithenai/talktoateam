@@ -33,7 +33,7 @@
 }
 
 h3 {
-  float:'left'
+  text-align:'left'
 }
 
 @keyframes App-logo-spin {
@@ -58,7 +58,7 @@ body {
 .custom-file-input::-webkit-file-upload-button {
   visibility: hidden;
 }
-.custom-file-input::before {style={{float:'right',marginTop:'0.2em',marginLeft:'0.2em'}}
+.custom-file-input::before {
   display: inline-block;
   background: -webkit-linear-gradient(top, #f9f9f9, #e3e3e3);
   border: 1px solid #999;
@@ -84,7 +84,7 @@ body {
   visibility: hidden;
 }
 .custom-file-input-button::before {
-  content: 'Select';
+  content: 'Upload';
   display: inline-block;
   background: #198754;
   border: 1px solid #999;
@@ -97,7 +97,7 @@ body {
   font-weight: 700;
   font-size: 10pt;
   color:white;
-  width:4em
+  width:4.5em
 }
 .custom-file-input-button:hover::before {
   border-color: black;

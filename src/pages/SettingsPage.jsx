@@ -70,7 +70,6 @@ export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTra
               
 			<div id="body" style={bodyStyle}  >
 			  
-			  <h3>Settings</h3>
 			  <Tabs
 				  defaultActiveKey="llm"
 				  id="configtabs"
@@ -106,6 +105,8 @@ export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTra
 		</div>
 	)
 }
+//<h3>Settings</h3>
+			  
 {/* <Button style={{float:'right', fontSize:'0.7em', marginRight:'0.5em'}} variant="success" onClick={startWizard} >{icons.magic} Setup Wizard</Button>
 			  <Button style={{float:'right', fontSize:'0.7em', marginRight:'0.5em'}} variant="warning" onClick={clearConfig} >{icons.bin} Clear Config And Usage Logs</Button>
 			  <Button style={{float:'right', fontSize:'0.7em', marginRight:'0.5em'}} variant="danger" onClick={clearAll} >{icons.bin} Clear All</Button> */}

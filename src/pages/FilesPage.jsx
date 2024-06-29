@@ -28,8 +28,7 @@ export default function FilesPage(props) {
               <Menu {...{isOnlineRef,bodyStyle, creditBalance, refreshHash, token, logout, user,login, utils, usingStt, usingTts, isSpeaking, isMuted, mute, stopAllPlaying, icons, unmute, stopPlaying, lastLlmTrigger, config, aiUsage, forceRefresh, autoStartMicrophone, setAutoStartMicrophone, isPlaying, allowRestart, isWaiting, startWaiting, stopWaiting, onCancel, isReady, setIsReady, onTranscript, onPartialTranscript, setUserMessage}} />
 			<div id="body" style={bodyStyle}  >
 			
-	<h3>Files</h3>
-        <FileList {...props} />
+	    <FileList {...props} />
         
     
     		</div>
@@ -38,3 +37,5 @@ export default function FilesPage(props) {
 		<Footer icons={icons} />
 	</div>
 }
+//<h3 style={{textAlign:'left'}} >Files</h3>
+    

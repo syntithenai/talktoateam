@@ -7,10 +7,11 @@ import localforage from 'localforage';
 //const { Voy } = await import("voy-search");
 // import useEmbeddingsWorker from './useEmbeddingsWorker'
 import useEmbeddings from './useEmbeddings'
+import useFileSplitter from './useFileSplitter'
 import nlp from 'compromise'
 import {split} from 'sentence-splitter'
 		
-export default function useFileManager({config, storeName, token, logout, allowMimeTypes, loadData, onError, googleFolderName, forceRefresh}) {
+export default function useFileManager({creditBalance, config, storeName, token, logout, allowMimeTypes, loadData, onError, googleFolderName, forceRefresh}) {
 	if (!storeName) storeName = 'files'
   //console.log(storeName, allowMimeTypes)
 	var [files, setFiles] = useState([])
@@ -30,38 +31,42 @@ export default function useFileManager({config, storeName, token, logout, allowM
 	},[])
 
 	const embedder = useEmbeddings() //Worker({workerUrl: './embeddings_worker.js'})
-   
-    function generateFragments(inputString, chunkSize = 20, overlapSize = 3) {
-		console.log('gen frag')
-		const words = inputString.split(/\s+/);
-		const result = [];
-		
-		for (let i = 0; i < words.length; i += (chunkSize - overlapSize)) {
-			const chunk = words.slice(i, i + chunkSize);
-			result.push(chunk.join(' '));
-			if (i + chunkSize >= words.length) {
-				break;
-			}
+	const fileSplitter = useFileSplitter()
+	
+	function maxFragmentSizeFromEmbedder() {
+		if (config && config.embedder && config.embedder.max_length > 0) {
+			return parseInt(config.embedder.max_length)
+		} else {
+			return '8191'
 		}
-		return result;
-		
-		// return split(inputString).filter(function(a) { return (a.type === 'Sentence') }).map(function(a) {return a.raw})
+	}
+
+    function generateFragments(file) {
+		let frags = null
+		if (config && config.embeddings && config.embeddings.max_length > 0) {
+			frags = fileSplitter.generateFragments(file,config.embeddings.max_length );
+		} else {
+			frags = fileSplitter.generateFragments(file);
+		}
+		console.log(frags)
+		return frags
 	}
 	
 	async function generateEmbeddings(fragments) {
-		console.log('gen embed')
+		// console.log('gen embed')
 		if (!(config && config.llm && config.llm.openai_key)) throw new Exception("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
 		return await embedder.run(fragments, config.llm.openai_key)
 		//Promise.all(fragments.map((q) => embedder.run(q)));
 	}
 	//embedder.run(fragments) //
 
-    async function searchVectorFiles(text, files, topK=5) {
+    async function searchVectorFiles(text, files, topK=5, minSimilarity = 0.37) {
 		// console.log("SEARCH VEC", text, files)
 		if (!(config && config.llm && config.llm.openai_key)) throw new Error("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
 		let embedderResponse = await embedder.run([text], config.llm.openai_key)
 		// console.log(embedderResponse)
 		let comparisons = []
+		// generate comparisons between the embedded query text and every file
 		if (embedderResponse  && embedderResponse[0] && embedderResponse[0].embedding) {
 			// console.log('HAVE QUERY EMBEDD', embedderResponse[0].embedding)
 			let queryEmbedding = embedderResponse[0].embedding
@@ -74,11 +79,14 @@ export default function useFileManager({config, storeName, token, logout, allowM
 							// console.log(file.fragments[embeddingKey])
 							if (file.fragments && file.fragments[embeddingKey]) {
 								// console.log("sims",queryEmbedding, embedding)
-								comparisons.push({
-									similarity: utils.cosineSimilarity(queryEmbedding, embedding),
-									file: file.id,
-									fragment: file.fragments[embeddingKey],
-								})
+								let sim = utils.cosineSimilarity(queryEmbedding, embedding)
+								if (sim > minSimilarity) {
+									comparisons.push({
+										similarity: sim,
+										file: file.id,
+										fragment: file.fragments[embeddingKey],
+									})
+								}
 							}
 						})
 					}
@@ -95,20 +103,12 @@ export default function useFileManager({config, storeName, token, logout, allowM
 			return found
 		}
 
-		// .filter((object) =>
-		// 	Object.keys(filter).every((key) => object[key] === filter[key]),
-		// )
-		// const similarities = comparisons.map((obj) => ({
-		// 	similarity: cosineSimilarity(queryEmbedding, obj.embedding),
-		// 	object: obj,
-		// }));
-		
-		// Sort by similarity and return topK results
+		// Sort comparisons by similarity and return topK results
 		let sample = comparisons
 		.sort((a, b) => b.similarity - a.similarity)
 		.slice(0, topK);
 
-		let collatedFiles = []
+		let collatedFiles = {}
 		sample.forEach(function(s) {
 			if (collatedFiles.hasOwnProperty(s.file)) {
 				collatedFiles[s.file].matches.push(s)
@@ -117,6 +117,21 @@ export default function useFileManager({config, storeName, token, logout, allowM
 				collatedFiles[s.file].matches = [s]
 			}
 		})
+		// sort files by combined sum of similarities 
+		collatedFiles = Object.values(collatedFiles).sort(function(a,b) {
+			let tallyA = 0
+			let tallyB = 0
+			if (a && Array.isArray(a.matches)) {
+				a.matches.forEach(function(m) {tallyA += m.similarity})
+			}
+			if (b && Array.isArray(b.matches)) {
+				b.matches.forEach(function(m) {tallyB += m.similarity})
+			}
+			let avgA = (a && Array.isArray(a.matches) && a.matches.length > 0) ? tallyA/a.matches.length : 0
+			let avgB = (a && Array.isArray(b.matches) && b.matches.length > 0) ? tallyB/b.matches.length : 0 
+			return avgA - avgB
+		})
+		
 		return collatedFiles
 	}
     
@@ -133,24 +148,51 @@ export default function useFileManager({config, storeName, token, logout, allowM
 	
 	
 	
-	function addFiles(filesToAdd, resetFilter = true) {
-		console.log('add', filesToAdd, resetFilter)
-		if (Array.isArray(filesToAdd)) {
-			var newFiles = files
-			filesToAdd.forEach(function(file) {
-				if (file) newFiles.push(file)
+	// function addFiles(filesToAdd, resetFilter = true) {
+	// 	console.log('add', filesToAdd, resetFilter)
+	// 	if (Array.isArray(filesToAdd)) {
+	// 		var newFiles = files
+	// 		filesToAdd.forEach(function(file) {
+	// 			if (file) newFiles.push(file)
+	// 		})
+	// 		setFiles(newFiles)
+	// 		refresh().then(function() {
+	// 			forceRefresh()
+	// 		})
+			
+	// 	}
+	// 	return files
+	// }
+	function addFiles(documents, onChange, value) {
+		// console.log('addf',documents)
+		let promises = []
+		if (Array.isArray(documents)) {
+			documents.forEach(function(doc) {
+				promises.push(save(doc))
 			})
-			setFiles(newFiles)
+		}
+		// console.log('addf',promises)
+		Promise.all(promises).then(function(files) {
+			// console.log("saved", files)
+			let ids = Array.isArray(value) ? value : []
+			files.forEach(function(f) {
+				files.push(f)
+				ids.push(f.id)
+			})
+			// console.log('addf DONE',files)
+			setFiles(files)
+			if (onChange) onChange(utils.uniquifyArray(ids))
 			refresh().then(function() {
 				forceRefresh()
 			})
-			
-		}
-		return files
+		})
+		
 	}
 	
+	
+	
 	function updateFiles(files, resetFilter = true) {
-		console.log('updatefiles',files,resetFilter)
+		// console.log('updatefiles',files,resetFilter)
 		setFiles(files)
 		refresh().then(function() {
 			forceRefresh()
@@ -159,7 +201,7 @@ export default function useFileManager({config, storeName, token, logout, allowM
 	}
 	
 	async function doDeleteFile(file) {
-		console.log("DOdelete", file)
+		// console.log("DOdelete", file)
 		if (file && file.id) {
 			file.deleted = true
 			file.data  = null
@@ -185,7 +227,7 @@ export default function useFileManager({config, storeName, token, logout, allowM
 	}
 	
 	async function deleteFile(file){
-		console.log("delete", file,JSON.parse(JSON.stringify(files)))
+		// console.log("delete", file,JSON.parse(JSON.stringify(files)))
 		var m = file.name ? "Really delete the file " + file.name : 'Really delete this file?'
 		if (window.confirm(m)) {
 			doDeleteFile(file).then(function() {})
@@ -203,6 +245,34 @@ export default function useFileManager({config, storeName, token, logout, allowM
       })
     })
   }
+
+
+	function search(titleFilter = null, noData = true) {
+		// console.log('search', titleFilter)
+		return new Promise(function(resolve,reject) {
+			var final = []
+			store.iterate(function(value, key, iterationNumber) {
+				// console.log("SEARCH ITER",value,key,iterationNumber)
+				var passedFilters = value.deleted ? false : true
+				if (titleFilter && titleFilter.trim().length > 0 && value.name.toLowerCase().indexOf(titleFilter.trim()) === -1) {
+				  passedFilters = false
+				}
+				// console.log('searchFF', passedFilters, value, key, iterationNumber)
+				if (passedFilters && value) {
+					//value.bitLength = value.data ? value.data.size : 0
+					if (noData && !loadData) delete value.data  // don't return data with list
+					final.push(value)
+					
+				}
+			}).catch(function(err) {
+				console.log(err);
+				resolve([])
+			}).finally(function() {
+				// console.log('finaly', final)
+				resolve(final)
+			})
+		})
+	}
   
   function updateFileName(file) {
     return new Promise(function(resolve,reject) {
@@ -250,13 +320,13 @@ export default function useFileManager({config, storeName, token, logout, allowM
   
 function save(file) {
 	setIsBusy(true)
-	console.log("save",file, token)
+	// console.log("save",file, token)
 	return new Promise(function(resolve,reject) {
 		
 		function finishSave(file) {
 			file.updatedTimestamp = new Date()
 			store.setItem(file.id, file).then(function (item) {
-				console.log("save set item",item)
+				// console.log("save set item",item)
 				setFiles(files.map(function(f) {
 					if (f & f.id & file.id && file.id == f.id)  {
 						return file
@@ -275,20 +345,24 @@ function save(file) {
 				file.id = utils.generateRandomId() 
 				file.createdTimestamp = new Date()
 			}
+			file.updatedTimestamp = new Date()
 			if (file.data) {
-				console.log("have file data, gen embds")
-				file.fragments = generateFragments(file.data)
-				generateEmbeddings(file.fragments.map(function(fragment) {
-					return file.name + ' ' + fragment
+				// console.log("have file data, gen embds")
+				file.fragments = generateFragments(file)
+				file.chunking_strategy = fileSplitter.determineTextType(file.data)
+				let categories = Array.isArray(file.category) ? file.category.join(' ') : ''
+				if (Array.isArray(file.fragments)) generateEmbeddings(file.fragments.map(function(fragment) {
+					// include file name and categories in embedding
+					return file.name + ' ' + categories + ' ' + fragment
 				} )).then(function(embeddings) {
-					console.log("got emb",embeddings)
+					// console.log("got emb",embeddings)
 					file.embeddings = Array.isArray(embeddings) ? embeddings.map(function(e) {
 						return e.embedding
 					}) : []
 					finishSave(file)
 				})
 			} else {
-				console.log("have NO file data, skip embds")
+				// console.log("have NO file data, skip embds")
 				finishSave(file)
 			}
 			
@@ -301,31 +375,31 @@ function save(file) {
 
 
 
-	function search(titleFilter = null, noData = true) {
-		console.log('search', titleFilter)
-		return new Promise(function(resolve,reject) {
-			var final = []
-			store.iterate(function(value, key, iterationNumber) {
-				// console.log("SEARCH ITER",value,key,iterationNumber)
-				var passedFilters = value.deleted ? false : true
-				if (titleFilter && titleFilter.trim().length > 0 && value.name.toLowerCase().indexOf(titleFilter.trim()) === -1) {
-				  passedFilters = false
-				}
-				// console.log('searchFF', passedFilters, value, key, iterationNumber)
-				if (passedFilters && value) {
-					//value.bitLength = value.data ? value.data.size : 0
-					if (noData && !loadData) delete value.data  // don't return data with list
-					final.push(value)
-				}
-			}).catch(function(err) {
-				console.log(err);
-				resolve([])
-			}).finally(function() {
-				// console.log('finaly', final)
-				resolve(final)
-			})
-		})
-	}
+	// function search(titleFilter = null, noData = true) {
+	// 	console.log('search', titleFilter)
+	// 	return new Promise(function(resolve,reject) {
+	// 		var final = []
+	// 		store.iterate(function(value, key, iterationNumber) {
+	// 			// console.log("SEARCH ITER",value,key,iterationNumber)
+	// 			var passedFilters = value.deleted ? false : true
+	// 			if (titleFilter && titleFilter.trim().length > 0 && value.name.toLowerCase().indexOf(titleFilter.trim()) === -1) {
+	// 			  passedFilters = false
+	// 			}
+	// 			// console.log('searchFF', passedFilters, value, key, iterationNumber)
+	// 			if (passedFilters && value) {
+	// 				//value.bitLength = value.data ? value.data.size : 0
+	// 				if (noData && !loadData) delete value.data  // don't return data with list
+	// 				final.push(value)
+	// 			}
+	// 		}).catch(function(err) {
+	// 			console.log(err);
+	// 			resolve([])
+	// 		}).finally(function() {
+	// 			// console.log('finaly', final)
+	// 			resolve(final)
+	// 		})
+	// 	})
+	// }
 
 
 	function allowMime(mimeFragment) {
@@ -358,39 +432,55 @@ function save(file) {
 	
 	
 	function scrapeUrl(url) {
-		return new Promise(function(resolve,reject) {
-			console.log('scrape',url)
+		return new Promise(function (resolve, reject) {
+			console.log('scrape', url);
 			if (url) {
-				var xhr = new XMLHttpRequest();
-				xhr.responseType = 'blob';
-
-				xhr.onload = function (res) {
-					
-					console.log("SCRAPED",res)
-					const type = res && res.target && res.target.response ? res.target.response.type : ''
-					console.log("SCRAPED TYPE",type)
-					if (xhr.response && type)  {
-						utils.blobToBase64(xhr.response).then(function(b64) {
-							resolve({b64,type})
-						})
-					} else {
-						resolve(null)
-					}
-					//setWaiting(null)
-				};
-				xhr.onerror = function(err) {
-					console.log(err)
-					resolve(null)
+				// Use self provided proxy
+				if (config && config.tools && config.tools.proxy_url) {
+					url = config.tools.proxy_url + url;
+				// Use proxy via credit
+				} else if (creditBalance && token && token.access_token) {
+					url = import.meta.env.VITE_API_URL + '/proxy/' + url;
 				}
-				//setWaiting(true)
+				// console.log('scrape2', url);
+				var xhr = new XMLHttpRequest();
+				
+				xhr.onload = function (res) {
+					// console.log("SCRAPED", res);
+					if (xhr.response) {
+						const reader = new FileReader();
+						reader.onload = function () {
+							resolve(reader.result);
+						};
+						reader.onerror = function (err) {
+							console.log("Failed to read the response as text", err);
+							resolve(null);
+						};
+	
+						reader.readAsText(xhr.response);
+					} else {
+						resolve(null);
+					}
+				};
+	
+				xhr.onerror = function (err) {
+					console.log(err);
+					alert("Failed to load URL " + url);
+					resolve(null);
+				};
+	
 				xhr.open('GET', url);
+				xhr.responseType = 'blob';
 				xhr.send();
+			} else {
+				resolve(null);
 			}
-		})
-  }  
+		});
+	}
+	
   
-	function pasteFiles() {
-		console.log('paste',token)
+	function pasteFiles(onChange = null, value = null) {
+		// console.log('paste',token)
 		return new Promise(function(resolve,reject) {
 			var files = []
 			var promises = []
@@ -406,18 +496,19 @@ function save(file) {
 									item.getType(type).then(function(t) {
 										// TODO currently ignored  || type === 'text/html'
 										if (type === 'text/plain' ) {
-											console.log("TEXT SEEK LINKS")
+											// console.log("TEXT SEEK LINKS")
 											utils.blobToText(t).then(function(a) {
-												console.log("TEXT SEEK LINKS tt")
+												// console.log("TEXT SEEK LINKS tt",a, a.split('\n'))
 												var foundLink = false
-												a.split("/n").forEach(function(line) {
+												a.split("\n").forEach(function(line) {
+													// console.log("handle linke opot",line)
 													if (line.trim().startsWith('http://') || line.trim().startsWith('https://')) {
 														foundLink = true
-														console.log("SCRAPE",line)
+														// console.log("SCRAPE",line)
 														scrapeUrl(line.trim()).then(function(f) {
-															console.log("SCRAPED",f)
+															// console.log("SCRAPED",f)
 															if (f) {
-																resolve2({id: utils.generateRandomId(), name: line, type: f.type, data: f.b64})
+																resolve2({id: utils.generateRandomId(), name: line, type: f.type, data: f})
 															} else {
 																setWarning("Failed to load")
 																resolve(null)
@@ -426,24 +517,51 @@ function save(file) {
 													
 													}
 												})
-												console.log("TEXT SEEK LINKS done",foundLink, allowMime('text/plain'))
+												// console.log("TEXshawnT SEEK LINKS done",foundLink, allowMime('text/plain'))
 												if (!foundLink && allowMime('text/plain')) {
-													console.log("TEXT SEEK LINKS fail, just  paste text")
+													// console.log("TEXT SEEK LINKS fail, just  paste text")
 													const id = utils.generateRandomId()
 													resolve2({id: id, name: 'pasted text ' + id , type: type, data: a})
 												}
 											})
 													
 										} else if (type.indexOf('image/') === 0 && allowMime('image/')) {
-											console.log("IMAGE")
+											// console.log("IMAGE")
 											utils.blobToBase64(t).then(function(a) {
 												const id = utils.generateRandomId()
 												resolve2({id: id, name: 'pasted image ' + id , type: type, data: a})
 											})
 										
 										} else if (type !== 'text/html' && allowMime(type)) {
-											console.log("html")
-											utils.blobToBase64(t).then(function(a) {
+											// console.log("html")
+											
+											utils.blobToText(t).then(function(a) {
+												// console.log("TEXT SEEK LINKS tt",a)
+												var foundLink = false
+												a.split("/n").forEach(function(line) {
+													if (line.trim().startsWith('http://') || line.trim().startsWith('https://')) {
+														foundLink = true
+														// console.log("SCRAPE",line)
+														scrapeUrl(line.trim()).then(function(f) {
+															// console.log("SCRAPED",f)
+															if (f) {
+																resolve2({id: utils.generateRandomId(), name: line, type: f.type, data: f})
+															} else {
+																setWarning("Failed to load")
+																resolve(null)
+															}
+														})
+													
+													}
+												})
+												// console.log("TEXshawnT SEEK LINKS done",foundLink, allowMime('text/plain'))
+												if (!foundLink && allowMime('text/plain')) {
+													// console.log("TEXT SEEK LINKS fail, just  paste text")
+													const id = utils.generateRandomId()
+													resolve2({id: id, name: 'pasted text ' + id , type: type, data: a})
+												}
+
+
 												const id = utils.generateRandomId()
 												resolve2({id: id, name: 'pasted file ' + id , type: type, data: a})
 											})
@@ -453,9 +571,9 @@ function save(file) {
 								})
 							}))
 						})
-						console.log("PROM",promises)
+						// console.log("PROM",promises)
 						Promise.all(promises).then(function(newFiles) {
-							console.log("PPP",newFiles)
+							// console.log("PPP",newFiles)
 							if (Array.isArray(newFiles)) {
 								var savePromises = []
 								newFiles.forEach(function(file) {
@@ -466,8 +584,8 @@ function save(file) {
 									}))
 								})
 								Promise.all(savePromises).then(function(newFiles) {
-									console.log("NdF", newFiles)
-									resolve(addFiles(newFiles))
+									// console.log("NdF", newFiles)
+									resolve(addFiles(newFiles, onChange, value))
 								})
 							}
 						}) 
@@ -479,8 +597,8 @@ function save(file) {
 	}
 
 	
-	function filesSelected(e) {
-		console.log('ssss files selected', e.target.files)
+	function filesSelected(e, onChange = null, value = null) {
+		// console.log('ssss files selected', e.target.files)
 		if (e.target.files) {
 			var files = []
 			var promises = []
@@ -489,7 +607,7 @@ function save(file) {
 				// UNZIP MUSIC XML FILE
 				//if (file && file.type && file.type === "text/plain") {
 					//if (allowMime(file.type) ) {
-						console.log('file selected read b64')
+						// console.log('file selected read b64')
 						promises.push(new Promise(function(resolve,reject) {
 							utils.readFileAsText(file).then(function (res) {
 								resolve({id: utils.generateRandomId(), name: file.name, type: file.type, data: res})
@@ -515,17 +633,9 @@ function save(file) {
 				//}
 			})
 			Promise.all(promises).then(function(data) {
-				console.log('read files',data)
+				// console.log('read files',data)
 				var savePromises = []
 				data.forEach(function(newFile) { 
-					// TODO SAVE AND CLEAR DATA FIELD
-					// two element array 	
-					//if (Array.isArray(dataPair) && dataPair.length === 2) {
-						//files.push({id: utils.generateRandomId(), tuneId: tune && tune.id ? tune.id : null, name: dataPair[0].name, type: dataPair[0].type, data: dataPair[1]})
-					//// full file record from mxl
-					//} else if (typeof dataPair === 'object' ) {
-					//files.push(newFile)
-					//}
 					savePromises.push(new Promise(function(resolve,reject) {
 						save(newFile).then(function(f) {
 							resolve(f)
@@ -533,82 +643,16 @@ function save(file) {
 					}))
 				})
 				Promise.all(savePromises).then(function(finalFiles) {
-					console.log("add selected files", finalFiles)
-					addFiles(finalFiles)
-					refresh().then(function() {
-						forceRefresh()
-					})
+					// console.log("add selected files", finalFiles)
+					return addFiles(finalFiles, onChange, value)
 				})
 			})
 		}
 	}
+
 	  
-	return {files,  fileManager: {searchVectorFiles,generateEmbeddings,generateFragments, setFiles, load, updateFileName, deleteFile, save, search, scrapeUrl, pasteFiles, filesSelected,  allowMime, addFiles, refresh, allowMimeTypes, warning, setWarning, allowMimeTypes, isBusy, setIsBusy}}
+	return {files,  fileManager: {maxFragmentSizeFromEmbedder, searchVectorFiles,generateEmbeddings,generateFragments, setFiles, load, updateFileName, deleteFile, save,  scrapeUrl, pasteFiles, filesSelected,  allowMime, addFiles, refresh, allowMimeTypes, warning, setWarning, allowMimeTypes, isBusy, setIsBusy}}
   
 }
 
 
-
-
-// async function createSearcher(fragments, embeddings) {
-// 	// Index embeddings with voy
-// 	//const resource = { embeddings: embeddings.map(({ result }, i) => ({
-// 	  //id: String(i),
-// 	  //title: fragments[i],
-// 	  //url: `/path/${i}`,
-// 	  //embeddings: result,
-// 	//})) };
-// 	//const index = new Voy(resource);
-// 	//return index
-// }
-// async function searchVoy(text, index) {
-// 	//const q = await model.current.process(text);
-// 	//const result = index.search(q.result, 1);
-
-// 	//// Display search result
-// 	//result.neighbors.forEach((result) =>
-// 	  //console.log(`✨ voy similarity search result: "${result.title}"`)
-// 	//);
-// 	//return result
-// }
-
-    // async function createSearcherFromFiles(files) {
-		//let embeddings = []
-		//let fragments = []
-		//if (Array.isArray(files)) {
-			//files.forEach(function(file) {
-				//if (file && Array.isArray(file.embeddings)) {
-					//embeddings = [...embeddings,...file.embeddings]
-					//if (file && Array.isArray(file.fragments)) {
-						//fragments = [...fragments,...file.fragments]
-					//}
-				//}
-			//})
-		//}
-		//// Index embeddings with voy
-		//const resource = { embeddings: embeddings.map(({ result }, i) => ({
-		  //id: String(i),
-		  //title: fragments[i],
-		  //url: `/path/${i}`,
-		  //embeddings: result,
-		//})) };
-		//console.log("CREATE VOY from files", resource)
-		//const index = new Voy(resource);
-		//return index
-    // }
-    
-	// function search(text, files) {}
-	//   const similarities = this.objects
-	//   .filter((object) =>
-	//     Object.keys(filter).every((key) => object[key] === filter[key]),
-	//   )
-	//   .map((obj) => ({
-	//     similarity: cosineSimilarity(queryEmbedding, obj.embedding),
-	//     object: obj,
-	//   }));
-	
-	// // Sort by similarity and return topK results
-	// return similarities
-	//   .sort((a, b) => b.similarity - a.similarity)
-	//   .slice(0, topK);
-	// }

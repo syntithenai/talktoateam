@@ -1,10 +1,10 @@
 import {useState} from 'react'
-import {Button, ButtonGroup, Modal, ListGroup, Badge} from 'react-bootstrap'
+import {Button, ButtonGroup, Modal, ListGroup, Badge, ListGroupItem} from 'react-bootstrap'
 import useIcons from '../useIcons'
 import ModelSelector from './ModelSelector'
 
-export default function FileSelectorModal({ defaultOptions, onChange , value, icons}) {
-    
+export default function FileSelectorModal(props) {
+    const {files,  defaultOptions, onChange , value, icons} = props
   const [show, setShow] = useState(false);
   const handleClose = () => {
       setShow(false);
@@ -17,10 +17,7 @@ export default function FileSelectorModal({ defaultOptions, onChange , value, ic
   }
 
   if (!show) {
-	  return <Button style={{maxWidth: '30em', float:'left'}} size="sm" variant="secondary"  onClick={handleShow} >
-			<span style={{float:'left'}} >{icons.brain}</span>
-      <span> {value}</span> 
-		</Button>
+	  return <Button style={{maxWidth: '30em', float:'left', color:'green'}} size="sm" variant="outline-success"  onClick={handleShow} >{icons.cursor}</Button>
      
   } else  {
   
@@ -30,11 +27,16 @@ export default function FileSelectorModal({ defaultOptions, onChange , value, ic
      
       <Modal className="fullwidthmodal" show={show} onHide={handleClose}>
         <Modal.Header closeButton>
-          {<Modal.Title>Select Model</Modal.Title>}
+          {<Modal.Title>Select File</Modal.Title>}
         </Modal.Header>
         <Modal.Body style={{minHeight:'800px'}} >
-        
-            <ModelSelector onChange={onChangeWrap}  value={value} defaultOptions={defaultOptions} />
+         {Array.isArray(files) && <ListGroup>{files.map(function(f) {
+            return <ListGroupItem onClick={function() {
+              let items = value
+              items.push(f.id)
+              onChangeWrap(items)
+            }} >{f.name}</ListGroupItem>
+        })}</ListGroup>}
         </Modal.Body>
         <Modal.Footer style={{minHeight:'800px', verticalAlign:'top'}} >
          

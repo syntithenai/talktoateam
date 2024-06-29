@@ -55,9 +55,13 @@ export default function ({config, token, creditBalance, abortController}) {
 		console.log("START SEARCH", config)
 		return new Promise(function(resolve,reject) {
 			//console.log(config, config.tools.tavily_key)
-			// if (!config.tools || !config.tools.tavily_key) {
-			// 	resolve("A key is required to access the tavily web search API. Check your tools configuration.")
-			// }
+			if (config.tools && (config.tools.tavily_key  || config.tools.cors_url)) {
+				// ok
+			} else if (token && token.access_token && creditBalance > 0) {
+				// OK
+			} else {
+				reject("To use websearch you login and buy credit or provide your own tool urls and keys. Check your tools configuration.")
+			}
 			tavilySearch(message.join(' '), 5).then(function(results1) {
 				try {
 					let results = JSON.parse(results1)
