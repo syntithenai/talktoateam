@@ -59,7 +59,7 @@ export default function useGoogleLogin({clientId, scopes, usePrompt, loginButton
     }
     
     function login() {
-      // console.log("login")
+      console.log("login")
       initClient()
       getToken()
     }

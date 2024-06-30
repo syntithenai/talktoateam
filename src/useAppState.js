@@ -9,6 +9,7 @@ export default function useAppState(props) {
 	const utils = useUtils()
 	let abortController = useRef(new AbortController())
 	const [accordionSelectedKey, setAccordionSelectedKey] = useState(0)
+	const [errorMessage, setErrorMessage] = useState('')
 	
 	const utteranceQueue = useRef([])
 	
@@ -130,7 +131,7 @@ export default function useAppState(props) {
 
 	const [availableModels, setAvailableModels]  = useState([])
 	useEffect(function() {
-		console.log("appstate load models", creditBalance, config, props.token)
+		// console.log("appstate load models", creditBalance, config, props.token)
 		if (configRef.current) {
 			fetch(import.meta.env.VITE_API_URL + '/pricing', {
 				method: 'GET',
@@ -143,7 +144,7 @@ export default function useAppState(props) {
 					throw new Error('Failed to load pricing');
 				}
 				response.json().then(function(data) {
-					console.log("bill respon DATA", data)
+					// console.log("bill respon DATA", data)
 					if (data && data.llm) {
 						let availableModels = data.llm.map(function(model) {
 							model.id = utils.generateRandomId()
@@ -167,7 +168,7 @@ export default function useAppState(props) {
 							allowedProviders.push('groqcloud')
 						}
 						
-						console.log("providers", allowedProviders)
+						// console.log("providers", allowedProviders)
 						let models = availableModels.filter(function(model) {
 							console.log(model.provider, allowedProviders)
 							if (model.provider && allowedProviders.indexOf(model.provider) !== -1) {
@@ -185,7 +186,7 @@ export default function useAppState(props) {
 							}
 						}
 						setAvailableModels(models)
-						console.log("LOADED MODELS",models, allowedProviders)
+						// console.log("LOADED MODELS",models, allowedProviders)
 					}
 				})
 			})
@@ -266,5 +267,5 @@ export default function useAppState(props) {
 		setRefreshHash(new Date().getTime())
 	}
 
-	return {isOnlineRef, exchangeRate, setExchangeRate,updateExchangeRate, abortController, creditBalance, updateCreditBalance, availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
+	return {errorMessage, setErrorMessage, isOnlineRef, exchangeRate, setExchangeRate,updateExchangeRate, abortController, creditBalance, updateCreditBalance, availableModels, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone,autoStopMicrophone, setAutoStopMicrophone, llmEnabled, setLlmEnabled, icons, configRef, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting,  userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter}
 }

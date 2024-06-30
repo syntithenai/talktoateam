@@ -29,9 +29,10 @@ import {useParams, useLocation, useNavigate} from 'react-router-dom';
 import {HashRouter as  Router,Routes, Route, Link  } from 'react-router-dom'
 import ChatHistoriesModal from './components/ChatHistoriesModal'
 import ChatHistoryPage from './pages/ChatHistoryPage'
-
+import ErrorWarningModal from './components/ErrorWarningModal'
 import SettingsPage from './pages/SettingsPage'
 import ChatPage from './pages/ChatPage'
+import RoadMapPage from './pages/RoadMapPage';
 import RolesPage from './pages/RolesPage'
 import RolePage from './pages/RolePage'
 import HelpPage from './pages/HelpPage'
@@ -88,7 +89,7 @@ function App({nlp}) {
 	}
 	
 	const {scrollTo, generateRandomId} = useUtils()
-	const {isOnlineRef, exchangeRate, setExchangeRate,updateExchangeRate,abortController, creditBalance, updateCreditBalance, availableModels ,utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter} = useAppState({doSave, token})
+	const {errorMessage, setErrorMessage, isOnlineRef, exchangeRate, setExchangeRate,updateExchangeRate,abortController, creditBalance, updateCreditBalance, availableModels ,utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter} = useAppState({doSave, token})
 	let modelSelector = useModelSelector({configString: JSON.stringify(config), creditBalance, token, availableModels})
 
 	
@@ -144,9 +145,11 @@ function App({nlp}) {
 					setRuntimes(t)
 				})
 			}).catch(function(e) {
+				setErrorMessage("Failed to load code runtimes from "+ configManager.codeRunnerEndpoint())
 				console.log(e)
 			})
 		} catch (error) {
+			setErrorMessage("Failed to load code runtimes from "+ configManager.codeRunnerEndpoint())
 			console.error('Error loading code runtimes:', error);
 		}
 	}, [])
@@ -169,6 +172,7 @@ function App({nlp}) {
 		files, 
 		fileManager,
 		modelSelector,
+		errorMessage,  setErrorMessage, 
 		onStart: function() {
 			//console.log('LOCAL LLM START')
 			addAssistantMessage('')
@@ -203,7 +207,7 @@ function App({nlp}) {
 				console.log('ABORT: ', error.message);
 			} else {
 				console.log('LLM error:', error.message);
-				alert(error)
+				setErrorMessage(error.message)
 			}
 			//alert(err)
 			// revertChatHistory()
@@ -225,6 +229,7 @@ function App({nlp}) {
 		utils,
 		files, 
 		fileManager,
+		errorMessage,  setErrorMessage, 
 		onStart: function() {
 			//console.log('TEAM LLM START')
 			addAssistantMessage('')
@@ -255,7 +260,7 @@ function App({nlp}) {
 				console.log('ABORT: ', error.message);
 			} else {
 				console.log('LLM error:', error.message);
-				alert(error)
+				setErrorMessage(error.message)
 			}
 			// try {
 			// 	revertChatHistory()
@@ -336,14 +341,17 @@ function App({nlp}) {
 	}
 	
 	
-	let allProps = {isOnlineRef, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels, getDocument}
+	let allProps = {errorMessage, setErrorMessage, isOnlineRef, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels, getDocument}
 	
 	return (<div style={{position:'relative'}}>
 		{mergeData && <MergeWarningModal chatHistoryId={chatHistoryId} chatHistories={chatHistories} setChatHistories={setChatHistories} logs={aiUsage.logs} setLogs={aiUsage.setLogs} doSave={doSave} config={config} setConfig={setConfig} forceRefresh={forceRefresh} mergeData={mergeData} setMergeData={setMergeData} roles={roles} setRoles={setRoles}  currentRole={currentRole} setCurrentRole={setCurrentRole} setChatHistoryRoles={setChatHistoryRoles} chatHistoryRoles={chatHistoryRoles} />}
 		{!mergeData && 
 			<>
+				
+		
 				{!hasRequiredConfig(config) && <ConfigWizard login={login} logout={logout} user={user} token={token} config={config} setConfig={setConfig} forceRefresh={forceRefresh} />}
 				{hasRequiredConfig(config) && <Router >
+					{errorMessage &&  <ErrorWarningModal errorMessage={errorMessage} setErrorMessage={setErrorMessage} icons={icons} />}
 						<Routes>
 							<Route  path={`/`}   element={<HomePage {...allProps}  />} />
 							<Route  path={`/menu`}   element={<ChatHistoryPage {...allProps}  />} />
@@ -369,6 +377,8 @@ function App({nlp}) {
 							<Route path={`/pricing`} element={<PricingPage {...allProps}  />} />
 							<Route path={`/transactions`} element={<TransactionsPage {...allProps}  />} />
 							<Route path={`/admin`} element={<AdminTransactionsPage {...allProps}  />} />
+							<Route path={`/roadmap`} element={<RoadMapPage {...allProps}  />} />
+							
 						</Routes>    
 					</Router >
 				}
@@ -384,4 +394,4 @@ function App({nlp}) {
 export default App;
 
 //<Route path={`/payment`} element={<PaypalPaymentPage {...allProps}  />} />
-							
+							 

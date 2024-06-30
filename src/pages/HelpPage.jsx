@@ -76,31 +76,7 @@ export default function HelpPage({isOnlineRef, allowRestart, onCancel, onTranscr
             <p>The software includes a File Manager that generates vector embeddings to be used with an integrated Retrieval Augmented Generation(RAG) system.</p>
 
         </Tab>
-        <Tab eventKey="ui" title="UI">
-        <p>At the heart of the software is a chat interface. Most language models are trained on histories of conversations. Language models usually understand "chat history" well.</p>
-    
-    <h3>Menu Bar</h3>
-    <p>The three lines in the top left take the user to the list of chats that have been saved. It also opens additional menu items not available on the chat page including (left to right), the current chat session, admin of personas and teams, settings, and help.</p>
-
-    <h3>Chat Interface</h3>
-    <p>Message input and send buttons plus a paperclip button to load a file as the user message.</p>
-    <p>In the menu bar "New Chat" button.</p>
-    <p>Assistant selector including:</p>
-    <ul>
-        <li>Pencil to edit cu rrent assistant</li>
-        <li>Button with name that opens the assistant selector</li>
-        <li>Button with examples showing how to use the assistant</li>
-    </ul>
-    <p>Edit, copy buttons per content section. It team flows shown in Accordion, edit and copy buttons per section.</p>
-    <p>Revert history (user messages only) will delete all chat history after this point and load the user message into the form for editing and resubmission.</p>
-    <p>Costs and duration are shown for assistant responses.</p>
-
-    <h3>Chat History</h3>
-    <p>Search filter at top of page.</p>
-    <p>List showing previous conversations with copy and delete buttons.</p>
-    <p>New chat button.</p>
-    <p>Clear all chat history button.</p>
-        </Tab>
+       
         <Tab eventKey="personas" title="Personas">
             <p>A persona is a collection of properties that define how a model should respond. In particular, a persona has form fields to edit:</p>
             <ul>
@@ -114,7 +90,7 @@ export default function HelpPage({isOnlineRef, allowRestart, onCancel, onTranscr
             </ul>
             <p>A persona can have the type "inference" in which case it uses language models to generate responses. A persona can also have the type "algorithmic" in which case it executes the code inside the editable function block to generate a response.</p>
             <p>The output format wrap as field allows the addition of text before and after the generated content. This can be useful to trigger a renderer (more below). The output wrapping is applied before tool use so it can also be useful in ensuring the correct wrapping to trigger tools use.</p>
-            <p>It is possible to select a preferred model size. This allows the use of the fastest most cost-effective model for the task. This field is used to determine the best model to call when using this persona. The configuration will determine the actual available models. <strong>!!!This feature is not implemented at this time.</strong></p>
+            <p>It is possible to select a preferred model size. This allows the use of the fastest most cost-effective model for the task. This field is used to determine the best model to call when using this persona. The configuration will determine the actual available models.</p>
 
         </Tab>
         <Tab eventKey="teams" title="Teams">

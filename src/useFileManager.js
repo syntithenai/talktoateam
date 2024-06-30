@@ -54,16 +54,16 @@ export default function useFileManager({creditBalance, config, storeName, token,
 	
 	async function generateEmbeddings(fragments) {
 		// console.log('gen embed')
-		if (!(config && config.llm && config.llm.openai_key)) throw new Exception("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
-		return await embedder.run(fragments, config.llm.openai_key)
+		if (!(config && config.embeddings && config.embeddings.openai_key)) throw new Exception("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
+		return await embedder.run(fragments, config.embeddings.openai_key)
 		//Promise.all(fragments.map((q) => embedder.run(q)));
 	}
 	//embedder.run(fragments) //
 
     async function searchVectorFiles(text, files, topK=5, minSimilarity = 0.37) {
 		// console.log("SEARCH VEC", text, files)
-		if (!(config && config.llm && config.llm.openai_key)) throw new Error("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
-		let embedderResponse = await embedder.run([text], config.llm.openai_key)
+		if (!(config && config.embeddings && config.embeddings.openai_key)) throw new Error("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
+		let embedderResponse = await embedder.run([text], config.embeddings.openai_key)
 		// console.log(embedderResponse)
 		let comparisons = []
 		// generate comparisons between the embedded query text and every file

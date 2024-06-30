@@ -3,7 +3,7 @@ import nlp from 'compromise'
 //const config = require('./config')
 
 //const nlp = window.nlp
-function agenticLlmApiClient({files, fileManager, token, modelSelector, aiUsage, onError, tools , onStart, abortController}) {
+function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage, tools , onError, onStart, abortController}) {
 	// force local api
 	// url = import.meta.env.VITE_API_URL
 	// console.log("AGENTIC",token)
@@ -172,7 +172,7 @@ function agenticLlmApiClient({files, fileManager, token, modelSelector, aiUsage,
 	
 	async function start({messages, modelConfig, onUpdate, onComplete,onStart}) {
 		console.log("AGENTIC START",modelConfig, fileManager)	
-		let final = {}
+		let finalFiles = {}
 		let filesIndex = {}
 		if (Array.isArray(files)) files.forEach(function(f) {
 			if (f && f.id) filesIndex[f.id] = f
@@ -180,11 +180,11 @@ function agenticLlmApiClient({files, fileManager, token, modelSelector, aiUsage,
 		if (modelConfig && Array.isArray(modelConfig.files)) {
 			modelConfig.files.forEach(function(id) {
 				if (filesIndex[id]) {
-					final[id] = filesIndex[id]
+					finalFiles[id] = filesIndex[id]
 				}
 			})
 		}
-		console.log("AGENTIC START files", files, final, filesIndex)	
+		console.log("AGENTIC START files", files, finalFiles, filesIndex)	
 		let startTime = new Date()
 		if (modelConfig && modelConfig.type ==="algorithmic" ) {
 			isStopped = false
@@ -198,7 +198,7 @@ function agenticLlmApiClient({files, fileManager, token, modelSelector, aiUsage,
 					let message = lastUserMessage ? lastUserMessage.content : ''
 					console.log("Function CALL:", message, messages, lastUserMessage);
 					try {
-						let functionResult =   processorFunction(message, messages, files);
+						let functionResult =   processorFunction(message, messages, finalFiles);
 						console.log("Function res:", functionResult);
 						if (functionResult && functionResult.then && typeof functionResult.then == 'function') {
 							return functionResult.then(function(pRes) {
@@ -253,8 +253,8 @@ function agenticLlmApiClient({files, fileManager, token, modelSelector, aiUsage,
 			let ragData = []
 			let text = Array.isArray(messages) && messages.length > 0 && messages[messages.length -1].content ? messages[messages.length -1].content : ''
 			// console.log("RAG SESARCH",text)
-			if (text && Array.isArray(files)) {
-				let vectorResults = await fileManager.searchVectorFiles(text, files)
+			if (text && Array.isArray(finalFiles)) {
+				let vectorResults = await fileManager.searchVectorFiles(text, finalFiles)
 				// console.log("VECRESSSSS", vectorResults)
 				if (Array.isArray(vectorResults)) {
 					// console.log("VECRESSSSS os array", vectorResults, vectorResults.length, vectorResults[0])

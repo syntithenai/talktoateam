@@ -61,7 +61,7 @@ export default function PricingPage({ isOnlineRef,allowRestart, onCancel, onTran
 							<Table striped bordered hover>
 								<thead><tr><th>Service</th><th>Charge</th></tr></thead>
 								<tbody>
-									<tr><td>Requests made through our LLM proxy</td><td>15% surcharge on provider price plus $0.01  per request </td></tr>
+									<tr><td>LLM proxy (chat to a range of providers)</td><td>15% surcharge on provider price plus $0.01  per request </td></tr>
 									<tr><td>AI enhanced websearch</td><td>$0.02  per request</td></tr>
 									<tr><td>Web request made through our CORS supporting proxy</td><td>$0.01 per request</td></tr>
 									<tr><td>Code execution endpoint</td><td>$0.005/second</td></tr>
