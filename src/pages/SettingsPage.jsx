@@ -14,6 +14,7 @@ import Menu from '../components/Menu'
 import Footer from '../components/Footer';
 import {Link } from 'react-router-dom'
 import ModelSelectorModal from '../components/ModelSelectorModal'
+import {useParams, useLocation, useNavigate} from 'react-router-dom';
 
 export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTranscript, onPartialTranscript, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}) {
 	// console.log(token)
@@ -21,7 +22,13 @@ export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTra
 	// useEffect(function() {
 	// 	if (token && token.access_token) updateCreditBalance(token)
 	// },[token])
-
+	let params = useParams()
+	let [activeTab , setActiveTab] = useState(params.section)
+	
+	useEffect(function() {
+		setActiveTab(params.section)
+	},[params.section])
+	  
 	function clearConfig() {
 		setConfig({llm:{},stt:{},tts:{}})
 		aiUsage.setLogs({})
@@ -71,7 +78,8 @@ export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTra
 			<div id="body" style={bodyStyle}  >
 			  
 			  <Tabs
-				  defaultActiveKey="llm"
+				  activeKey={activeTab}
+				  onSelect={function(e) {setActiveTab(e)}}
 				  id="configtabs"
 				  className="mb-3"
 				>

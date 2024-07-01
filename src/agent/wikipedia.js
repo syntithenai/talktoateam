@@ -3,7 +3,7 @@ export default function({config, abortController}) {
         async function wikipedia_search(searchTerm) {
             const apiUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(searchTerm)}&utf8=&format=json&origin=*`;
             let options =  {signal: abortController.current.signal}
-            try {
+            // try {
                 const response = await fetch(apiUrl, options);
                 const data = await response.json();
 				console.log("WIKISEARCH DATA",response,data)
@@ -12,15 +12,15 @@ export default function({config, abortController}) {
 					 return sr.title  
 				   }).join("\n")  + "\n" + "```"
                 }
-            } catch (error) {
-                return error
-            }
+            // } catch (error) {
+            //     return error
+            // }
         }
 
         async function wikipedia_load_page(title) {
 			const pageUrl = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&titles=${encodeURIComponent(title)}&format=json&explaintext=true&origin=*`;
             let options =  {signal: abortController.current.signal}
-            try {
+            // try {
                 const response = await fetch(pageUrl, options);
                 const data = await response.json();
                 // console.log("DD",data)
@@ -28,9 +28,9 @@ export default function({config, abortController}) {
 				const text = key ? data.query.pages[key].extract : ''
 				return text
 				
-            } catch (error) {
-                return error
-            }
+            // } catch (error) {
+            //     return error
+            // }
         }
         
         async function wikipedia_first_result(searchTerm) {

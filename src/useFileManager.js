@@ -11,7 +11,7 @@ import useFileSplitter from './useFileSplitter'
 import nlp from 'compromise'
 import {split} from 'sentence-splitter'
 		
-export default function useFileManager({creditBalance, config, storeName, token, logout, allowMimeTypes, loadData, onError, googleFolderName, forceRefresh}) {
+export default function useFileManager({isFileManagerWaiting, setIsFileManagerWaiting,creditBalance, config, storeName, token, logout, allowMimeTypes, loadData, onError, googleFolderName, forceRefresh}) {
 	if (!storeName) storeName = 'files'
   //console.log(storeName, allowMimeTypes)
 	var [files, setFiles] = useState([])
@@ -30,14 +30,14 @@ export default function useFileManager({creditBalance, config, storeName, token,
 		refresh()
 	},[])
 
-	const embedder = useEmbeddings() //Worker({workerUrl: './embeddings_worker.js'})
+	const embedder = useEmbeddings({config, onError}) //Worker({workerUrl: './embeddings_worker.js'})
 	const fileSplitter = useFileSplitter()
 	
 	function maxFragmentSizeFromEmbedder() {
 		if (config && config.embedder && config.embedder.max_length > 0) {
 			return parseInt(config.embedder.max_length)
 		} else {
-			return '8191'
+			return 8191
 		}
 	}
 
@@ -54,22 +54,39 @@ export default function useFileManager({creditBalance, config, storeName, token,
 	
 	async function generateEmbeddings(fragments) {
 		// console.log('gen embed')
-		if (!(config && config.embeddings && config.embeddings.openai_key)) throw new Exception("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
-		return await embedder.run(fragments, config.embeddings.openai_key)
+		return await embedder.run(fragments)
 		//Promise.all(fragments.map((q) => embedder.run(q)));
 	}
 	//embedder.run(fragments) //
 
     async function searchVectorFiles(text, files, topK=5, minSimilarity = 0.37) {
 		// console.log("SEARCH VEC", text, files)
-		if (!(config && config.embeddings && config.embeddings.openai_key)) throw new Error("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
-		let embedderResponse = await embedder.run([text], config.embeddings.openai_key)
-		// console.log(embedderResponse)
+		//if (!(config && config.embeddings && config.embeddings.openai_key)) throw new Error("Invalid embed configuration. Login and buy credit or provide your own keys for embeddings in settings.")
+		let usedEmbeddings = {}
+		if (Array.isArray(files)) files.forEach(function(f) {
+			// console.log(f)
+			if (f && f.embeddings_model && f.embeddings_provider) usedEmbeddings[f.embeddings_provider + " " + f.embeddings_model] = true
+		})
+		// console.log('USED',usedEmbeddings)
+		let queryEmbeddings = {}
+		for (let key in Object.keys(usedEmbeddings)) {
+			// console.log('get ',key, usedEmbeddings)
+			let k = Object.keys(usedEmbeddings)[key]
+			let embeddings = await embedder.runModel([text], k)
+			// console.log('HAVE QUERY EMBEDD', k, embeddings)
+			if (embeddings  && embeddings[0] && embeddings[0].embedding) {
+				// console.log('HAVE QUERY EMBEDD OK', k, embeddings[0].embedding)
+				let queryEmbedding = embeddings[0].embedding
+				queryEmbeddings[k] = queryEmbedding
+			}
+		}
+		//let embedderResponse = await embedder.run([text])
+		// console.log(usedEmbeddings, queryEmbeddings)
 		let comparisons = []
 		// generate comparisons between the embedded query text and every file
-		if (embedderResponse  && embedderResponse[0] && embedderResponse[0].embedding) {
+		// if (embedderResponse  && embedderResponse[0] && embedderResponse[0].embedding) {
 			// console.log('HAVE QUERY EMBEDD', embedderResponse[0].embedding)
-			let queryEmbedding = embedderResponse[0].embedding
+			// let queryEmbedding = embedderResponse[0].embedding
 			if (Array.isArray(files)) {
 				files.forEach(function(file, fileKey) {
 					// console.log("file" ,file)
@@ -77,9 +94,9 @@ export default function useFileManager({creditBalance, config, storeName, token,
 						// console.log(file.embeddings, file.fragments)
 						file.embeddings.forEach(function(embedding, embeddingKey) {
 							// console.log(file.fragments[embeddingKey])
-							if (file.fragments && file.fragments[embeddingKey]) {
-								// console.log("sims",queryEmbedding, embedding)
-								let sim = utils.cosineSimilarity(queryEmbedding, embedding)
+							if (file.fragments && file.fragments[embeddingKey] && file.embeddings_provider && file.embeddings_model && queryEmbeddings[file.embeddings_provider + ' ' + file.embeddings_model]) {
+								// console.log("sims",queryEmbeddings[file.embeddings_provider + ' ' + file.embeddings_model], embedding)
+								let sim = utils.cosineSimilarity(queryEmbeddings[file.embeddings_provider + ' ' + file.embeddings_model], embedding)
 								if (sim > minSimilarity) {
 									comparisons.push({
 										similarity: sim,
@@ -93,7 +110,7 @@ export default function useFileManager({creditBalance, config, storeName, token,
 				})
 			}
 			// console.log("COMPS",comparisons)
-		}
+		// }
 		
 		function findFile(id) {
 			let found = null
@@ -354,8 +371,10 @@ function save(file) {
 				if (Array.isArray(file.fragments)) generateEmbeddings(file.fragments.map(function(fragment) {
 					// include file name and categories in embedding
 					return file.name + ' ' + categories + ' ' + fragment
-				} )).then(function(embeddings) {
+				} )).then(function({provider, model,embeddings}) {
 					// console.log("got emb",embeddings)
+					file.embeddings_model = model
+					file.embeddings_provider = provider
 					file.embeddings = Array.isArray(embeddings) ? embeddings.map(function(e) {
 						return e.embedding
 					}) : []
@@ -651,7 +670,7 @@ function save(file) {
 	}
 
 	  
-	return {files,  fileManager: {maxFragmentSizeFromEmbedder, searchVectorFiles,generateEmbeddings,generateFragments, setFiles, load, updateFileName, deleteFile, save,  scrapeUrl, pasteFiles, filesSelected,  allowMime, addFiles, refresh, allowMimeTypes, warning, setWarning, allowMimeTypes, isBusy, setIsBusy}}
+	return {files,  fileManager: {isReady: embedder.isReady, readyProgress: embedder.readyProgress, maxFragmentSizeFromEmbedder, searchVectorFiles,generateEmbeddings,generateFragments, setFiles, load, updateFileName, deleteFile, save,  scrapeUrl, pasteFiles, filesSelected,  allowMime, addFiles, refresh, allowMimeTypes, warning, setWarning, allowMimeTypes, isBusy, setIsBusy}}
   
 }
 

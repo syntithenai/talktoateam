@@ -313,7 +313,7 @@ export default function ChatPage({isOnlineRef,onPartialTranscript, allowRestart,
 				<div style={{fontWeight:'bold',textAlign:'left', width:'100%'}} >{Array.isArray(chatHistory) && chatHistory.filter(function(v) {return (v.role === 'system')}).map(function(v) {return v.content}).join("/n")}</div>
 				<ListGroup>
 				
-				{welcomeMessage &&  <ListGroup.Item key={-1}  style={{backgroundColor:  "green" , textAlign:'left'}} ><b style={{marginBottom:'2em'}} >ASSISTANT:</b> {welcomeMessage}</ListGroup.Item>}
+				{welcomeMessage &&  <ListGroup.Item key={-1}  style={{backgroundColor:  "#3d94da1f" , textAlign:'left'}} ><b style={{marginBottom:'2em'}} >ASSISTANT:</b> {welcomeMessage}</ListGroup.Item>}
 				{chatHistoryFiltered.map(function(message,mkey) {
 					let tally_in = 0
 					let tally_out = 0

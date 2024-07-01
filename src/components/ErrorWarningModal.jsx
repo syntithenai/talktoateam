@@ -15,7 +15,7 @@ export default function ErrorWarningModal({errorMessage, setErrorMessage, icons}
     </Modal.Body>
     <Modal.Footer >
       <Row>
-        <Col><Link to='/settings'  onClick={handleClose} ><Button style={{minWidth:'6em'}}>Settings</Button></Link></Col>
+        <Col><Link to='/settings/tools'  onClick={handleClose} ><Button style={{minWidth:'6em'}}>Settings</Button></Link></Col>
         <Col><Link to='/payment'  onClick={handleClose}  ><Button variant="success" style={{minWidth:'9em'}} >Buy Credit</Button></Link></Col>
         <Col><Button variant="danger" onClick={handleClose} style={{minWidth:'6em'}} >Close</Button></Col>
       </Row>

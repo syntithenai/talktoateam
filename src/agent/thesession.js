@@ -26,9 +26,10 @@ export default function({config, abortController}) {
 						}
 						resolve( ires)
 					})
-				}).catch(function(e) {
-				   resolve('')
 				})
+				// .catch(function(e) {
+				//    resolve('')
+				// })
 			})
 		}
 		
@@ -56,9 +57,10 @@ export default function({config, abortController}) {
 							})
 						} 
 					})
-				}).catch(function(e) {
-					resolve('')
-				})	
+				})
+				// .catch(function(e) {
+				// 	resolve('')
+				// })	
 			})
  
 		}
@@ -74,9 +76,10 @@ export default function({config, abortController}) {
 						}).join(`\n`)
 						resolve( "```" + res + "```")
 					})
-				}).catch(function(e) {
-				   resolve('')
-				})	
+				})
+				// .catch(function(e) {
+				//    resolve('')
+				// })	
 			})
 		}
         	

@@ -200,7 +200,7 @@ export default function HomePage({loadRole,  isOnlineRef,allowRestart, onCancel,
             <Card style={{ width: '100%' }}>
               
               <Card.Body>
-                <RolesBasedChart forceRefresh={forceRefresh} />
+                <img src="/teams/roles_based.png" style={{width:'53em'}} />
               </Card.Body>
               <Card.Body>
                 <Card.Title>Agentic Workflows</Card.Title>

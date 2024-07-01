@@ -11,6 +11,7 @@ export default function useAppState(props) {
 	const [accordionSelectedKey, setAccordionSelectedKey] = useState(0)
 	const [errorMessage, setErrorMessage] = useState('')
 	
+
 	const utteranceQueue = useRef([])
 	
 	function setUtteranceQueue(history) {
@@ -170,7 +171,7 @@ export default function useAppState(props) {
 						
 						// console.log("providers", allowedProviders)
 						let models = availableModels.filter(function(model) {
-							console.log(model.provider, allowedProviders)
+							// console.log(model.provider, allowedProviders)
 							if (model.provider && allowedProviders.indexOf(model.provider) !== -1) {
 								return true
 							}

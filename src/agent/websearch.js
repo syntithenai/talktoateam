@@ -1,5 +1,6 @@
 // requires config.tavilyKey and config.tavilyUrl and controller (for stopping web request)
-export default function ({config, token, creditBalance, abortController}) {
+export default function ({config, token, creditBalance, abortController, onError}) {
+	
 	// console.log("websearch", config, token, creditBalance)
 	async function tavilySearch(query, maxResults = 5)  {
 		if (config || creditBalance > 0) {
@@ -22,7 +23,7 @@ export default function ({config, token, creditBalance, abortController}) {
 				url = import.meta.env.VITE_API_URL + '/websearch'
 				headers['authorization'] = 'Bearer ' +  token.access_token 
 			} else {
-				window.alert("Login  and buy credit or provide Tavily credentials in Tools settings to enable web search.")
+				onError("To use web search, you need to login and buy credit or configure your own tool urls and keys in the tools settings.")
 				return JSON.stringify({error:'No access'})
 			}
 			// JSON.stringify(console.log(url,headers))
@@ -46,8 +47,7 @@ export default function ({config, token, creditBalance, abortController}) {
 				return response.json()
 			} 
 		} else {
-			window.alert("Login and buy credit or provide Tavily credentials in Tools settings to enable web search.")
-			return JSON.stringify({error:'No access'})
+			onError("To use web search, you need to login and buy credit or configure your own tool urls and keys in the tools settings.")
 		}
 		return {}
 	}
@@ -60,30 +60,31 @@ export default function ({config, token, creditBalance, abortController}) {
 			} else if (token && token.access_token && creditBalance > 0) {
 				// OK
 			} else {
-				reject("To use websearch you login and buy credit or provide your own tool urls and keys. Check your tools configuration.")
+				onError("To use web search, you need to login and buy credit or configure your own tool urls and keys in the tools settings.")
 			}
 			tavilySearch(message.join(' '), 5).then(function(results1) {
-				try {
+				// try {
 					let results = JSON.parse(results1)
-					console.log("TTRES",results)
+					// console.log("TTRES",results)
 					if (results && results.detail && results.detail.error) {
-						return reject(results.detail.error)
+						throw new Error(results.detail.error)
 					}
 					if (results && results.detail && results.detail.error) {
-						return reject(results.detail.error)
+						throw new Error(results.detail.error)
 					}
-					console.log(results)
+					// console.log(results)
 					let final = [results.answer]
 					// let final = [results && results.answer ? results.answer : (results && Array.isArray(results.results) ? results.results.map(function(r) {return r.content}).join("\n") : '')]
 					return resolve(final.join("\n"))
-				} catch (e) {
-					console.log(e)
-					reject(String(e))}
-					// resolve('')
-			}).catch(function(e) {
-					console.log(e)
-					reject("Failed web search, check your configuration and/or try again later.")
+				// } catch (e) {
+				// 	console.log(e)
+				// 	reject(String(e))}
+				// 	// resolve('')
 			})
+			// .catch(function(e) {
+			// 		console.log(e)
+			// 		reject("Failed web search, check your configuration and/or try again later.")
+			// })
 		})
 	}
 

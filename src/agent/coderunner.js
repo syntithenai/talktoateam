@@ -27,9 +27,6 @@ export default function({runtimes, config, token, creditBalance}) {
 		})
 	}
 
-
-	
-
 	function coderunner_run(text) {
 		return new Promise(function(resolve,reject) {
 			if (text) {
@@ -42,8 +39,6 @@ export default function({runtimes, config, token, creditBalance}) {
 					console.log('language',language, code)
 					runCode(code, language).then(function({response, error} ) {
 						resolve(response + (error ? "\n### ERROR \n"+error : '' ))
-					}).catch(function(e) {
-						reject(e)
 					})
 					
 				} else {
@@ -99,7 +94,7 @@ export default function({runtimes, config, token, creditBalance}) {
 				}
 				
 				error = ''
-				try {
+				//try {
 					fetch(url , {
 						method: 'POST',
 						headers: headers
@@ -121,12 +116,12 @@ export default function({runtimes, config, token, creditBalance}) {
 							resolve({response,error})
 						})
 					})
-				} catch (error) {
-					let response = ''
-					error = String(error)
-					resolve({response, error})
-					console.error('Speech generateion error:', error);
-				}
+				// } catch (error) {
+				// 	let response = ''
+				// 	error = String(error)
+				// 	resolve({response, error})
+				// 	console.error('Speech generateion error:', error);
+				// }
 			}
 		})
 	}

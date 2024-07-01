@@ -1,4 +1,4 @@
-import {React, useState} from 'react'
+import {React, useState, useEffect} from 'react'
 import {Button, Modal, Form, Row, Col} from 'react-bootstrap'
 
 import useIcons from '../useIcons'
@@ -82,63 +82,69 @@ export default function MergeWarningModal({chatHistoryId, chatHistories, setChat
 		}
 	}
 
-	function discard() {
-		//console.log("DISCARD",mergeData,currentRole,category,systemMessage,systemConfig,roles,chatHistory,config)
-		doSave()
-		setMergeData(null)
-	}
+
+	useEffect(function() {
+		if (mergeData) merge()
+	},[mergeData])
+
+	// function discard() {
+	// 	//console.log("DISCARD",mergeData,currentRole,category,systemMessage,systemConfig,roles,chatHistory,config)
+	// 	doSave()
+	// 	setMergeData(null)
+	// }
 	
-	function overwrite() {
-		//console.log("OVERWRITE",mergeData,currentRole,category,systemMessage,systemConfig,roles,chatHistory,config)
-		if (mergeData) {
-			if (mergeData.currentRole) setCurrentRole( mergeData.currentRole)
-			if (mergeData.category) setCategory( mergeData.category)
-			if (mergeData.category) setCategory( mergeData.category)
-			if (mergeData.systemMessage) setSystemMessage(mergeData.systemMessage)
-			if (mergeData.systemConfig) setSystemConfig(mergeData.systemConfig)
-			if (mergeData.config) setConfig(mergeData.config)
+	// function overwrite() {
+	// 	//console.log("OVERWRITE",mergeData,currentRole,category,systemMessage,systemConfig,roles,chatHistory,config)
+	// 	if (mergeData) {
+	// 		if (mergeData.currentRole) setCurrentRole( mergeData.currentRole)
+	// 		if (mergeData.category) setCategory( mergeData.category)
+	// 		if (mergeData.category) setCategory( mergeData.category)
+	// 		if (mergeData.systemMessage) setSystemMessage(mergeData.systemMessage)
+	// 		if (mergeData.systemConfig) setSystemConfig(mergeData.systemConfig)
+	// 		if (mergeData.config) setConfig(mergeData.config)
 			
-			if (Array.isArray(mergeData.roles)) {
-				setRoles(mergeData.roles)
-			}
-			if (Array.isArray(mergeData.logs)) {
-				setLogs(mergeData.logs)
-			}
-			if (typeof mergeData.chatHistory === 'object') {
-				setChatHistory(mergeData.chatHistory)
-			}
-		}
-	}	
-	
-	return (
-		<>
+	// 		if (Array.isArray(mergeData.roles)) {
+	// 			setRoles(mergeData.roles)
+	// 		}
+	// 		if (Array.isArray(mergeData.logs)) {
+	// 			setLogs(mergeData.logs)
+	// 		}
+	// 		if (typeof mergeData.chatHistory === 'object') {
+	// 			setChatHistory(mergeData.chatHistory)
+	// 		}
+	// 	}
+	// }	
+	return null
+
+	// return (
+	// 	<>
 		  
-		  <Modal
-			show={true}
-		  >
-			<Modal.Header closeButton>
-			  <Modal.Title style={{marginRight:'2em'}}>Merge Warning</Modal.Title>
+	// 	  <Modal
+	// 		show={true}
+	// 	  >
+	// 		<Modal.Header closeButton>
+	// 		  <Modal.Title style={{marginRight:'2em'}}>Merge Warning</Modal.Title>
 			 
-			</Modal.Header>
-			<Modal.Body>
-			<div style={{width:'100%',clear:'both', marginBottom:'2em'}} >
-			Do you want to merge changes made on another device?
-			</div>
+	// 		</Modal.Header>
+	// 		<Modal.Body>
+	// 		<div style={{width:'100%',clear:'both', marginBottom:'2em'}} >
+	// 		Do you want to merge changes made on another device?
+	// 		</div>
 			
-			<Row>
-				<Col className='mb-3' >
-					<Button variant="success" style={{float:'left', marginLeft:'2em', marginBottom:'0.3em'}} onClick={function() {merge()}} >Yes</Button>
-				</Col>
-				<Col className='mb-3' >
-					<Button variant="danger" style={{float:'left', marginLeft:'2em', marginBottom:'0.3em'}} onClick={function() {discard()}} >No</Button>
-				</Col>
+	// 		<Row>
+	// 			<Col className='mb-3' >
+	// 				<Button variant="success" style={{float:'left', marginLeft:'2em', marginBottom:'0.3em'}} onClick={function() {merge()}} >Yes</Button>
+	// 			</Col>
+	// 			<Col className='mb-3' >
+	// 				<Button variant="danger" style={{float:'left', marginLeft:'2em', marginBottom:'0.3em'}} onClick={function() {discard()}} >No</Button>
+	// 			</Col>
 				
-			</Row>
-			</Modal.Body>
+	// 		</Row>
+	// 		</Modal.Body>
 			
-		  </Modal>
-		</>
-	)
+	// 	  </Modal>
+	// 	</>
+	// )
 }
 //<Col className='mb-3' >
 					//<Button variant="danger" style={{float:'left', marginLeft:'2em', marginBottom:'0.3em'}} onClick={function() {overwrite()}} >Overwrite</Button>

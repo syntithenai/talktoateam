@@ -8,13 +8,13 @@ import GoogleDriverPickerButton from './GoogleDriverPickerButton'
 import FileSelectorModal from './FileSelectorModal'
 
 export default function FileList(props) {
-	const {config, files, fileManager, categoryFilter, setCategoryFilter, mini, categories,value, onChange, handleClose, forceRefresh, exportDocument, getDocument,utils} = props
+	const {isFileManagerWaiting, setIsFileManagerWaiting, config, files, fileManager, categoryFilter, setCategoryFilter, mini, categories,value, onChange, handleClose, forceRefresh, exportDocument, getDocument,utils} = props
 //{onChange, chatHistoryId, roles,deleteRole, setRoles, loadRole, importRoles, exportRoles, newRole, mini, handleClose, setCurrentRole, setCurrentTeam,  categories, duplicateRole, forceRefresh, categoryFilter, setCategoryFilter}) {
-	const icons = useIcons()
+// console.log("FL",isFileManagerWaiting)	
+const icons = useIcons()
 	const [search, setSearch] = useState('')
 	const [filtered, setFilteredI] = useState([])
-	const [isPreviewWaiting, setIsPreviewWaiting] = useState(false)
-
+	
 	function setFiltered(i) {
 		setFilteredI(i)
 		// console.log("SETFILTERED",i)
@@ -127,7 +127,7 @@ export default function FileList(props) {
 	}
 
 	function setPreviewFileValue(file, field, value) {
-		setIsPreviewWaiting(true)
+		setIsFileManagerWaiting(true)
 		if (file && field) file[field] = value
 		setPreviewFile(file)
 		if (config && config.embeddings && config.embeddings.max_length > 0) {
@@ -136,7 +136,7 @@ export default function FileList(props) {
 			file.fragments = fileManager.generateFragments(file)
 		}
 		setPreviewFile(file)
-		setIsPreviewWaiting(false)
+		setIsFileManagerWaiting(false)
 		saveFile(file)
 		forceRefresh()
 	}
@@ -159,7 +159,7 @@ export default function FileList(props) {
 			<Modal.Body style={{minHeight:'50em'}}>
 			<div className="border p-3 mb-3">
 			
-				{isPreviewWaiting && <img style={{float:'right', marginRight:'2em', height:'2.4em', width:'2.4em' }} src="/spinner.svg" onClick={function() {setIsPreviewWaiting(false)}}/>}
+				{isFileManagerWaiting && <img style={{float:'right', marginRight:'2em', height:'2.4em', width:'2.4em' }} src="/spinner.svg" onClick={function() {setIsFileManagerWaiting(false)}}/>}
 				<h5>Chunking</h5>
 				<Row className="mb-3">
 				<Form.Group as={Col} controlId="openaiKeyee">
@@ -231,7 +231,7 @@ export default function FileList(props) {
 		
 		return (
 			<>
-				{!fileManager.isBusy && <span style={{marginLeft:'0.3em', border:'1px solid green', float:'right', width: '21em', height:'3em', padding:'0.5em', borderRadius:'5px', marginBottom:'0.5em'}} >
+				{!(isFileManagerWaiting) && <span style={{marginLeft:'0.3em', border:'1px solid green', float:'right', width: '21em', height:'3em', padding:'0.5em', borderRadius:'5px', marginBottom:'0.5em'}} >
 					<b style={{marginRight:'1.5em'}} >Add Files</b>
 					{!mini && <ButtonGroup>
 						<span style={{marginRight:'1em', width:'4em', overflow:'hidden', float:'right'}} ><input multiple={true} type='file'  className='custom-file-input-button' accept={(fileManager && Array.isArray(fileManager.allowMimeTypes)) ? fileManager.allowMimeTypes.join(",") : '*'}  onChange={filesSelected} /></span>
@@ -242,8 +242,8 @@ export default function FileList(props) {
 						}} />
 					</ButtonGroup>}
 				</span>}
-				{fileManager.isBusy && <span style={{marginLeft:'1em', border:'1px solid green', float:'right', width: '18em', height:'3em', padding:'0.5em', borderRadius:'5px', marginBottom:'0.5em'}} >
-					<b><img style={{height:'2em'}} src="/spinner.svg" /></b>
+				{(isFileManagerWaiting) && <span style={{marginLeft:'1em', border:'1px solid green', float:'right', width: '18em', height:'3em', padding:'0.5em', borderRadius:'5px', marginBottom:'0.5em'}} >
+					<b><img style={{height:'2em'}} src="/spinner.svg"  onClick={function() {setIsFileManagerWaiting(false)}} /></b>
 				</span>}
 				
 				

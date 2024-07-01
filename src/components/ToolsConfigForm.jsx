@@ -60,7 +60,7 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 				  />
 				  
 				   <Form.Label>CORS Proxy Key</Form.Label>
-					<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="http://proxy.cors.sh/" target="new" >http://proxy.cors.sh/</a></span></Form.Text>
+					<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} > See <a href="http://proxy.cors.sh/" target="new" >http://proxy.cors.sh/</a></span></Form.Text>
           	   
 				
 				<Form.Control
@@ -72,10 +72,10 @@ const ToolsConfigForm = ({configIn, setConfig, forceRefresh}) => {
 			</Form.Group>
 			{<Form.Group  style={{marginTop:'1.5em'}} as={Col} controlId="openaiKey">
 				<Form.Label>Piston Code Runner URL</Form.Label>
-				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} >See <a href="https://github.com/engineer-man/piston" target="new" >https://github.com/engineer-man/piston</a></span></Form.Text>
+				<Form.Text><span style={{display:'block',marginLeft:'3em', fontStyle:'italic', fontSize:'0.7em'}} > See <a href="https://github.com/engineer-man/piston" target="new" >https://github.com/engineer-man/piston</a></span></Form.Text>
 				<Form.Control
 					type="text"
-					value={config && config.tools && config.tools.piston_url ?  config.tools.piston_url : 'https://emkc.org/api/v2/piston'}
+					value={config && config.tools && config.tools.piston_url ?  config.tools.piston_url : ''}
 					onChange={(e) => {setConfigValue('piston_url',e.target.value);  }}
 				  />
 				

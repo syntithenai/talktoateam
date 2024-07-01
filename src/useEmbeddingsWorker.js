@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 
-export default function useEmbeddingsWorker({workerUrl, onReady, onProgress}) {
+export default function useEmbeddingsWorker({onReady, onProgress, onError}) {
 
   // Model loading
   const [ready, setReady] = useState(null);
@@ -11,15 +11,19 @@ export default function useEmbeddingsWorker({workerUrl, onReady, onProgress}) {
   
   const worker = useRef(null);
   const workerInitialised = useRef(false)
-    
+  let workerUrl = './embeddings_worker.js'
+  //window.location.origin + '/embeddings_worker.js'
+
   useEffect(() => {
    // console.log("usework INIT",worker.current)
     if (!workerInitialised.current) {
       // Create the worker if it does not yet exist.
-      console.log("usework INIT create", workerUrl)
+      // console.log("usework INIT create", workerUrl)
       worker.current = new Worker(new URL(workerUrl, import.meta.url), {
         type: 'module'
       });
+      worker.current.onError = onError
+      // console.log("usework INIT created", worker.current)
       workerInitialised.current = true
     }
 
@@ -29,62 +33,59 @@ export default function useEmbeddingsWorker({workerUrl, onReady, onProgress}) {
   });
 
   const run = (input) => {
+    // console.log("usework run", input)
     return new Promise(function(resolve,reject) {
         const onMessageReceived = (e) => {
-            console.log("usework MSG",e)
+            // console.log("usework MSG",e)
             switch (e.data.status) {
                 case 'initiate':
-                // Model file start load: add a new progress item to the list.
-                setReady(false);
-                setProgressItems(prev => [...prev, e.data]);
-                break;
+                  // Model file start load: add a new progress item to the list.
+                  setReady(false);
+                  setProgressItems(prev => [...prev, e.data]);
+                  break;
 
                 case 'progress':
-                // Model file progress: update one of the progress items.
-                setProgressItems(
-                    prev => prev.map(item => {
-                    if (item.file === e.data.file) {
-                        return { ...item, progress: e.data.progress }
-                    }
-                    return item;
-                    })
-                );
-                if (onProgress) onProgress(e.data.progress)
-                break;
+                  // console.log("usework progress", e.data.progress)
+                  // Model file progress: update one of the progress items.
+                  setProgressItems(
+                      prev => prev.map(item => {
+                      if (item.file === e.data.file) {
+                          return { ...item, progress: e.data.progress }
+                      }
+                      return item;
+                      })
+                  );
+                  if (onProgress) onProgress(e.data.progress)
+                  break;
 
                 case 'done':
-                // Model file loaded: remove the progress item from the list.
-                setProgressItems(
-                    prev => prev.filter(item => item.file !== e.data.file)
-                );
-                break;
+                  // console.log("usework done", e.data.progress)
+                  // Model file loaded: remove the progress item from the list.
+                  setProgressItems(
+                      prev => prev.filter(item => item.file !== e.data.file)
+                  );
+                  break;
 
                 case 'ready':
-                // Pipeline ready: the worker is ready to accept messages.
-                setReady(true);
-                if (onReady) onReady()
-                break;
+                  // console.log("usework ready")
+                  // Pipeline ready: the worker is ready to accept messages.
+                  setReady(true);
+                  if (onReady) onReady()
+                  break;
 
 
                 case 'complete':
-                // Generation complete: re-enable the "Translate" button
-                setDisabled(false);
-                worker.current.removeEventListener('message', onMessageReceived)
-                // console.log("REWSOLVE")
-                resolve(e.data.output)
-                break;
-            }
-        };
-
-        // Attach the callback function as an event listener.
-        worker.current.addEventListener('message', onMessageReceived);  
-        console.log("usework  RUN",input, worker.current)
-
-        // setDisabled(true);
-        worker.current.postMessage({
-          text: input,
-        });
-        console.log("usework  sent", input)      
+                  // console.log("usework complete")
+                  // Generation complete: re-enable the "Translate" button
+                  setDisabled(false);
+                  worker.current.removeEventListener('message', onMessageReceived)
+                  // console.log("REWSOLVE")
+                  resolve(e.data.output)
+            }  
+        }
+        worker.current.addEventListener('message',onMessageReceived)
+        worker.current.postMessage(input)
+        // console.log("usework  sent", input)      
     })
 
    

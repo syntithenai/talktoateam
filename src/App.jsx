@@ -92,8 +92,11 @@ function App({nlp}) {
 	const {errorMessage, setErrorMessage, isOnlineRef, exchangeRate, setExchangeRate,updateExchangeRate,abortController, creditBalance, updateCreditBalance, availableModels ,utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, categories, setCategories, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter} = useAppState({doSave, token})
 	let modelSelector = useModelSelector({configString: JSON.stringify(config), creditBalance, token, availableModels})
 
-	
-	const {files, fileManager} = useFileManager({creditBalance, config, storeName:'files', token, logout, allowMimeTypes : ['.txt','text/plain'], loadData : false, onError : function(e) {window.alert(e)}, forceRefresh})
+	const [isFileManagerWaiting, setIsFileManagerWaiting] = useState(false)
+	const {files, fileManager} = useFileManager({isFileManagerWaiting, setIsFileManagerWaiting,creditBalance, config, storeName:'files', token, logout, allowMimeTypes : ['.txt','text/plain'], loadData : false, onError : function(e) {
+		setErrorMessage(e);
+		setIsFileManagerWaiting(false)
+	}, forceRefresh})
 	
 	
 	const {chatHistoriesRef, chatHistoryId,chatHistoryIdRef,  setChatHistoryId, chatHistories, setChatHistories, newChatHistory, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage,  currentChatHistory, revertChatHistory, deleteChatHistory, duplicateChatHistory, getLastAssistantChatIndex, getLastAssistantMessage} = useChatHistoryManager({utils,forceRefresh, doSave, utils})
@@ -154,7 +157,9 @@ function App({nlp}) {
 		}
 	}, [])
 	// console.log("PRE",config,configRef)
-	const tools = useTools(runtimes, config, token, creditBalance, abortController)
+	const tools = useTools({runtimes, config, token, creditBalance, abortController, files, fileManager, onError : function(e) {
+		setErrorMessage(e);
+	}})
 	
 	
 	async function playSpeech(text, forceEngine='', forceVoice='', forceSpeed='') {
@@ -256,7 +261,7 @@ function App({nlp}) {
 		},
 		onError: function(error) {
 			stopLanguageModels()
-			if (error instanceof AbortError) {
+			if (error instanceof DOMException && error.name == 'AbortError') {
 				console.log('ABORT: ', error.message);
 			} else {
 				console.log('LLM error:', error.message);
@@ -341,7 +346,7 @@ function App({nlp}) {
 	}
 	
 	
-	let allProps = {errorMessage, setErrorMessage, isOnlineRef, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels, getDocument}
+	let allProps = {isFileManagerWaiting, setIsFileManagerWaiting, errorMessage, setErrorMessage, isOnlineRef, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn: configRef.current, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels, getDocument}
 	
 	return (<div style={{position:'relative'}}>
 		{mergeData && <MergeWarningModal chatHistoryId={chatHistoryId} chatHistories={chatHistories} setChatHistories={setChatHistories} logs={aiUsage.logs} setLogs={aiUsage.setLogs} doSave={doSave} config={config} setConfig={setConfig} forceRefresh={forceRefresh} mergeData={mergeData} setMergeData={setMergeData} roles={roles} setRoles={setRoles}  currentRole={currentRole} setCurrentRole={setCurrentRole} setChatHistoryRoles={setChatHistoryRoles} chatHistoryRoles={chatHistoryRoles} />}
@@ -355,12 +360,14 @@ function App({nlp}) {
 						<Routes>
 							<Route  path={`/`}   element={<HomePage {...allProps}  />} />
 							<Route  path={`/menu`}   element={<ChatHistoryPage {...allProps}  />} />
+							<Route  path={`/help/:section`}   element={<HelpPage {...allProps}  />} />
 							<Route  path={`/help`}   element={<HelpPage {...allProps}  />} />
 							<Route  path={`/chat/:id`}   element={<ChatPage {...allProps}  />} />
 							<Route  path={`/chat`}   element={<ChatPage {...allProps}  />} />
 							<Route  path={`/simplechat/:id`}   element={<ChatPage {...allProps}  simplifiedChat={true}/>} />
 							<Route  path={`/simplechat`}   element={<ChatPage {...allProps}  simplifiedChat={true}/>} />
 							<Route  path={`/history`}   element={<ChatHistoryPage {...allProps}  />} />
+							<Route  path={`/settings/:section`}   element={<SettingsPage {...allProps}  />} />
 							<Route  path={`/settings`}   element={<SettingsPage {...allProps}  />} />
 							<Route  path={`/roles`}   element={<RolesPage {...allProps}  />} />
 							<Route path={`/role/:id/:category`} element={<RolePage {...allProps}  />} />
@@ -374,10 +381,7 @@ function App({nlp}) {
 							<Route path={`/tokens`} element={<TokensPage {...allProps}  />} />
 							<Route path={`/files`} element={<FilesPage {...allProps}  />} />
 							<Route path={`/payment`} element={<PaymentPage {...allProps}  />} />
-							<Route path={`/pricing`} element={<PricingPage {...allProps}  />} />
-							<Route path={`/transactions`} element={<TransactionsPage {...allProps}  />} />
-							<Route path={`/admin`} element={<AdminTransactionsPage {...allProps}  />} />
-							<Route path={`/roadmap`} element={<RoadMapPage {...allProps}  />} />
+							isFileManagerWaiting, setIsFileManagerWaiting			<Route path={`/roadmap`} element={<RoadMapPage {...allProps}  />} />
 							
 						</Routes>    
 					</Router >

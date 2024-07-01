@@ -76,11 +76,17 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 			let endPos = parameters.lastIndexOf(")")
 			let useParams = parameters.slice(0,endPos)
 			// tools are called with an array of parameters
-			let results = await tools[functionName.toLowerCase()](parseCSVLine(useParams))
-			//console.log("TOOL RESULTS",functionName,useParams, results)
-			toolCalls[callText] = results
+			let results = null
+			try {
+				results = await tools[functionName.toLowerCase()](parseCSVLine(useParams))
+				//console.log("TOOL RESULTS",functionName,useParams, results)
+				toolCalls[callText] = results
+			} catch (e) {
+				onError(e)
+			}
 			return [callText,results]
 		} else {
+			// fail silently and return empty if a function name doesn't match
 			return [callText,'']
 		}
 	}
@@ -173,14 +179,19 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 	async function start({messages, modelConfig, onUpdate, onComplete,onStart}) {
 		console.log("AGENTIC START",modelConfig, fileManager)	
 		let finalFiles = {}
+		let finalWholeFiles = {}
 		let filesIndex = {}
 		if (Array.isArray(files)) files.forEach(function(f) {
-			if (f && f.id) filesIndex[f.id] = f
+			if (f && f.id)  filesIndex[f.id] = f
 		})
 		if (modelConfig && Array.isArray(modelConfig.files)) {
 			modelConfig.files.forEach(function(id) {
 				if (filesIndex[id]) {
-					finalFiles[id] = filesIndex[id]
+					if (f.embed_whole_file === 'yes') {
+						finalWholeFiles[id] = filesIndex[id]
+					} else {
+						finalFiles[id] = filesIndex[id]
+					}
 				}
 			})
 		}
@@ -207,7 +218,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 								onComplete(pRes, {tokens_in: 0, tokens_out: 0, duration: (new Date() - startTime).valueOf()})
 								return ret
 							}).catch(function(e) {
-								onError("Error evaluating function:"+ e)
+								onError(e)
 							})
 						} else {
 							console.log("Function Resultss:", functionResult);
@@ -217,7 +228,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 						}
 					} catch (error) {
 						console.error("Error evaluating function:", error);
-						onError("Error evaluating function:"+ error)
+						onError(error)
 						return
 					}
 				} else {
@@ -253,6 +264,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 			let ragData = []
 			let text = Array.isArray(messages) && messages.length > 0 && messages[messages.length -1].content ? messages[messages.length -1].content : ''
 			// console.log("RAG SESARCH",text)
+			// inject rag matches ?
 			if (text && Array.isArray(finalFiles)) {
 				let vectorResults = await fileManager.searchVectorFiles(text, finalFiles)
 				// console.log("VECRESSSSS", vectorResults)
@@ -268,6 +280,10 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 						}
 					})
 				}
+			}
+			// whole files ?
+			if (Array.isArray(finalWholeFiles)) {
+				ragData.push(finalWholeFiles.map(function(f) {return f.data}).join("\n\n"))
 			}
 			// console.log("VECRESSSSS", ragData)
 			let formData = {
@@ -296,7 +312,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 				})
 				if (response.status !== 200) {
 					stop()
-					onError("Error querying model - " + formData.model +'. '+ response.statusText)
+					onError(new Error("Error querying model - " + formData.model +'. '+ response.statusText))
 				}
 				// streaming response via onStart, onUpdate, onComplete and resolve promise with complete final result
 				const reader = response.body.pipeThrough(new TextDecoderStream()).getReader()
@@ -574,7 +590,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 				for (let m in team.members) {
 					let member = team.members[m]
 					if (m && m.id && m.id.startsWith("TEAM:::::")) {
-						onError("A compressed team cannot have nested teams (" + m.name + ')')
+						onError(new Error("A compressed team cannot have nested teams (" + m.name + ')'))
 					} else {
 						template.push('\n###PERSONA')
 						let msg = [member.message]
@@ -966,7 +982,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 					case 'rolesbased':
 						console.log(team)
 						if (!getExpert(team,'generator')) {
-							onError("A generator is required for roles based teams")
+							onError(new Error("A generator is required for roles based teams"))
 							sendComplete()
 						} else {
 							let finished = false
