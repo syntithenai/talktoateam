@@ -83,7 +83,7 @@ self.addEventListener('message', async (event) => {
             // const roundedOutput = Array.from(output.data as number[]).map(
             //    (value: number) => parseFloat(value.toFixed(precision)),
             // );
-            console.log('RR',roundedOutput)
+            // console.log('RR',roundedOutput)
         } catch (e) {
             console.log(e)
         }

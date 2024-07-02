@@ -1,5 +1,8 @@
 import { FrameProcessor } from '@ricky0123/vad-web'
 import nlp from 'compromise'
+import {JSONPath} from 'jsonpath-plus';
+
+
 //const config = require('./config')
 
 //const nlp = window.nlp
@@ -15,8 +18,122 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 	let isBusy = false
 	function setIsBusy(v) { isBusy = v}
 	// var controller = new AbortController()
-	
-	
+
+	function extractJSONChunks(text) {
+		const jsonChunks = [];
+		let inJson = false;
+		let bracketCount = 0;
+		let jsonString = '';
+		
+		for (let i = 0; i < text.length; i++) {
+			const char = text[i];
+			if (char === '{') {
+				if (!inJson) {
+					inJson = true;
+				}
+				bracketCount++;
+			}
+			if (inJson) {
+				jsonString += char;
+			}
+			if (char === '}') {
+				bracketCount--;
+				if (bracketCount === 0) {
+					inJson = false;
+					try {
+						const jsonChunk = JSON.parse(jsonString);
+						jsonChunks.push(jsonChunk);
+					} catch (e) {
+						console.error("Invalid JSON found, skipping:", jsonString);
+					}
+					jsonString = '';
+				}
+			}
+		}
+		return jsonChunks;
+	}
+	tools.extractJSONChunks = extractJSONChunks
+
+	function shouldMemberUseExitGate(member, response) {
+		// console.log("EXIT???",member, response, member.config, member.config.exit_on)
+		// if (isStopped) return true
+		if (member && member.config && response && response.content) {
+			// console.log("EXIT??? ha ccc", member.config.exit_on, member.config.exit_on === 'json')
+			
+			if (member.config.exit_on === "containstext" && member.config.exit_on_text) {
+				// console.log("EXIT??? text")
+				if (response.content.indexOf(member.config.exit_on_text) !== -1) {
+					return true
+				}
+			} else if (member.config.exit_on === "notcontainstext" && member.config.exit_on_text) {
+				// console.log("EXIT??? not text")
+				if (response.content.indexOf(member.config.exit_on_text) === -1) {
+					return true
+				}
+			} else if (member.config.exit_on === "json" || member.config.exit_on === "notjson")  {
+				// console.log('JSONOK ?', response.content)
+				let canParse = false
+				// TODO JSONPATH FILTER
+				if (member.config.exit_on_jsonpath) {
+					const result = JSONPath({path: member.config.exit_on_jsonpath, json: response.content});
+					// console.log("PATHRES",result)
+					if (Array.isArray(result) && result.length > 0) {
+						found = true
+						if (member.config.exit_on === "json") {
+							return true
+						} else if (!found && member.config.exit_on === "notjson") {
+							return true
+						}
+					}
+				}  else {
+					try {
+						let j = JSON.parse(response.content)
+						canParse = true
+						// console.log('JSONOK parsed')
+					} catch (e) {console.log(e)}
+					if (canParse && member.config.exit_on === "json") {
+						// console.log('exit on found json')
+						return true
+					} else if (!canParse && member.config.exit_on === "notjson") {
+						// console.log('exit on not found json')
+						return true
+					}
+				}
+
+			} else if (member && member.config && (member.config.exit_on === "containsjson" || member.config.exit_on === "notcontainsjson" ))  {
+				// console.log('JSONOK contains ?')
+				let canParse = false
+				let chunks = extractJSONChunks(response.content) 
+				let found = false
+				for (let c in chunks) {
+					if (member.config.exit_on_jsonpath) {
+						const result = JSONPath({path: member.config.exit_on_jsonpath, json: chunks[c]});
+						// console.log("PATHRES",result)
+						if (Array.isArray(result) && result.length > 0) {
+							found = true
+							if (member.config.exit_on === "containsjson") {
+								return true
+							}
+						}
+					}  else {
+						// TODO JSONPATH FILTER
+						try {
+							let j = JSON.parse(c)
+							canParse = true
+							found = true
+						} catch (e) {}
+						if (canParse && member.config.exit_on === "containsjson") {
+							return true
+						} 
+					}
+				}
+				if (!found && member.config.exit_on === "notcontainsjson") {
+					return true
+				}
+			} 
+		}
+		return false
+	}
 	
 	function stop() {
 		isStopped = true
@@ -1202,6 +1319,10 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 											modelConfig: member.config, 
 											onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage 
 										})
+										if (shouldMemberUseExitGate(member, r)) {
+											stop()
+											break
+										}
 									}
 								}
 							}

@@ -218,7 +218,31 @@ export default function RoleForm (props)  {
 	let [addStopToken, setAddStopToken] = useState('')
 	// <CategoryAutosuggest categories={categories}  onChange={(e) => handleCategoryChange(e)} value={role && role.category ? role.category : ''}/>
 	//  <Button onClick={function() {utils.downloadText(JSON.stringify(roles[roleId]), roles[roleId].name + '.js')}} style={{float:'right'}} variant="success" >{icons.save}</Button>
-    				
+
+	function helpText(key) {
+		switch(key) {
+			case 'json':
+				return 'Break the flow if the Persona response is strictly JSON formatted information'
+				break
+			case 'containsjson':
+				return 'Break the flow if the Persona response contains JSON formatted information'
+				break
+			case 'containstext':
+				return 'Break the flow if the Persona response contains matching text'
+				break
+			case 'notjson':
+				return 'Break the flow if the Persona response is not strictly JSON formatted information'
+				break
+			case 'notcontainsjson':
+				return 'Break the flow if the Persona response does not contain JSON formatted information'
+				break
+			case 'notcontainstext':
+				return 'Break the flow if the Persona response does not contain matching text'
+				break
+		}	
+		return ''
+	}
+
   return (
     <>
     <Form id={refresh} onSubmit={function(e) {e.preventDefault(); return false}}>
@@ -239,7 +263,7 @@ export default function RoleForm (props)  {
 								value={role && role.name ? role.name : ''}
 							></Form.Control>
 							</Col>
-						   <Col>
+						    <Col>
 								<Form.Label>Type</Form.Label>
 								&nbsp;&nbsp; &nbsp;&nbsp;
 								<Form.Select
@@ -338,6 +362,56 @@ export default function RoleForm (props)  {
 					</Col>
 			</Row>
 			</Tab>
+
+			<Tab eventKey="exitgate" title="Exit Gate" >
+			<Row>
+				<Col>
+					<div style={{textAlign:'left'}}>If you need to conditionally stop a team flow, and return this Personas response directly, choose an option below.</div>
+					<div style={{textAlign:'left', marginTop:'1em'}}>This enables a Persona to ask questions.</div>
+					<div style={{textAlign:'left', marginTop:'1em', fontWeight:'bold'}}>This does not apply to Parallel or Generator type teams.</div>
+				<hr/>
+				  <Form.Group style={{textAlign:'left'}} controlId="exitgate">
+				  	<Form.Label>Exit On </Form.Label>
+					<Form.Select
+						  style={{width:'14em', display:'inline', marginLeft:'2em'}} 
+						  value={role && role.config && role.config.exit_on ? role.config.exit_on : ''}
+						  onChange={function(e) {
+							saveConfig('exit_on',e.target.value)
+						  }}
+						>
+							<option></option>
+							<option value="json" >Is JSON</option>
+							<option value="containsjson" >Contains JSON</option>
+							<option value="containstext" >Matches Text</option>
+							<option value="notjson" >Is Not JSON</option>
+							<option value="notcontainsjson" >Does Not Contain JSON</option>
+							<option value="notcontainstext" >Does Not Match Text</option>
+						</Form.Select>
+						<Form.Text style={{marginLeft:'1em'}}>{helpText(role && role.config && role.config.exit_on ? role.config.exit_on : '')}</Form.Text>
+						{(role && role.config && (role.config.exit_on === 'containstext' || role.config.exit_on === 'notcontainstext')) && <div style={{marginTop:'1em'}}><Form.Label>Match Text</Form.Label>
+							<Form.Control type="text" 
+							onChange={(e) => saveConfig('exit_on_text',e.target.value)}
+							value={role && role.config && role.config.exit_on_text ? role.config.exit_on_text : ''}
+						></Form.Control></div>}
+						{(role && role.config && (role.config.exit_on === 'json' || role.config.exit_on === 'containsjson' || role.config.exit_on === 'notjson' || role.config.exit_on === 'notcontainsjson')) && <div style={{marginTop:'1em'}}><Form.Label>JSON Path</Form.Label>
+						
+						<Form.Text style={{marginLeft:'1em'}}>If a JSON path is set, only break if the path is <span>{(role.config.exit_on === 'notjson' || role.config.exit_on === 'notcontainsjson') ? 'not' : ''}</span> found in the response.</Form.Text>
+						<Form.Text> See <a href="https://jsonpath.com/" target="_new" >https://jsonpath.com/</a></Form.Text>
+							
+							<Form.Control type="text" 
+							onChange={(e) => saveConfig('exit_on_jsonpath',e.target.value)}
+							value={role && role.config && role.config.exit_on_jsonpath ? role.config.exit_on_jsonpath : ''}
+						></Form.Control></div>}
+						
+				  </Form.Group>
+				</Col>
+			  </Row>
+			  
+			
+			  
+		  </Tab>
+
+
 		  {(!role || !role.config || role.config.type !== 'algorithmic') && <Tab eventKey="Output" title="Output Format">
 			<Row className="mb-3">
 				<Col>
@@ -745,9 +819,7 @@ export default function RoleForm (props)  {
 		  <Tab eventKey="Files" title="Files" >
 				 <Row>
         <Col>
-		{JSON.stringify(role && role.config ? role.config.files : [])}
 			<FileList {...props} value={role && role.config && Array.isArray(role.config.files) ? role.config.files : []} onChange={function(fileIds) {
-				console.log("ROLE FILES change",fileIds)
 				let final = []
 				let filesIndex = {}
 				files.forEach(function(f) {

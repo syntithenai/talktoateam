@@ -148,11 +148,11 @@ function App({nlp}) {
 					setRuntimes(t)
 				})
 			}).catch(function(e) {
-				setErrorMessage("Failed to load code runtimes from "+ configManager.codeRunnerEndpoint())
+				//setErrorMessage("Failed to load code runtimes from "+ configManager.codeRunnerEndpoint())
 				console.log(e)
 			})
 		} catch (error) {
-			setErrorMessage("Failed to load code runtimes from "+ configManager.codeRunnerEndpoint())
+			//setErrorMessage("Failed to load code runtimes from "+ configManager.codeRunnerEndpoint())
 			console.error('Error loading code runtimes:', error);
 		}
 	}, [])
@@ -381,7 +381,9 @@ function App({nlp}) {
 							<Route path={`/tokens`} element={<TokensPage {...allProps}  />} />
 							<Route path={`/files`} element={<FilesPage {...allProps}  />} />
 							<Route path={`/payment`} element={<PaymentPage {...allProps}  />} />
-							isFileManagerWaiting, setIsFileManagerWaiting			<Route path={`/roadmap`} element={<RoadMapPage {...allProps}  />} />
+							<Route path={`/transactions`} element={<TransactionsPage {...allProps}  />} />
+							<Route path={`/admin`} element={<AdminTransactionsPage {...allProps}  />} />
+							<Route path={`/roadmap`} element={<RoadMapPage {...allProps}  />} />
 							
 						</Routes>    
 					</Router >

@@ -127,18 +127,19 @@ const icons = useIcons()
 	}
 
 	function setPreviewFileValue(file, field, value) {
+		console.log('SPFV',file, field, value)
 		setIsFileManagerWaiting(true)
 		if (file && field) file[field] = value
-		setPreviewFile(file)
 		if (config && config.embeddings && config.embeddings.max_length > 0) {
 			file.fragments = fileManager.generateFragments(file, config.embeddings.max_length)
 		} else {
 			file.fragments = fileManager.generateFragments(file)
 		}
+		saveFile(file)
 		setPreviewFile(file)
 		setIsFileManagerWaiting(false)
-		saveFile(file)
 		forceRefresh()
+		//preview(file)
 	}
 
 	// function savePreviewFile() {
@@ -173,7 +174,7 @@ const icons = useIcons()
 					</Form.Group>
 					
 					<Form.Group as={Col} controlId="openaiKey">
-					<Form.Label>Chunking Strategy</Form.Label>
+					<Form.Label>Chunking Strategy{previewFile ? previewFile.chunking_strategy : 'NONE'}</Form.Label>
 					<Form.Select  value={previewFile && previewFile.chunking_strategy ? previewFile.chunking_strategy : 'paragraphs'}
 						onChange={(e) => {setPreviewFileValue(previewFile, 'chunking_strategy',e.target.value);}} >
 							<option value="" ></option>

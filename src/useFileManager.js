@@ -365,8 +365,8 @@ function save(file) {
 			file.updatedTimestamp = new Date()
 			if (file.data) {
 				// console.log("have file data, gen embds")
+				//if (!file.chunking_strategy) file.chunking_strategy = fileSplitter.determineTextType(file.data)
 				file.fragments = generateFragments(file)
-				file.chunking_strategy = fileSplitter.determineTextType(file.data)
 				let categories = Array.isArray(file.category) ? file.category.join(' ') : ''
 				if (Array.isArray(file.fragments)) generateEmbeddings(file.fragments.map(function(fragment) {
 					// include file name and categories in embedding

@@ -33,7 +33,7 @@ export default function TransactionsPage({ isOnlineRef,allowRestart, onCancel, o
         }).then(function(paymentResponse) {
             if (paymentResponse.ok) {
                 paymentResponse.json().then(function(data) {
-                     console.log(data)
+                    //  console.log(data)
                     if (Array.isArray(data)) {
                         setTransactions(data.map(function(transaction) {
                             return {
@@ -93,7 +93,7 @@ export default function TransactionsPage({ isOnlineRef,allowRestart, onCancel, o
                 }
             }
         }
-        console.log("lose")
+        // console.log("lose")
         return false
     }
 
@@ -103,7 +103,7 @@ export default function TransactionsPage({ isOnlineRef,allowRestart, onCancel, o
         if (a && a.date) {
             if (startDate) {
                 startOk = false
-                console.log(compareDates(renderDateAsAU(startDate), a.date), renderDateAsAU(startDate),a.date)
+                // console.log(compareDates(renderDateAsAU(startDate), a.date), renderDateAsAU(startDate),a.date)
         
                 if (compareDates(a.date, renderDateAsAU(startDate) )) {
                     startOk = true

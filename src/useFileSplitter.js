@@ -239,8 +239,8 @@ export default function useFileSplitter() {
     }
 
 
-    function splitWikimedia(text, maxLength, cssSelector) {
-
+    function splitWikimedia(text, maxLength) {
+        return splitParagraphs(textContent, maxLength)
     }
     
     function splitMarkdown(text, maxLength, cssSelector) {
