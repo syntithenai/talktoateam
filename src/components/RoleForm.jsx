@@ -368,7 +368,7 @@ export default function RoleForm (props)  {
 				<Col>
 					<div style={{textAlign:'left'}}>If you need to conditionally stop a team flow, and return this Personas response directly, choose an option below.</div>
 					<div style={{textAlign:'left', marginTop:'1em'}}>This enables a Persona to ask questions.</div>
-					<div style={{textAlign:'left', marginTop:'1em', fontWeight:'bold'}}>This does not apply to Parallel or Generator type teams.</div>
+					<div style={{textAlign:'left', marginTop:'1em', fontWeight:'bold'}}>This only applies to the members of Linear type teams.</div>
 				<hr/>
 				  <Form.Group style={{textAlign:'left'}} controlId="exitgate">
 				  	<Form.Label>Exit On </Form.Label>
