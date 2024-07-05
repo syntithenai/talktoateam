@@ -1,7 +1,7 @@
 import { FrameProcessor } from '@ricky0123/vad-web'
 import nlp from 'compromise'
 import {JSONPath} from 'jsonpath-plus';
-
+import jsonic from 'jsonic'
 
 //const config = require('./config')
 
@@ -18,6 +18,44 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 	let isBusy = false
 	function setIsBusy(v) { isBusy = v}
 	// var controller = new AbortController()
+
+	function fixBrackets(jsonString) {
+		const openBraces = jsonString.match(/{/g) || [];
+		const closeBraces = jsonString.match(/}/g) || [];
+		const openBrackets = jsonString.match(/\[/g) || [];
+		const closeBrackets = jsonString.match(/\]/g) || [];
+		while (openBraces.length > closeBraces.length) jsonString += '}';
+		while (closeBraces.length > openBraces.length) jsonString = '{' + jsonString;
+		while (openBrackets.length > closeBrackets.length) jsonString += ']';
+		while (closeBrackets.length > openBrackets.length) jsonString = '[' + jsonString;
+		return jsonString;
+	}
+	
+	function removeTrailingCommas(jsonString) {
+		return jsonString.replace(/,(\s*[}\]])/g, '$1');
+	}
+
+	function addMissingCommas(jsonString) {
+		return jsonString.replace(/}\s*{/g, '},{');
+	}
+
+	function parseLenientJSON(jsonString) {
+		try {
+		  return jsonic(jsonString);
+		} catch (e) {
+		  console.error("Failed to parse JSON:", e);
+		  return null;
+		}
+	}
+	function fixAndParseJSON(jsonString) {
+		// Apply fixes
+		jsonString = fixBrackets(jsonString);
+		jsonString = addMissingCommas(jsonString);
+		jsonString = removeTrailingCommas(jsonString);
+		
+		// Parse leniently
+		return parseLenientJSON(jsonString);
+	}
 
 	function extractJSONChunks(text) {
 		const jsonChunks = [];
@@ -41,7 +79,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 				if (bracketCount === 0) {
 					inJson = false;
 					try {
-						const jsonChunk = JSON.parse(jsonString);
+						const jsonChunk = fixAndParseJSON(jsonString);
 						jsonChunks.push(jsonChunk);
 					} catch (e) {
 						console.error("Invalid JSON found, skipping:", jsonString);
@@ -76,7 +114,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 				// TODO JSONPATH FILTER
 				if (member.config.exit_on_jsonpath) {
 					const result = JSONPath({path: member.config.exit_on_jsonpath, json: response.content});
-					// console.log("PATHRES",result)
+					console.log("PATHRES",result)
 					if (Array.isArray(result) && result.length > 0) {
 						found = true
 						if (member.config.exit_on === "json") {
@@ -87,47 +125,52 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 					}
 				}  else {
 					try {
-						let j = JSON.parse(response.content)
+						let j = fixAndParseJSON(response.content)
 						canParse = true
 						// console.log('JSONOK parsed')
-					} catch (e) {console.log(e)}
+					} catch (e) {}
 					if (canParse && member.config.exit_on === "json") {
 						// console.log('exit on found json')
 						return true
 					} else if (!canParse && member.config.exit_on === "notjson") {
 						// console.log('exit on not found json')
 						return true
+					} else {
+						// console.log('NOM',canParse, member.config.exit_on)
 					}
 				}
 
 			} else if (member && member.config && (member.config.exit_on === "containsjson" || member.config.exit_on === "notcontainsjson" ))  {
-				// console.log('JSONOK contains ?')
+				console.log('JSONOK contains ?')
 				let canParse = false
 				let chunks = extractJSONChunks(response.content) 
 				let found = false
 				for (let c in chunks) {
 					if (member.config.exit_on_jsonpath) {
 						const result = JSONPath({path: member.config.exit_on_jsonpath, json: chunks[c]});
-						// console.log("PATHRES",result)
+						console.log("PATHRES",result)
 						if (Array.isArray(result) && result.length > 0) {
 							found = true
 							if (member.config.exit_on === "containsjson") {
+								console.log("JSONcontains match ")
 								return true
 							}
 						}
 					}  else {
-						// TODO JSONPATH FILTER
 						try {
-							let j = JSON.parse(c)
+							let j = fixAndParseJSON(c)
 							canParse = true
 							found = true
 						} catch (e) {}
 						if (canParse && member.config.exit_on === "containsjson") {
+							console.log("JSONcontains match ")
 							return true
 						} 
 					}
 				}
+				console.log(found,member.config)
 				if (!found && member.config.exit_on === "notcontainsjson") {
+					console.log("JSON not contains match ")
 					return true
 				}
 			} 
@@ -248,6 +291,91 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 		const final = sections.map(function(s) {return s.trim()}).join("```")
 		return final
 	}
+
+	function getSystemMessage(persona) {
+		// console.log("GET SYSTEM MESSAGE", persona)
+		let systemMessage = persona && persona.message ? persona.message : ''
+		systemMessage = systemMessage + (persona && persona.skills ? "\n" + persona.skills : '')
+		systemMessage = systemMessage + (persona && persona.backStory ? "\n" + persona.backStory : '')
+		if (persona && persona.config && persona.config.outputType === 'json') { 	
+			systemMessage = systemMessage + (persona.config && persona.config.outputExamples ? "\n" + persona.config.outputExamples : '')
+			systemMessage = systemMessage + (persona.config && persona.config.outputSchema ? "\n" + persona.config.outputSchema : '')
+		} else if (persona && persona.config && persona.config.outputType === 'choice') { 	
+			systemMessage = systemMessage + (persona.config && persona.config.outputExamples ? "\n###CHOICES\n" + persona.config.outputExamples : '')
+		}
+		return {role:"system", content: systemMessage}
+	}
+
+	function getSystemMessageContent(persona) {
+		let message = getSystemMessage(persona)
+		return message && message.content ? message.content : ''
+	}
+
+	function mergeChatHistory(systemMessage, userMessage) {
+		let newHistory = messages.filter(function(m) {
+			if (m.role === 'user' || m.role === 'assistant') {
+				return true
+			}
+			return false
+		}).map(function(m) {
+			return {role: m.role, content: Array.isArray(m.content) ? m.content.map(function(m) {return m.content}).join("\n") : m.content} 
+		})
+		if (systemMessage) newHistory.unshift(systemMessage)
+		if (userMessage) {
+			let a = newHistory.pop()
+			if (a.role ==='user') {
+				newHistory.push(userMessage)
+			} else {
+				let b = newHistory.pop()
+				if (b.role === 'user') {
+					newHistory.push(userMessage)
+					newHistory.push(a)
+				} else {
+					newHistory.push(b)
+					newHistory.push(a)
+				}
+			}
+		}
+		return newHistory
+	}
+	
+	function combinedMessages(chatHistory, addMessages = null, newSystemMessage=null) {
+		// console.log('COMBINED MESSAGES', chatHistory, addMessages, addToSystemMessage)
+		let systemMessage = null
+		let firstElement = null
+		// console.log("TO COMBINE",JSON.parse(JSON.stringify(chatHistory)), addMessages, addToSystemMessage)
+		// clear messages from the beginning until we find the first user message, save the systemMessage
+		while ((!firstElement || firstElement.role !== 'user') && chatHistory.length > 0) {
+			firstElement = chatHistory.shift()
+			if (firstElement && firstElement.role === 'system') {
+				systemMessage = firstElement 
+			} else if (firstElement && firstElement.role === 'assistant') {
+				// discard assistant message
+			} else if (firstElement && firstElement.role === 'user') {
+				// keep user message
+				chatHistory.unshift(firstElement)
+			} 
+		}
+		if (newSystemMessage) {
+			chatHistory.unshift({role:'system', 'content': newSystemMessage})
+		} else if (systemMessage)  {
+			chatHistory.unshift(systemMessage)
+		}
+
+		if (Array.isArray(addMessages)) chatHistory.concat(addMessages)
+		chatHistory = chatHistory.map(function(m) {
+			return {role: m && m.role ? m.role : {}, content: m && Array.isArray(m.content) ? m.content.map(function(m) {return m && m.content ? m.content : ''}).join("\n") : m && m.content ? m.content : ''} 
+		})
+		// console.log("CLENED",chatHistory)
+		return chatHistory
+	}
+
+	function prependSystemMessage(persona, chatHistory) {
+		let systemMessage = getSystemMessage(persona)
+		let newHistory = JSON.parse(JSON.stringify(chatHistory))
+		newHistory.unshift(systemMessage)	
+		return newHistory
+	}
 	
 	function cleanHistoryAndAddSystemMessage (chatHistory, addToSystemMessage) {
 		let systemMessage = null
@@ -259,8 +387,9 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 			if (firstElement && firstElement.role === 'system') {
 				systemMessage = firstElement 
 			} else if (firstElement && firstElement.role === 'assistant') {
-				// discard it
+				// discard assistant message
 			} else if (firstElement && firstElement.role === 'user') {
+				// keep user message
 				chatHistory.unshift(firstElement)
 			} 
 		}
@@ -294,6 +423,14 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 	}
 	
 	async function start({messages, modelConfig, onUpdate, onComplete,onStart}) {
+
+		// function appendToMessages(newMessages) {
+		// 	let m = Array.isArray(messages) ? JSON.parse(JSON.stringify(messages)) : []
+		// 	if (Array.isArray(newMessages)) {
+		// 		m.concat(newMessages)
+		// 	}
+		// 	return m
+		// }
 		console.log("AGENTIC START",modelConfig, fileManager)	
 		let finalFiles = {}
 		let finalWholeFiles = {}
@@ -516,6 +653,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 			} catch (error) {
 				let logEntry = {tokens_in: tokensIn, tokens_out: tokensOut, model, key, url, duration : (new Date() - startTime).valueOf()}
 				console.error('LLM RUN ERROR:', error);
+				onError(error)
 				stop()
 				onComplete(sent.join("")+buffer.join(""), logEntry)
 				return {content: sent.join("")+buffer.join(""), log: logEntry}
@@ -524,25 +662,6 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 		}
 	}
 	
-	function getSystemMessage(persona) {
-		let systemMessage = persona && persona.message ? persona.message : ''
-		systemMessage = systemMessage + (persona && persona.skills ? "\n" + persona.skills : '')
-		systemMessage = systemMessage + (persona && persona.backStory ? "\n" + persona.backStory : '')
-		if (persona && persona.config && persona.config.outputType === 'json') { 	
-			systemMessage = systemMessage + (persona.config && persona.config.outputExamples ? "\n" + persona.config.outputExamples : '')
-			systemMessage = systemMessage + (persona.config && persona.config.outputSchema ? "\n" + persona.config.outputSchema : '')
-		} else if (persona && persona.config && persona.config.outputType === 'choice') { 	
-			systemMessage = systemMessage + (persona.config && persona.config.outputExamples ? "\n###CHOICES\n" + persona.config.outputExamples : '')
-		}
-		return {role:"system", content: systemMessage}
-	}
-	
-	function prependSystemMessage(persona, chatHistory) {
-		let systemMessage = getSystemMessage(persona)
-		let newHistory = JSON.parse(JSON.stringify(chatHistory))
-		newHistory.unshift(systemMessage)	
-		return newHistory
-	}
 	
 	function chooseExperts(message, experts) {
 		console.log("CHOOSE EXP",message, experts)
@@ -585,8 +704,6 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 
 ###QUESTION
 ` + message 
-
-	
 			start({messages:[{role:'system', content: systemMessage}, {role:'user', content: message}], modelConfig: {}, onUpdate: function() {}, onComplete: function(finalContent, usage) {
 				let finalQuestions = []
 				
@@ -601,6 +718,15 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 	}
 	
 	async function startTeam({message,messages, team, onUpdate, onComplete,onStart }) {
+		
+		// function appendToMessages(newMessages) {
+		// 	let m = Array.isArray(messages) ? JSON.parse(JSON.stringify(messages)) : []
+		// 	if (Array.isArray(newMessages)) {
+		// 		m.concat(newMessages)
+		// 	}
+		// 	return m
+		// }
+		
 		console.log("START TEAM", messages, team)
 		isStopped = false
 		let startTime = new Date()
@@ -724,14 +850,14 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 			function iOnComplete(content, usage) {
 				onTeamComplete(k,content,usage,'Compressed Team'+((team && team.name) ? ' - ' + team.name : ''))
 			}
-			let cContentc = await start({messages: mergeChatHistory({role:'system', content: template.join('\n')}, {role:'user', content:'###QUESTION\n' +message}), modelConfig: {}, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+			let cContentc = await start({messages: combinedMessages(messages,[{role:'user', content:'###QUESTION\n' +message}], template.join('\n')), modelConfig: {}, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 			//console.log("START COMPRESSED RESULT", cContentc)
 			let cContent = handleAssistantResponse(cContentc) 
 			if (getExpert(team,'formatter')) {
 				k = k + 1
 				function iOnComplete(content, usage) {
 					onTeamComplete(k,content,usage,'Compressed Team Formatter - '+getExpert(team,'formatter').name)
-				}
+				} 
 				let formatterContentc = await start({messages: mergeChatHistory(getSystemMessage(getExpert(team,'formatter')), {role:'user', content:[message, cContent ].join("\n")}) , modelConfig: getExpert(team,'formatter').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 				//let formatterContent = handleAssistantResponse(formatterContentc)
 				//generated[1] = {content: formatterContent, log: formatterContentc.log, name: 'Formatter'}
@@ -811,7 +937,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 							//console.log("DOteam",member.name)
 							promises.push(startTeam({
 								message: expertMessage,
-								messages:  [{role:'user', content:expertMessage}],
+								messages:  combinedMessages(messages, [{role:'user', content:expertMessage}]),
 								team: member, 
 								onUpdate: iOnUpdate, 
 								onComplete: iOnComplete, 
@@ -820,7 +946,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 						} else {
 							//console.log("DOpers",member.name)
 							promises.push(start({
-								messages:  [getSystemMessage(member), {role:'user', content:expertMessage}],
+								messages:  combinedMessages(messages, [{role:'user', content:expertMessage}], getSystemMessage(member)), 
 								modelConfig: member.config, 
 								onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage 
 							}))
@@ -901,7 +1027,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 								// use custom experts selector
 								if (selectorRole && selectorRole.id) {
 									// selector MUST return the id of a role or list of comma seperated ids
-									let roleIdsc = await start({messages: [getSystemMessage(selectorRole), {role:'user', content:message }], modelConfig: selectorRole.config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+									let roleIdsc = await start({messages: combinedMessages(messages, [{role:'user', content:message }], getSystemMessageContent(selectorRole)),  modelConfig: selectorRole.config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 									let roleIds = handleAssistantResponse(roleIdsc)
 									let experts = []
 									roleIds.split(",").forEach(function(roleId) {
@@ -979,7 +1105,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 								}
 								let questionGeneratorContent = getSystemMessage(questionGeneratorRole)
 								questionGeneratorContent.name = team.name + ' - Question Generator - '+ questionGeneratorRole.name
-								let questionGeneratorsc = await start({messages: [questionGeneratorContent, {role:'user', content:message }], modelConfig: questionGeneratorRole.config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+								let questionGeneratorsc = await start({messages: combinedMessages(messages, [{role:'user', content:message }], questionGeneratorContent.content), modelConfig: questionGeneratorRole.config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 								let questions = handleAssistantResponse(questionGeneratorsc)
 								let qa = questions.split("\n")
 								// ensure no bloanks
@@ -1019,6 +1145,10 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 											generated = final
 											generated[k + 1] = {content: formatterContent, log: formatterContentc.log, name: getExpert(team,'formatter') ? team.name + ' - Formatter - ' + getExpert(team,'formatter').name : 'Formatter'}
 											sendComplete()
+											if (shouldMemberUseExitGate(getExpert(team,'formatter'), formatterContentc)) {
+												stop()
+												// break
+											}
 										})
 									} else {
 										generated = final
@@ -1083,6 +1213,10 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 												generated = final
 												generated[k + 1] = {content: formatterContent, log: formatterContentc.log, name: getExpert(team,'formatter') ? team.name + ' - Formatter - ' + getExpert(team,'formatter').name : 'Formatter'}
 												sendComplete()
+												if (shouldMemberUseExitGate(getExpert(team,'formatter'), formatterContentc)) {
+													stop()
+													//break
+												}
 											})
 										} else {
 											generated = final
@@ -1097,7 +1231,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 						break
 					
 					case 'rolesbased':
-						console.log(team)
+						// console.log(team)
 						if (!getExpert(team,'generator')) {
 							onError(new Error("A generator is required for roles based teams"))
 							sendComplete()
@@ -1123,6 +1257,12 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 								let blockerContentc = await start({messages: prependSystemMessage(getExpert(team,'blocker'), [{role:'user', content:[message].join("\n")}]), modelConfig: getExpert(team,'blocker').config, onUpdate: iOnUpdate, onComplete: function() {}, onError, aiUsage })
 								 blockerContent = handleAssistantResponse(blockerContentc)
 								 onTeamComplete(k, blockerContent, blockerContentc.log, 'Blocker')
+								 if (shouldMemberUseExitGate(getExpert(team,'blocker'), blockerContentc)) {
+									stop()
+									finished = true
+									//break
+								}
+								
 							}	 
 							if (!blockerContent) blockerContent = "PASS"
 							finished = (blockerContent && blockerContent.trim() === 'FAIL') ? true : false
@@ -1143,19 +1283,29 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 									if (getExpert(team,'feeder').id && getExpert(team,'feeder').id.startsWith("TEAM:::::")) {
 										let feederContentc = await startTeam({
 											message: message ,
-											messages:  [{role:'user', content:[message].join("\n")}],
+											messages:  combinedMessages(messages, [{role:'user', content:[message].join("\n")}]),
 											team: getExpert(team,'feeder'), 
 											onUpdate: iOnUpdate, 
 											onComplete: iOnComplete, 
 											onStart: function() {}
 										})
 										feederContent = handleAssistantResponse(feederContentc)
+										if (shouldMemberUseExitGate(getExpert(team,'feeder'), feederContentc)) {
+											stop()
+											finished = true
+											//break
+										}
 									} else {
-										let feederContentc = await start({messages: [getSystemMessage(getExpert(team,'feeder')), {role:'user', content:[message].join("\n") }], modelConfig: getExpert(team,'feeder').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+										let feederContentc = await start({messages: combinedMessages(messages, [{role:'user', content:[message].join("\n") }], getSystemMessageContent(getExpert(team,'feeder'))) , modelConfig: getExpert(team,'feeder').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 										feederContent = handleAssistantResponse(feederContentc)
+										if (shouldMemberUseExitGate(getExpert(team,'feeder'), feederContentc)) {
+											stop()
+											finished = true
+											//break
+										}
 									}
 								}
-								if (getExpert(team,'planner')) {
+								if (!finished && getExpert(team,'planner')) {
 									k+=1
 									function iOnUpdate(content, partial) {
 										onTeamUpdate(k,content,partial)
@@ -1172,16 +1322,26 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 									if (getExpert(team,'planner').id && getExpert(team,'planner').id.startsWith("TEAM:::::")) {
 										let plannerContentc = await startTeam({
 											message: message ,
-											messages:  [{role:'user', content:[message].join("\n")}],
+											messages:  combinedMessages(messages, [{role:'user', content:[message].join("\n")}]),
 											team: getExpert(team,'planner'), 
 											onUpdate: iOnUpdate, 
 											onComplete: iOnComplete, 
 											onStart: function() {}
 										})
 										plannerContent = handleAssistantResponse(plannerContentc)
+										if (shouldMemberUseExitGate(getExpert(team,'planner'), plannerContentc)) {
+											stop()
+											finished = true
+											//break
+										}
 									} else {
-										let plannerContentc = await start({messages: [getSystemMessage(getExpert(team,'planner')), {role:'user', content:[message].join("\n") }], modelConfig: getExpert(team,'planner').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+										let plannerContentc = await start({messages:  combinedMessages(messages, [{role:'user', content:[message].join("\n") }], getSystemMessageContent(getExpert(team,'planner'))), modelConfig: getExpert(team,'planner').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 										plannerContent = handleAssistantResponse(plannerContentc)
+										if (shouldMemberUseExitGate(getExpert(team,'planner'), plannerContentc)) {
+											stop()
+											finished = true
+											//break
+										}
 									}
 								}
 								//console.log("PRE ROLEBASED",blockerContent, feederContent, plannerContent)
@@ -1189,7 +1349,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 									iterations += 1
 									
 									if (!finished) {
-										if (getExpert(team,'generator')) {
+										if (!finished && getExpert(team,'generator')) {
 											k+=1
 											function iOnUpdate(content, partial) {
 												onTeamUpdate(k,content,partial)
@@ -1203,22 +1363,32 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 													k = k + 1
 												}
 											}
-											if (getExpert(team,'generator').id && getExpert(team,'generator').id.startsWith("TEAM:::::")) {
+											if (!finished && getExpert(team,'generator').id && getExpert(team,'generator').id.startsWith("TEAM:::::")) {
 												let generatorContentc = await startTeam({
 													message: message ,
-													messages:  [{role:'user', content:[message, feederContent, plannerContent, generatorContent, summariserContent, rewriterContent].join("\n")}],
+													messages:  combinedMessages(messages, [{role:'user', content:[message, feederContent, plannerContent, generatorContent, summariserContent, rewriterContent].join("\n")}], getSystemMessageContent(getExpert(team,'generator'))),
 													team: getExpert(team,'generator'), 
 													onUpdate: iOnUpdate, 
 													onComplete: iOnComplete, 
 													onStart: function() {}
 												})
 												generatorContent = handleAssistantResponse(generatorContentc)
-											} else {
-												let generatorContentc = await start({messages: [getSystemMessage(getExpert(team,'generator')), {role:'user', content:[message, feederContent, plannerContent, generatorContent, summariserContent, rewriterContent].join("\n") }], modelConfig: getExpert(team,'generator').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+												if (shouldMemberUseExitGate(getExpert(team,'generator'), generatorContentc)) {
+													stop()
+													finished = true
+													break
+												}
+											} else if (!finished) {
+												let generatorContentc = await start({messages:  combinedMessages(messages, [{role:'user', content:[message, feederContent, plannerContent, generatorContent, summariserContent, rewriterContent].join("\n") }], getSystemMessageContent(getExpert(team,'generator')) ), modelConfig: getExpert(team,'generator').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 												generatorContent = handleAssistantResponse(generatorContentc)
+												if (shouldMemberUseExitGate(getExpert(team,'generator'), generatorContentc)) {
+													stop()
+													finished = true
+													break
+												}
 											}
 										}
-										if (getExpert(team,'summariser')) {
+										if (!finished && getExpert(team,'summariser')) {
 											k+=1
 											function iOnUpdate(content, partial) {
 												onTeamUpdate(k,content,partial)
@@ -1227,11 +1397,16 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 												let persona = getExpert(team,'summariser')
 												onTeamComplete(k,content,usage,'Summariser '+((persona && persona.name) ? ' - ' + persona.name : ''))
 											}
-											let summariserContentc = await start({messages: [getSystemMessage(getExpert(team,'summariser')), {role:'user', content:[message, plannerContent, generatorContent].join("\n")}], modelConfig: getExpert(team,'summariser').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+											let summariserContentc = await start({messages: combinedMessages(messages,[{role:'user', content:[message, plannerContent, generatorContent].join("\n")}], getSystemMessageContent(getExpert(team,'summariser')) ), modelConfig: getExpert(team,'summariser').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 											summariserContent = handleAssistantResponse(summariserContentc)
+											if (shouldMemberUseExitGate(getExpert(team,'summariser'), summariserContentc)) {
+												stop()
+												finished = true
+												break
+											}
 										}
 										let scorerContent = ''
-										if (getExpert(team,'scorer')) {
+										if (!finished && getExpert(team,'scorer')) {
 											k+=1
 											function iOnUpdate(content, partial) {
 												onTeamUpdate(k,content,partial)
@@ -1241,12 +1416,18 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 												onTeamComplete(k,content,usage,'Scorer '+((persona && persona.name) ? ' - ' + persona.name : ''))
 											}
 											
-											 let scorerContentc = await start({messages: [getSystemMessage(getExpert(team,'scorer')), {role:'user', 
-												 content:[message,  (summariserContent ? summariserContent : generatorContent)].join("\n")
-											}],
-												  modelConfig: getExpert(team,'scorer').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+											 let scorerContentc = await start({
+												messages: combinedMessages(messages, [{role:'user', content:[message,  (summariserContent ? summariserContent : generatorContent)].join("\n")}], getSystemMessageContent(getExpert(team,'scorer'))), 
+												modelConfig: getExpert(team,'scorer').config, 
+												onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage 
+											})
 											 scorerContent = handleAssistantResponse(scorerContentc)
 											 if (!scorerContentc) scorerContentc = "PASS"
+											 if (shouldMemberUseExitGate(getExpert(team,'scorer'), scorerContentc)) {
+												stop()
+												finished = true
+												break
+											}
 										}	 
 										
 										finished = (scorerContent && scorerContent.trim() === 'FAIL') ? false : true
@@ -1260,13 +1441,18 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 													let persona = getExpert(team,'rewriter')
 													onTeamComplete(k,content,usage,'Rewriter '+((persona && persona.name) ? ' - ' + persona.name : ''))
 												}
-												let rewriterContentc = await start({messages: [getSystemMessage(getExpert(team,'rewriters')), {role:'user', content:[message, feederContent, plannerContent, generatorContent, summariserContent, rewriterContent].join("\n")}], modelConfig: getExpert(team,'rewriter').config, onUpdate: iOnUpdate, onComplete: iOnComplete})
+												let rewriterContentc = await start({messages: combinedMessages(messages, [{role:'user', content:[message, feederContent, plannerContent, generatorContent, summariserContent, rewriterContent].join("\n")}], getSystemMessageContent(getExpert(team,'rewriters'))), modelConfig: getExpert(team,'rewriter').config, onUpdate: iOnUpdate, onComplete: iOnComplete})
 												rewriterContent = handleAssistantResponse(rewriterContentc)
+												if (shouldMemberUseExitGate(getExpert(team,'rewriter'), rewriterContentc)) {
+													stop()
+													finished = true
+													break
+												}
 											}
 										}
 									}
 								}
-								if (getExpert(team,'formatter')) {
+								if (!finished && getExpert(team,'formatter')) {
 									k+=1
 									function iOnUpdate(content, partial) {
 										onTeamUpdate(k,content,partial)
@@ -1277,6 +1463,11 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 									}
 									let formatterContentc = await start({messages: [getSystemMessage(getExpert(team,'formatter')), {role:'user', content:[message, generatorContent, summariserContent, ].join("\n")}], modelConfig: getExpert(team,'formatter').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
 									formatterContent = handleAssistantResponse(formatterContentc)
+									if (shouldMemberUseExitGate(getExpert(team,'formatter'), formatterContentc)) {
+										stop()
+										finished = true
+										//break
+									}
 								}
 							}
 							sendComplete()
@@ -1286,6 +1477,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 					case 'linear':
 					case 'linearcollation':
 					default:
+						console.log('TYPE LINEAR ',team)
 						if (Array.isArray(team.members) && team.members.length > 0) {
 							let lastResponse = ''
 							for (let i in team.members) {
@@ -1307,7 +1499,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 									if (member.id.startsWith('TEAM:::::'))  {
 										let r = await startTeam({
 											message: message + nextContent,
-											messages:  [{role:'user', content:[message, nextContent].join("\n")}],
+											messages:  combinedMessages(messages, [{role:'user', content:[message, nextContent].join("\n")}]),
 											team: member, 
 											onUpdate: iOnUpdate, 
 											onComplete: iOnComplete, 
@@ -1315,7 +1507,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 										})
 									} else {
 										let r = await start({
-											messages:  [getSystemMessage(member), {role:'user', content:[message, nextContent].join("\n")}],
+											messages:  combinedMessages(messages, [{role:'user', content:[message, nextContent].join("\n")}], getSystemMessageContent(member)),
 											modelConfig: member.config, 
 											onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage 
 										})
@@ -1326,23 +1518,30 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 									}
 								}
 							}
-							sendComplete()
-							return {content: generated, log: tally}
-						}
-						if (getExpert(team,'formatter')) {
-							let k = generated.length 
-							function iOnUpdate(content, partial) {
-								onTeamUpdate(k,content,partial)
+							console.log('DONE TEAM MEMBERS NOW FORMAT', getExpert(team,'formatter'))
+							if (getExpert(team,'formatter')) {
+								let k = generated.length 
+								function iOnUpdate(content, partial) {
+									onTeamUpdate(k,content,partial)
+								}
+								function iOnComplete(content, usage) {
+									let member = getExpert(team,'formatter')
+									onTeamComplete(k,content,usage,'Formatter '+((member && member.name) ? ' - ' + member.name : ''))
+								}
+								let responsec = await start({messages: prependSystemMessage(getExpert(team,'formatter'), [{role:'user', content:[message, generated.map(function(g) {return g.content}).join("\n") ].join("\n")}]), modelConfig: getExpert(team,'formatter').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
+								if (shouldMemberUseExitGate(getExpert(team,'formatter'), responsec)) {
+									stop()
+									//break
+								}
+								sendComplete()
+								return {content: generated, log: tally}
+							} else {
+								sendComplete()
+								return {content: generated, log: tally}
 							}
-							function iOnComplete(content, usage) {
-								let member = getExpert(team,'formatter')
-								onTeamComplete(k,content,usage,'Formatter '+((member && member.name) ? ' - ' + member.name : ''))
-							}
-							let responsec = await start({messages: prependSystemMessage(getExpert(team,'formatter'), [{role:'user', content:[message, generated.map(function(g) {return g.content}).join("\n") ].join("\n")}]), modelConfig: getExpert(team,'formatter').config, onUpdate: iOnUpdate, onComplete: iOnComplete, onError, aiUsage })
-							sendComplete()
-						} else {
-							sendComplete()
+							
 						}
+						
 						
 						break
 				}
@@ -1368,7 +1567,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 								// use custom experts selector
 								if (selectorRole && selectorRole.id) {
 									// selector MUST return the id of a role or list of comma seperated ids
-									let roleIdsc = await start({messages: prependSystemMessage(selectorRole, [{role:'user', content:message }]), modelConfig: selectorRole.config, onUpdate: function() {}, onComplete: function() {}, onError, aiUsage })
+									let roleIdsc = await start({messages: combinedMessages(messages, [{role:'user', content:message}], getSystemMessageContent(selectorRole)), modelConfig: selectorRole.config, onUpdate: function() {}, onComplete: function() {}, onError, aiUsage })
 									let roleIds = handleAssistantResponse(roleIdsc)
 									//console.log("ROLES SELECTED", roleIds)
 									generated[0] = {content: roleIds, log: roleIdsc.log, name: 'Role Selector - '+ selectorRole.name}

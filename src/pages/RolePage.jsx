@@ -36,12 +36,12 @@ export default function RolePage(props) {
 			//console.log('paramchange new id',lastId, id)
 			navigate("/role/"+id)
 		} else if (params.id) {
-			console.log('paramchange have id',params.id,params.category,useRoles,useRoles[params.id])
+			// console.log('paramchange have id',params.id,params.category,useRoles,useRoles[params.id])
 			setCurrentRole(params.id)
 			if (params.category) useRoles[params.id].category = [params.category]
 			localStorage.setItem("voice2llm_last_role", params.id)
 			if (!useRoles.hasOwnProperty(params.id)) {
-				console.log('paramchange crate id',params.id,params.category)
+				// console.log('paramchange crate id',params.id,params.category)
 				useRoles[params.id] = {id: params.id}
 				if (params.category) useRoles[params.id].category = [params.category]
 				setRoles(useRoles)

@@ -5,7 +5,7 @@ import useIcons from '../useIcons'
 
 import {Link} from 'react-router-dom'
 
-export default function AdminAddTransactionModal({loadUserTransactions, icons, user, token}) {
+export default function AdminAddTransactionModal({disabled, loadUserTransactions, icons, user, token}) {
 	const [show, setShow] = useState(false);
 	const handleClose = () => {
 		setShow(false);
@@ -14,7 +14,7 @@ export default function AdminAddTransactionModal({loadUserTransactions, icons, u
 	const handleShow = () => setShow(true);
 	const hiddenInput = useRef()
 	const [amount, setAmount] = useState(0)
-	const [type, setType] = useState(0)
+	const [type, setType] = useState('credit')
 	
 	function submitForm() {
 		handleClose()
@@ -35,7 +35,7 @@ export default function AdminAddTransactionModal({loadUserTransactions, icons, u
 	}
 
 	if (!show) {
-		return <Button variant="success" style={{marginRight:'2em'}}   onClick={handleShow} >Add Transaction</Button>
+		return <Button variant="success" disabled={disabled} style={{marginRight:'2em'}}   onClick={handleShow} >Add Transaction</Button>
 	} else {
 		return (
 			<>

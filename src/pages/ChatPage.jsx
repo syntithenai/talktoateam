@@ -32,34 +32,41 @@ export default function ChatPage({isOnlineRef,onPartialTranscript, allowRestart,
 		lastLlmTrigger.current=''
 		stopLanguageModels()
 	}
+
+	let chatInputRef = useRef()
+	
+
 	const navigate = useNavigate()
 	let params = useParams()
 	//console.log(params)
 	const hiddenInput = useRef()
 
 	useEffect(function() {
-		if (!chatHistories) chatHistories = {}
+		//if (!chatHistories) chatHistories = {}
 		// redirect with id if one is missing
-		if (!params.id) {
-			const lastId = localStorage.getItem("voice2llm_last_chat")
-			const id = lastId ? lastId : utils.generateRandomId()
-			navigate("/chat/"+id)
-		} else if (params.id) {
-			setChatHistoryId(params.id)
-			localStorage.setItem("voice2llm_last_chat", params.id)
-			// create new
-			if (!chatHistories.hasOwnProperty(params.id)) {
-				chatHistories[params.id] = []
-				setChatHistories(chatHistories)
-				// save current history role
-				if (!chatHistoryRoles) chatHistoryRoles = {}
-				chatHistoryRoles[params.id] = currentRole
-			} else {
-			// load current history role
-				if (!chatHistoryRoles) chatHistoryRoles = {}
-				if (chatHistoryRoles[params.id]) setCurrentRole(chatHistoryRoles[params.id]) 
+		let chatHistories = JSON.parse(localStorage.getItem('voice2llm_chat_histories'))
+		console.log("CHAT INIT", params.id, chatHistories)
+		if (chatHistories) {
+			if (!params.id) {
+				const lastId = localStorage.getItem("voice2llm_last_chat")
+				const id = lastId ? lastId : utils.generateRandomId()
+				navigate("/chat/"+id)
+			} else if (params.id) {
+				setChatHistoryId(params.id)
+				localStorage.setItem("voice2llm_last_chat", params.id)
+				// create new
+				if (!chatHistories.hasOwnProperty(params.id)) {
+					chatHistories[params.id] = []
+					setChatHistories(chatHistories)
+					// save current history role
+					if (!chatHistoryRoles) chatHistoryRoles = {}
+					chatHistoryRoles[params.id] = currentRole
+				} else {
+				// load current history role
+					if (!chatHistoryRoles) chatHistoryRoles = {}
+					if (chatHistoryRoles[params.id]) setCurrentRole(chatHistoryRoles[params.id]) 
+				}
 			}
-			 
 		}
 	},[params.id])
 	
@@ -273,14 +280,11 @@ export default function ChatPage({isOnlineRef,onPartialTranscript, allowRestart,
 		<ConfirmDialog forceShow={showConfirm} setForceShow={setShowConfirm} title="Revert Chat History" message="Really discard chat messages after this and start with this message?" onCancel={function() {setShowConfirm(false)}} onConfirm={function() {restartFromChatMessage(toRestart.current); setShowConfirm(false)}}  />
 		{<>
 			<Menu {...{isOnlineRef,bodyStyle, creditBalance, refreshHash, token, logout, user,login, utils, usingStt, usingTts, isSpeaking, isMuted, mute, stopAllPlaying, icons, unmute, stopPlaying, lastLlmTrigger, config, aiUsage, forceRefresh, autoStartMicrophone, setAutoStartMicrophone, isPlaying, allowRestart, isWaiting, startWaiting, stopWaiting, onCancel, isReady, setIsReady, onTranscript, onPartialTranscript, setUserMessage}} />
-			<div id="body" style={bodyStyle}  >
+			<div id="body" style={{backgroundColor:'#dfd2f8', zIndex:'3',position: 'fixed', top: '3.5em', height:'7em', left: 0, width: '100%',  paddingTop:'0.2em',paddingLeft:'0.5em'}}  >
 			<Link  to={"/chat/"+newChatId} style={{float:'right',marginTop:'0.2em',marginRight:'0.7em'}}><Button onClick={stopLanguageModels} disabled={!newChatId}   variant="primary"  >{icons["newchat"]}</Button></Link>	
+				
 				<form  onSubmit={function(e) {submitForm(userMessageRef.current,config); e.preventDefault(); return false}} >
 					{!simplifiedChat && <><AssistantSelector {...{categoryFilter, setCategoryFilter, user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, category, setCategory,exportRoles,importRoles,setSystemMessage,systemMessage,setSystemConfig, systemConfig, init, saveRole, loadRole, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger,  autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking,  isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, getLastAssistantMessage, setLastUserMessage,getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, chatHistoryRoles, setChatHistoryRoles, getLastAssistantChatIndex, categories, configManager, runtimes, currentTeam,  setCurrentTeam, teams, setTeams}}/></>}
-					
-					
-					
-					
 					
 					<div style={{clear:'both', float:'left'}} />
 					
@@ -310,7 +314,6 @@ export default function ChatPage({isOnlineRef,onPartialTranscript, allowRestart,
 			{(!token || !token.access_token) && <div style={{clear:'both', paddingTop:'0.3em', paddingBottom:'0.3em'}} >
 						Chatting to a free language model from <a href="https://groq.com/" target="+new" style={{textDecoration:'none', color:'black'}}><img src="/grokcloud.ico"  style={{height:'24px', width:'24px'}} /> GroqCloud </a>
 					</div>}
-				<div style={{fontWeight:'bold',textAlign:'left', width:'100%'}} >{Array.isArray(chatHistory) && chatHistory.filter(function(v) {return (v.role === 'system')}).map(function(v) {return v.content}).join("/n")}</div>
 				<ListGroup>
 				
 				{welcomeMessage &&  <ListGroup.Item key={-1}  style={{backgroundColor:  "#3d94da1f" , textAlign:'left'}} ><b style={{marginBottom:'2em'}} >ASSISTANT:</b> {welcomeMessage}</ListGroup.Item>}

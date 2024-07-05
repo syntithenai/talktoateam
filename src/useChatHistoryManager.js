@@ -151,22 +151,25 @@ export default function useChatHistoryManager({utils,forceRefresh, doSave, curre
 	
 	
 	function revertChatHistory(index = null) {
-		//console.log('revert',index)
 		let c = currentChatHistory()
+		console.log('revert',index, JSON.parse(JSON.stringify(c)))
 		let m = ''
 		if (c) {
-			//console.log('revert h',c)
+			console.log('revert h',c)
 			let count = 0
 			let startLength = c.length
-			while (c.length > 0 && (startLength - count) > index) {
-				//console.log('revert l',startLength, count, JSON.parse(JSON.stringify(c)))
+			while (c.length > 0 && (startLength - count) > index + 1) {
+				console.log('revert l',startLength, count, JSON.parse(JSON.stringify(c)))
 				let lastMessageItem = c.pop()
 				count += 1
 				if (lastMessageItem.role ==='assistant') {
+					console.log('revert pop ast',lastMessageItem)
 					let lastUserMessageItem = c.pop()
+					console.log('revert pop ast again assume user',lastUserMessageItem)
 					count += 1
 					m = lastUserMessageItem.content
 				} else if (lastMessageItem.role ==='user') {
+					console.log('revert pop user',lastMessageItem)
 					m = lastMessageItem.content
 				}
 			}
@@ -196,15 +199,16 @@ export default function useChatHistoryManager({utils,forceRefresh, doSave, curre
 			try {
 				let id = localStorage.getItem('voice2llm_chat_history_id')
 				let c = JSON.parse(localStorage.getItem("voice2llm_chat_histories"))
-				//console.log("loaded chat histories",c)
+				console.log("loaded chat histories",c)
 				setChatHistories(c)
 				if (id) {
 					setChatHistoryId(id)
-					//setChatHistory(chatHistories[id])
+					// setChatHistory(chatHistories[id])
 					// TODO LOAD ROLE
 				}
 				forceRefresh()
 			} catch (e) {
+				console.log(e)
 				setChatHistories({})
 				forceRefresh()
 			}

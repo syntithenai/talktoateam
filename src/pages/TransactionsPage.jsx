@@ -40,7 +40,7 @@ export default function TransactionsPage({ isOnlineRef,allowRestart, onCancel, o
                                 date: convertUnixTimestampToAUFormat(transaction.date),
                                 type: transaction.type,
                                 model: transaction.model,
-                                amount: "$" + parseFloat(transaction.amount).toFixed(4)
+                                amount: "$" + parseFloat(transaction.amount).toFixed(6)
                             }
                         }))
                     }

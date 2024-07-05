@@ -3,22 +3,11 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
-import nlp from 'compromise'
-import plg from 'compromise-stats'
-import dplg from 'compromise-dates'
-import splg from 'compromise-speech'
-nlp.plugin(plg)
-nlp.plugin(splg)
-nlp.plugin(dplg)
-
-// for tools
-window.compromise = nlp
-window.nlp = nlp
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
-    <App nlp={nlp} />
+    <App  />
   </React.StrictMode>
 );
 

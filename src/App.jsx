@@ -48,7 +48,18 @@ import AdminTransactionsPage from './pages/AdminTransactionsPage';
 import FilesPage from './pages/FilesPage'
 import useTools from './useTools'
 import useModelSelector from './useModelSelector'
+import nlp from 'compromise'
+import plg from 'compromise-stats'
+import dplg from 'compromise-dates'
+import splg from 'compromise-speech'
+nlp.plugin(plg)
+nlp.plugin(splg)
+nlp.plugin(dplg)
 
+// for tools 
+window.compromise = nlp
+window.nlp = nlp
+console.log("SET NLP",window.compromise)
 
 function App({nlp}) {
 

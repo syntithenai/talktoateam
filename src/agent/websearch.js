@@ -67,10 +67,10 @@ export default function ({config, token, creditBalance, abortController, onError
 					let results = JSON.parse(results1)
 					// console.log("TTRES",results)
 					if (results && results.detail && results.detail.error) {
-						throw new Error(results.detail.error)
+						onError(results.detail.error)
 					}
 					if (results && results.detail && results.detail.error) {
-						throw new Error(results.detail.error)
+						onError(results.detail.error)
 					}
 					// console.log(results)
 					let final = [results.answer]

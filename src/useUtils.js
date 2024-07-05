@@ -7,7 +7,7 @@ function exportTeam(teams,teamId, roles, files = null) {
 	}
 	let allRoles = []
 	let useTeam = JSON.parse(JSON.stringify(teams[teamId]))
-		console.log("EXPORT TEAM",useTeam && useTeam.name, useTeam)
+		// console.log("EXPORT TEAM",useTeam && useTeam.name, useTeam)
 		if (Array.isArray(teams[teamId].files)) {
 			let files = []
 			teams[teamId].files.forEach(function(fileId) {
@@ -171,7 +171,7 @@ function exportTeam(teams,teamId, roles, files = null) {
 		}
 		
 	
-	console.log("EXPORTED TEAM",useTeam)
+	// console.log("EXPORTED TEAM",useTeam)
 	return useTeam
 }
 

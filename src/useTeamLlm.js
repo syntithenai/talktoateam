@@ -48,7 +48,11 @@ export default function useTeamLlm({files, fileManager, token, modelSelector, ab
 			//console.log("ssssssSTART TEAM",  useTeam)
 			//onStart()
 			setIsBusy(true)
-			client.startTeam({message, messages: chatHistory, team: useTeam, onUpdate, onComplete: function(content, usage) {console.log("OC",content, usage); setIsBusy(false); onComplete(content, usage)} ,onStart })
+			client.startTeam({message, messages: chatHistory, team: useTeam, onUpdate, onComplete: function(content, usage) { 
+				setIsBusy(false);  
+				document.getElementById("usermessage").focus(); 
+				onComplete(content, usage);
+			} ,onStart })
 		}
 		
 		

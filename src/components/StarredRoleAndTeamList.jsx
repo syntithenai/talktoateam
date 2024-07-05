@@ -39,7 +39,7 @@ export default function StarredRoleAndTeamList({teams, icons, onChange, chatHist
     // add ids to team objects
     let teamsPlus = Object.keys(teams).map(function(t) {
         let team = teams[t]
-        team.id = t
+        team.id = 'TEAM:::'+t
         return team
     })
 	let rolesPlus = Object.keys(roles).map(function(t) {
@@ -65,7 +65,7 @@ export default function StarredRoleAndTeamList({teams, icons, onChange, chatHist
 						:
 					    <ListGroup.Item key={roleKey}  style={{ backgroundColor:'white', borderBottom:'1px solid lightgrey'}}>
 							<div style={{padding:'0.1em', backgroundColor:'white' }} >
-								<Link to={role.list_type === 'team' ? "/team/"+role.id : "/role/"+role.id } style={{float:'left'}}   onClick={function() {setCurrentRole(roleKey, chatHistoryId); setCurrentTeam(null);  forceRefresh()}} >
+								<Link to={role.list_type === 'team' ? "/team/"+role.id.slice(7) : "/role/"+role.id } style={{float:'left'}}   onClick={function() {setCurrentRole(roleKey, chatHistoryId); setCurrentTeam(null);  forceRefresh()}} >
 									<Button variant="outline-primary" style={{ textAlign:'left'}}  >{role.list_type === 'team' && <Badge>{icons.team}</Badge>} <Badge >{icons.palette} {role && role.samples ? role.samples.length : 0}</Badge> {role.name} </Button>
 								</Link>
 								<ButtonGroup style={{float:'right', marginLeft:'0.3em'}} >

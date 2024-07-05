@@ -50,6 +50,7 @@ export default function useLlm({files, fileManager, token, modelSelector, abortC
 				onComplete: function(content, log) {
 					// console.log("AI LLM complete",content,log)
 					setIsBusy(false); 
+					document.getElementById("usermessage").focus()
 					onComplete(content, log)
 				}
 			}

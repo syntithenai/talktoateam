@@ -56,7 +56,18 @@ export default function LoadRoleModal(props) {
 				  className="mb-3"
 				>
 					<Tab eventKey="starred" title="Starred">
-						<StarredRoleAndTeamList  {...props} mini={true} onChange={function(e) {console.log("onchange set role",e);setCurrentRole(e, chatHistoryId); setCurrentTeam(null); navigate('/chat'); handleClose()}} handleClose={handleClose} categories={props.categories}  forceRefresh={forceRefresh} />
+						<StarredRoleAndTeamList  {...props} mini={true} onChange={function(e) {
+							console.log("onchange set role",e);
+							if (e.startsWith('TEAM:::')) {
+								setCurrentTeam(e.slice(7), chatHistoryId); 
+								setCurrentRole(null); 
+							} else {
+								setCurrentRole(e, chatHistoryId); 
+								setCurrentTeam(null); 
+							}
+							navigate('/chat'); 
+							handleClose()
+						}} handleClose={handleClose} categories={props.categories}  forceRefresh={forceRefresh} />
 					</Tab>
 					<Tab eventKey="roles" title="Persona">
 						<RoleList {...props} mini={true} onChange={function(e) {console.log("onchange set role",e);setCurrentRole(e, chatHistoryId); setCurrentTeam(null); navigate('/chat'); handleClose()}} handleClose={handleClose} categories={props.categories}  forceRefresh={forceRefresh} />
