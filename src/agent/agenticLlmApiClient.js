@@ -563,12 +563,12 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 					if (done) break;
 					value.split("data: ").forEach(function(t) {
 						if (t && t.length > 0) {
-							console.log("response d",t)
+							// console.log("response d",t)
 							let j 
 							try {
 									j = JSON.parse(t)
 							} catch (e) {}
-							console.log("response json",j)
+							// console.log("response json",j)
 							if (j && j.error) {
 								stop()
 								onError(new Error(j.error))
@@ -577,21 +577,21 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 							// collate and tokenise into sentences for TTS delivery
 							// TODO collate json arguments if talking directly to openai
 							if (j && j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.hasOwnProperty('tool_calls') && Array.isArray(j.choices[0].delta.tool_calls)) {
-								console.log("TOOL CALs found",j.choices[0].delta.tool_calls)
+								// console.log("TOOL CALs found",j.choices[0].delta.tool_calls)
 								for (let toolKey in j.choices[0].delta.tool_calls) {
-									console.log("TOOL CALs key ",toolKey)
+									// console.log("TOOL CALs key ",toolKey)
 									let tool_call = j.choices[0].delta.tool_calls[toolKey] ? j.choices[0].delta.tool_calls[toolKey].function : null
-									console.log("TOOL CAL FOUND", tool_call)
+									// console.log("TOOL CAL FOUND", tool_call)
 									
 									if (tool_call && tool_call.name && tool_call.name.trim().length > 0) {
-										console.log("TOOL CAL name FOUND", tool_call.name)
+										// console.log("TOOL CAL name FOUND", tool_call.name)
 										if (currentToolCall.name.trim().length > 0) {
-											console.log("TOOL CAL add row")
+											// console.log("TOOL CAL add row")
 											toolCalls.push(currentToolCall)
 										}
 										currentToolCall = {name:tool_call.name,arguments:tool_call.arguments ? tool_call.arguments : ''}
 									} else if (tool_call && tool_call.arguments) {
-										console.log("TOOL CAL args FOUND", tool_call.arguments)
+										// console.log("TOOL CAL args FOUND", tool_call.arguments)
 										currentToolCall.arguments += tool_call.arguments
 									}
 									
@@ -639,12 +639,12 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 					
 				}
 				toolCalls.push(currentToolCall)
-				console.log('FIN TC',toolCalls)
+				// console.log('FIN TC',toolCalls)
 				toolCalls.forEach(function(toolCall) {
-					console.log('FIN TC ST')
+					// console.log('FIN TC ST')
 					return startToolCall(toolCall)
 				})
-				console.log('FIN TC p',toolCallPromises)
+				// console.log('FIN TC p',toolCallPromises)
 				// read last token
 				try {
 					const {lastvalue, lastdone} = await reader.read();
@@ -665,7 +665,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 				if (!isStopped) {
 					//startToolCalls(fullText) 
 					return Promise.all(toolCallPromises).then(function(toolCallResults) { 
-						console.log("response tool fall scomplete",toolCallResults)
+						// console.log("response tool fall scomplete",toolCallResults)
 						let final = renderToolCalls(fullText, toolCallResults)
 						onComplete(final, logEntry)
 						return {content: final, log: logEntry}
