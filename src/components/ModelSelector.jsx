@@ -43,10 +43,12 @@ export default function ModelSelector({defaultOptions, onChange , value , forceR
             {options.map(function(option,tk) {
               return <ListGroup.Item  key={tk} className={(tk%2 === 0) ? 'even': 'odd'} onClick={function(e) {	selectModel(option)}} >
                 <div style={{marginBottom:'0.4em'}} ><b>{option.provider}</b> {option.model}</div>
+                {option.comments && <div style={{marginBottom:'0.4em'}} >{option.comments}</div>}
                 <div  >
                 {option.parameters && <Button  style={{marginLeft:'0.5em'}} variant="secondary" >{option.parameters}B Parameters</Button>}
                 {option.context_length && <Button  style={{marginLeft:'0.5em'}} variant="secondary" >{parseInt(option.context_length)/1024}k Context</Button>}
                 <Button style={{marginLeft:'0.5em'}} variant="outline-success" >$In/Out {option.price_in}/{option.price_out}</Button>
+                {option.tags && <div >{option.tags.map(function(tag) {return <Button style={{marginBottom:'0.4em', marginTop:'0.4em', marginLeft:'0.4em'}}  variant="warning" >{tag}</Button>})}</div>}
                 </div>
                 
                 </ListGroup.Item>

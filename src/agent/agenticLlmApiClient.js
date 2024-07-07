@@ -11,6 +11,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 	// url = import.meta.env.VITE_API_URL
 	// console.log("AGENTIC",token)
 	tools = typeof tools === 'object' ? tools : {}
+	// tools.get_current_weather = function(args) {return new Promise(function(resolve,reject) { console.log("GET CURRENT WEATHER",args); resolve("GET CURRENT WEATHER "+ args.location)})}
 	let isStopped = true
 	
 	//console.log("TOOLS",tools)
@@ -190,29 +191,6 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 		}
 	}
 	
-	function openAIParametersFromConfig(modelConfig, url) {
-		let formData = {}
-		if (modelConfig) {
-			if (modelConfig.outputType === 'json')  formData.response_format = { "type": "json_object" }
-			if (modelConfig.temperatureOpenAI) formData.temperature = parseFloat(modelConfig.temperatureOpenAI) > 0 ? parseFloat(modelConfig.temperatureOpenAI) : 0
-			if (modelConfig.topPOpenAI) formData.top_p = parseFloat(modelConfig.topPOpenAI) > 0 ? parseFloat(modelConfig.topPOpenAI) : null
-			if (modelConfig.maxTokens) formData.max_tokens = parseFloat(modelConfig.maxTokens) > 0 ? parseFloat(modelConfig.maxTokens) : null
-			if (Array.isArray(modelConfig.stopTokens) && modelConfig.stopTokens.length > 0) formData.stop = modelConfig.stopTokens 
-			// OPENAI ONLY
-			if (modelConfig.frequencyPenalty) formData.frequency_penalty = parseFloat(modelConfig.frequencyPenalty) > -2 ? parseFloat(modelConfig.frequencyPenalty) : 0
-			if (modelConfig.presencePenalty) formData.presence_penalty = parseFloat(modelConfig.presencePenalty) > -2	 ? parseFloat(modelConfig.presencePenalty) : 0
-		}
-		if (!modelConfig || (modelConfig && modelConfig.outputType !== 'json')) formData.stream = true
-		if ((modelConfig && modelConfig.outputType !== 'json' && url === 'https://api.openai.com')) formData.stream_options = {include_usage: true}
-		if (url.startsWith(import.meta.env.VITE_API_URL) && modelConfig && modelConfig.config && Array.isArray(modelConfig.config.stopTokens)) {
-			formData.stop_tokens = modelConfig.config.stopTokens
-		}
-		if (url.startsWith(import.meta.env.VITE_API_URL) && modelConfig && modelConfig.config && Array.isArray(modelConfig.config.maxSentences)) {
-			formData.max_sentences = modelConfig.config.maxSentences
-		}
-		return formData
-	}
-	
 	
 	let toolCallPromises = []
 	let toolCalls = {}
@@ -226,70 +204,34 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 		}
 		return matches;
 	}
-
-	async function runToolCall(callText) {
-		let parts = callText.split("(")
-		let functionName = parts[0]
-		// all tool call function names MUST BE lowercase
-		if (tools.hasOwnProperty(functionName.toLowerCase())) {
-			let parameters = parts.slice(1).join("(")
-			let endPos = parameters.lastIndexOf(")")
-			let useParams = parameters.slice(0,endPos)
-			// tools are called with an array of parameters
-			let results = null
+	
+	function startToolCall(toolCall) {
+		console.log('startToolCall',toolCall)
+		let results = null
+		if (toolCall &&  toolCall.name && tools.hasOwnProperty(toolCall.name)) {
 			try {
-				results = await tools[functionName.toLowerCase()](parseCSVLine(useParams))
-				//console.log("TOOL RESULTS",functionName,useParams, results)
-				toolCalls[callText] = results
+				let args = []
+				if (toolCall.arguments) {
+					let argsJSON = fixAndParseJSON(toolCall.arguments)
+					args = Object.values(argsJSON)
+				}
+				console.log('startToolCall real',toolCall.name, args)
+				let callResult = tools[toolCall.name](...args)
+				if (callResult.then) {
+					toolCallPromises.push(callResult)
+				} else {
+					toolCallPromises.push(new Promise(function(resolve,reject) {resolve(callResult)}))
+				}
 			} catch (e) {
 				onError(e)
 			}
-			return [callText,results]
-		} else {
-			// fail silently and return empty if a function name doesn't match
-			return [callText,'']
 		}
+		return results
 	}
 	
-	function startToolCalls(fullText) {
-		let sections = (fullText ? fullText : '').split("```")
-		console.log("startToolCalls", tools)
-		sections.forEach(function(section) {
-			if (section.trim().startsWith('tool')) {
-				console.log("startToolCalls TOOL SECTION",section)
-				// replace tools in this section
-				section.trim().slice(4).split("\n").forEach(function(line) {
-					let functionName = line.split("(")[0].trim()
-					console.log("startToolCalls TOOL fn",functionName, line)
-					if (tools.hasOwnProperty(functionName) && !toolCalls.hasOwnProperty(line.trim()))  {
-						toolCalls[line.trim()] = null
-						toolCallPromises.push(runToolCall(line.trim()))
-					} 
-				})
-			}
-		})
-		console.log("TOOLcalls",toolCalls)
-		return toolCalls
-	}
-	
-	function renderToolCalls(fullText) {
-		console.log("rednerToolCalls")
-		let sections = (fullText ? fullText : '').split("```")
-		sections.forEach(function(section,sk) {
-			if (section.trim().startsWith('tool')) {
-				// replace tools in this section
-				let final = section.trim().slice(4).split("\n").map(function(line) {
-					if (toolCalls[line.trim()])  {
-						return toolCalls[line.trim()]
-					} else {
-						return ''
-					}
-				}).join("\n")
-				sections[sk] = 'markdown' + final
-			}
-		})
-		const final = sections.map(function(s) {return s.trim()}).join("```")
-		return final
+	function renderToolCalls(fullText, toolCallResults) {
+		console.log("rednerToolCalls", toolCallResults)
+		return fullText + toolCallResults.join("\n")
 	}
 
 	function getSystemMessage(persona) {
@@ -364,7 +306,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 
 		if (Array.isArray(addMessages)) chatHistory.concat(addMessages)
 		chatHistory = chatHistory.map(function(m) {
-			return {role: m && m.role ? m.role : {}, content: m && Array.isArray(m.content) ? m.content.map(function(m) {return m && m.content ? m.content : ''}).join("\n") : m && m.content ? m.content : ''} 
+			return {role: m && m.role ? m.role : {}, content: m && Array.isArray(m.content) ? m.content.map(function(m) {return m && m.content ? m.content : ''}).join("\n") : m && m.content ? m.content : '', log: m && m.log ? m.log : null} 
 		})
 		// console.log("CLENED",chatHistory)
 		return chatHistory
@@ -380,7 +322,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 	function cleanHistoryAndAddSystemMessage (chatHistory, addToSystemMessage) {
 		let systemMessage = null
 		let firstElement = null
-		console.log("TO CLENED",JSON.parse(JSON.stringify(chatHistory)))
+		// console.log("TO CLENED",JSON.parse(JSON.stringify(chatHistory)))
 		// clear messages from the beginning until we find the first user message, save the systemMessage
 		while ((!firstElement || firstElement.role !== 'user') && chatHistory.length > 0) {
 			firstElement = chatHistory.shift()
@@ -402,7 +344,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 		chatHistory = chatHistory.map(function(h) {
 			return {'role':h.role, 'content': h.content}
 		})
-		console.log("CLENED",chatHistory)
+		// console.log("CLENED",chatHistory)
 		return chatHistory
 	}
 	
@@ -422,6 +364,50 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 		return null
 	}
 	
+	function propertiesFromArguments(args) {
+		let properties = {}
+		if (Array.isArray(args)) args.forEach(function(argument) {
+			properties[argument.name] = {type: argument.type, description: argument.description}
+		})
+		return properties
+	}
+
+	function openAIParametersFromConfig(modelConfig, url) {
+		let formData = {}
+		if (modelConfig) {
+			if (modelConfig.outputType === 'json')  formData.response_format = { "type": "json_object" }
+			if (modelConfig.temperatureOpenAI) formData.temperature = parseFloat(modelConfig.temperatureOpenAI) > 0 ? parseFloat(modelConfig.temperatureOpenAI) : 0
+			if (modelConfig.topPOpenAI) formData.top_p = parseFloat(modelConfig.topPOpenAI) > 0 ? parseFloat(modelConfig.topPOpenAI) : null
+			if (modelConfig.maxTokens) formData.max_tokens = parseFloat(modelConfig.maxTokens) > 0 ? parseFloat(modelConfig.maxTokens) : null
+			if (Array.isArray(modelConfig.stopTokens) && modelConfig.stopTokens.length > 0) formData.stop = modelConfig.stopTokens 
+			if (Array.isArray(modelConfig.tools)) formData.tools = modelConfig.tools.map(function(t) {
+				return {type:'function', 'function': {
+					name:t.name, 
+					description: t.description, 
+					parameters: {
+						type:'object',
+						properties:propertiesFromArguments(t.arguments),
+						required: Array.isArray(t.required) ? t.required : []
+					}
+				}}
+			})
+			// OPENAI ONLY
+			if (modelConfig.frequencyPenalty) formData.frequency_penalty = parseFloat(modelConfig.frequencyPenalty) > -2 ? parseFloat(modelConfig.frequencyPenalty) : 0
+			if (modelConfig.presencePenalty) formData.presence_penalty = parseFloat(modelConfig.presencePenalty) > -2	 ? parseFloat(modelConfig.presencePenalty) : 0
+			
+		}
+		if (!modelConfig || (modelConfig && modelConfig.outputType !== 'json')) formData.stream = true
+		if ((modelConfig && modelConfig.outputType !== 'json' && url === 'https://api.openai.com')) formData.stream_options = {include_usage: true}
+		if (url.startsWith(import.meta.env.VITE_API_URL) && modelConfig && modelConfig.config && Array.isArray(modelConfig.config.stopTokens)) {
+			formData.stop_tokens = modelConfig.config.stopTokens
+		}
+		if (url.startsWith(import.meta.env.VITE_API_URL) && modelConfig && modelConfig.config && Array.isArray(modelConfig.config.maxSentences)) {
+			formData.max_sentences = modelConfig.config.maxSentences
+		}
+
+		return formData
+	}
+	
 	async function start({messages, modelConfig, onUpdate, onComplete,onStart}) {
 
 		// function appendToMessages(newMessages) {
@@ -431,7 +417,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 		// 	}
 		// 	return m
 		// }
-		console.log("AGENTIC START",modelConfig, fileManager)	
+		// console.log("AGENTIC START",modelConfig, fileManager)	
 		let finalFiles = {}
 		let finalWholeFiles = {}
 		let filesIndex = {}
@@ -449,7 +435,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 				}
 			})
 		}
-		console.log("AGENTIC START files", files, finalFiles, filesIndex)	
+		// console.log("AGENTIC START files", files, finalFiles, filesIndex)	
 		let startTime = new Date()
 		if (modelConfig && modelConfig.type ==="algorithmic" ) {
 			isStopped = false
@@ -461,13 +447,13 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 					let processorFunction = new Function('message','messages','files', modelConfig.processingFunction);
 					let lastUserMessage = getLastUserMessage(messages)
 					let message = lastUserMessage ? lastUserMessage.content : ''
-					console.log("Function CALL:", message, messages, lastUserMessage);
+					// console.log("Function CALL:", message, messages, lastUserMessage);
 					try {
 						let functionResult =   processorFunction(message, messages, finalFiles);
-						console.log("Function res:", functionResult);
+						// console.log("Function res:", functionResult);
 						if (functionResult && functionResult.then && typeof functionResult.then == 'function') {
 							return functionResult.then(function(pRes) {
-								console.log("Function Resultq1:", pRes);
+								// console.log("Function Resultq1:", pRes);
 								let ret = {content: pRes, log: {tokens_in: 0, tokens_out: 0, duration: (new Date() - startTime).valueOf()}}
 								onComplete(pRes, {tokens_in: 0, tokens_out: 0, duration: (new Date() - startTime).valueOf()})
 								return ret
@@ -475,13 +461,13 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 								onError(e)
 							})
 						} else {
-							console.log("Function Resultss:", functionResult);
+							// console.log("Function Resultss:", functionResult);
 							let ret = {content: functionResult, log: {tokens_in: 0, tokens_out: 0, duration: (new Date() - startTime).valueOf()}}
 							onComplete(functionResult, {tokens_in: 0, tokens_out: 0, duration: (new Date() - startTime).valueOf()})
 							return ret
 						}
 					} catch (error) {
-						console.error("Error evaluating function:", error);
+						// console.error("Error evaluating function:", error);
 						onError(error)
 						return
 					}
@@ -508,7 +494,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 			// key could be provider key for direct cors supported calls
 			// OR google access_token for this service
 			let key = modelSelector.getModelApiKey(modelObj.provider)
-			console.log("Persona Start:",url, key, messages,modelConfig, modelObj);
+			// console.log("Persona Start:",url, key, messages,modelConfig, modelObj);
 			if (!key) key = token && token.access_token ? token.access_token : ''
 			isStopped = false
 			var signal = abortController.current.signal;
@@ -552,9 +538,10 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 			let tokensIn = 0
 			let tokensOut = 0
 			let startTime = new Date()
-			
+			let toolCalls = []
+			let currentToolCall = {name:'',arguments:''}
 			try {
-				console.log("START REQUEST",key, formData.messages)
+				console.log("START REQUEST",key, formData)
 				let response = await fetch(url + '/chat/completions', {
 					signal,
 					method: 'POST',
@@ -564,6 +551,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 					},
 					body: JSON.stringify(formData),
 				})
+				// console.log("response",response)
 				if (response.status !== 200) {
 					stop()
 					onError(new Error("Error querying model - " + formData.model +'. '+ response.statusText))
@@ -574,51 +562,95 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 					const {value, done} = await reader.read();
 					if (done) break;
 					value.split("data: ").forEach(function(t) {
-						let j 
-						try {
-								j = JSON.parse(t)
-						} catch (e) {}
-						// collate and tokenise into sentences for TTS delivery
-						if (j && j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.hasOwnProperty('content')) {
-							buffer.push(j.choices[0].delta.content)
-							let n = nlp(sent.join("") + buffer.join("")).clauses().out("array")
-							sentences = n
-							// finished a sentence ?
-							if (n.length > 1 && n.length > lastSentenceCount) {
-								// send everything but last token in buffer, plus second param the whole transcript to date
-								let newText = n[n.length - 2]
-								let fullText = sent.join("") + newText
-								
-
-								onUpdate(fullText, newText, (new Date() - startTime).valueOf())
-								// push the buffer into sent and clear it
-								let sentCounter = ''
-								while (buffer.length > 0 && sentCounter.length < newText.length) {
-									let b = buffer.shift()
-									sentCounter += b
-									sent.push(b)
+						if (t && t.length > 0) {
+							console.log("response d",t)
+							let j 
+							try {
+									j = JSON.parse(t)
+							} catch (e) {}
+							console.log("response json",j)
+							if (j && j.error) {
+								stop()
+								onError(new Error(j.error))
+							}
+							// console.log("response json2")
+							// collate and tokenise into sentences for TTS delivery
+							// TODO collate json arguments if talking directly to openai
+							if (j && j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.hasOwnProperty('tool_calls') && Array.isArray(j.choices[0].delta.tool_calls)) {
+								console.log("TOOL CALs found",j.choices[0].delta.tool_calls)
+								for (let toolKey in j.choices[0].delta.tool_calls) {
+									console.log("TOOL CALs key ",toolKey)
+									let tool_call = j.choices[0].delta.tool_calls[toolKey] ? j.choices[0].delta.tool_calls[toolKey].function : null
+									console.log("TOOL CAL FOUND", tool_call)
+									
+									if (tool_call && tool_call.name && tool_call.name.trim().length > 0) {
+										console.log("TOOL CAL name FOUND", tool_call.name)
+										if (currentToolCall.name.trim().length > 0) {
+											console.log("TOOL CAL add row")
+											toolCalls.push(currentToolCall)
+										}
+										currentToolCall = {name:tool_call.name,arguments:tool_call.arguments ? tool_call.arguments : ''}
+									} else if (tool_call && tool_call.arguments) {
+										console.log("TOOL CAL args FOUND", tool_call.arguments)
+										currentToolCall.arguments += tool_call.arguments
+									}
+									
+									// if (tool_call && tool_call.name) {
+									// 	startToolCall(tool_call)
+									// }
 								}
-								lastSentenceCount = n.length
-								
-							}	
-						}
-						if (j && j.usage) {
-							tokensOut = j.usage.completion_tokens > 0 ? j.usage.completion_tokens : 0
-							tokensIn = j.usage.prompt_tokens > 0 ? j.usage.prompt_tokens : 0
-						}
-						if (j && j.x_groq && j.x_groq.usage) {
-							tokensOut = j.x_groq.usage.completion_tokens > 0 ? j.x_groq.usage.completion_tokens : 0
-							tokensIn = j.x_groq.usage.prompt_tokens > 0 ? j.x_groq.usage.prompt_tokens : 0
+							}
+							// console.log("response choice tool calls started")
+							if (j && j.choices && j.choices[0] && j.choices[0].delta && j.choices[0].delta.hasOwnProperty('content')) {
+								buffer.push(j.choices[0].delta.content)
+								let n = nlp(sent.join("") + buffer.join("")).clauses().out("array")
+								sentences = n
+								// finished a sentence ?
+								if (n.length > 1 && n.length > lastSentenceCount) {
+									// send everything but last token in buffer, plus second param the whole transcript to date
+									let newText = n[n.length - 2]
+									let fullText = sent.join("") + newText
+									
+
+									onUpdate(fullText, newText, (new Date() - startTime).valueOf())
+									// push the buffer into sent and clear it
+									let sentCounter = ''
+									while (buffer.length > 0 && sentCounter.length < newText.length) {
+										let b = buffer.shift()
+										sentCounter += b
+										sent.push(b)
+									}
+									lastSentenceCount = n.length
+									
+								}	
+							}
+							// console.log("response 1")
+							if (j && j.usage) {
+								tokensOut = j.usage.completion_tokens > 0 ? j.usage.completion_tokens : 0
+								tokensIn = j.usage.prompt_tokens > 0 ? j.usage.prompt_tokens : 0
+							}
+							if (j && j.x_groq && j.x_groq.usage) {
+								tokensOut = j.x_groq.usage.completion_tokens > 0 ? j.x_groq.usage.completion_tokens : 0
+								tokensIn = j.x_groq.usage.prompt_tokens > 0 ? j.x_groq.usage.prompt_tokens : 0
+							}
+							// console.log("tokens", tokensIn, tokensOut)
 						}
 					})
 					
 				}
+				toolCalls.push(currentToolCall)
+				console.log('FIN TC',toolCalls)
+				toolCalls.forEach(function(toolCall) {
+					console.log('FIN TC ST')
+					return startToolCall(toolCall)
+				})
+				console.log('FIN TC p',toolCallPromises)
 				// read last token
 				try {
 					const {lastvalue, lastdone} = await reader.read();
-					console.log("LASTVALUE",lastvalue, lastdone)
+					// console.log("LASTVALUE",lastvalue, lastdone)
 				} catch (e) {
-					console.log('LASTVALUE ERROR',e)
+					// console.log('LASTVALUE ERROR',e)
 				}
 
 				setIsBusy(false)
@@ -631,9 +663,10 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 				if (modelConfig && modelConfig.wrapBefore) fullText = modelConfig.wrapBefore + fullText
 				if (modelConfig && modelConfig.wrapAfter) fullText = fullText + modelConfig.wrapAfter
 				if (!isStopped) {
-					startToolCalls(fullText) 
+					//startToolCalls(fullText) 
 					return Promise.all(toolCallPromises).then(function(toolCallResults) { 
-						let final = renderToolCalls(fullText)
+						console.log("response tool fall scomplete",toolCallResults)
+						let final = renderToolCalls(fullText, toolCallResults)
 						onComplete(final, logEntry)
 						return {content: final, log: logEntry}
 					}).catch (function(error) {
@@ -664,7 +697,7 @@ function agenticLlmApiClient({ files, fileManager, token, modelSelector, aiUsage
 	
 	
 	function chooseExperts(message, experts) {
-		console.log("CHOOSE EXP",message, experts)
+		// console.log("CHOOSE EXP",message, experts)
 		return new Promise(function(resolve, reject) {
 			let systemMessage=`You are a human resources expert. 
 You understand very well how to find the right person for the job. 
@@ -1645,7 +1678,7 @@ You must ONLY respond with a comma seperated list of ids from the experts provid
 		})
 	}
 		
-    return {stop, start, startTeam, isBusy, startToolCalls, prependSystemMessage, tools, fixGraph, fixCode}
+    return {stop, start, startTeam, isBusy, prependSystemMessage, tools, fixGraph, fixCode}
 }
 
 

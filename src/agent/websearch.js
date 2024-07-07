@@ -27,31 +27,34 @@ export default function ({config, token, creditBalance, abortController, onError
 				return JSON.stringify({error:'No access'})
 			}
 			// JSON.stringify(console.log(url,headers))
+			
 			if (url && url.trim().length > 0) {
-				let response = await fetch(url, {
-					signal: abortController.current ? abortController.current.signal : null,
-					method: 'POST',
-					headers: headers,
-					body: JSON.stringify({
-					"api_key": (config && config.tools && config.tools.tavily_key && config.tools.tavily_url ? config.tools.tavily_key : ''),
-					"query": query,
-					"search_depth": "basic",
-					"include_answer": "true",
-					"include_images": "false",
-					"include_raw_content": "true",
-					"max_results": maxResults,
-					"include_domains": [],
-					"exclude_domains": []
+				if (query && query.length) {
+					let response = await fetch(url, {
+						signal: abortController.current ? abortController.current.signal : null,
+						method: 'POST',
+						headers: headers,
+						body: JSON.stringify({
+						"api_key": (config && config.tools && config.tools.tavily_key && config.tools.tavily_url ? config.tools.tavily_key : ''),
+						"query": query,
+						"search_depth": "basic",
+						"include_answer": "true",
+						"include_images": "false",
+						"include_raw_content": "true",
+						"max_results": maxResults,
+						"include_domains": [],
+						"exclude_domains": []
+						})
 					})
-				})
-				return response.json()
+					return response.json()
+				} 
 			} 
 		} else {
-			onError("To use web search, you need to login and buy credit or configure your own tool urls and keys in the tools settings.")
+			onError(new Error("To use web search, you need to login and buy credit or configure your own tool urls and keys in the tools settings."))
 		}
 		return {}
 	}
-	function websearch_tavily(message) {
+	function websearch(message) {
 		console.log("START SEARCH", config)
 		return new Promise(function(resolve,reject) {
 			//console.log(config, config.tools.tavily_key)
@@ -62,25 +65,30 @@ export default function ({config, token, creditBalance, abortController, onError
 			} else {
 				onError("To use web search, you need to login and buy credit or configure your own tool urls and keys in the tools settings.")
 			}
-			tavilySearch(message.join(' '), 5).then(function(results1) {
-				// try {
-					let results = JSON.parse(results1)
-					// console.log("TTRES",results)
-					if (results && results.detail && results.detail.error) {
-						onError(results.detail.error)
-					}
-					if (results && results.detail && results.detail.error) {
-						onError(results.detail.error)
-					}
-					// console.log(results)
-					let final = [results.answer]
-					// let final = [results && results.answer ? results.answer : (results && Array.isArray(results.results) ? results.results.map(function(r) {return r.content}).join("\n") : '')]
-					return resolve(final.join("\n"))
-				// } catch (e) {
-				// 	console.log(e)
-				// 	reject(String(e))}
-				// 	// resolve('')
-			})
+			if (Array.isArray(message)) message = message.join(' ')
+			if (message && message.trim().length  > 0) {
+				tavilySearch(message, 5).then(function(results1) {
+					// try {
+						let results = JSON.parse(results1)
+						// console.log("TTRES",results)
+						if (results && results.detail && results.detail.error) {
+							onError(results.detail.error)
+						}
+						if (results && results.detail && results.detail.error) {
+							onError(results.detail.error)
+						}
+						// console.log(results)
+						let final = [results.answer]
+						// let final = [results && results.answer ? results.answer : (results && Array.isArray(results.results) ? results.results.map(function(r) {return r.content}).join("\n") : '')]
+						return resolve(final.join("\n"))
+					// } catch (e) {
+					// 	console.log(e)
+					// 	reject(String(e))}
+					// 	// resolve('')
+				})
+			} else {
+				resolve('What do you want to search for?')
+			}
 			// .catch(function(e) {
 			// 		console.log(e)
 			// 		reject("Failed web search, check your configuration and/or try again later.")
@@ -90,7 +98,7 @@ export default function ({config, token, creditBalance, abortController, onError
 
 
 
-	return {websearch_tavily}
+	return {websearch}
 }
 
 

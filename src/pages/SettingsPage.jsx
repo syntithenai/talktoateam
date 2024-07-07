@@ -6,7 +6,7 @@ import useIcons from '../useIcons'
 import TTSConfigForm from '../components/TTSConfigForm'
 import STTConfigForm from '../components/STTConfigForm'
 import LLMConfigForm from '../components/LLMConfigForm'
-import ToolsConfigForm from '../components/ToolsConfigForm'
+import ExternalToolsConfigForm from '../components/ExternalToolsConfigForm'
 import PreferredModelsConfigForm from '../components/PreferredModelsConfigForm'
 import EmbeddingsConfigForm from '../components/EmbeddingsConfigForm'
 //import SystemMessageForm from '../components/SystemMessageForm'
@@ -15,8 +15,9 @@ import Footer from '../components/Footer';
 import {Link } from 'react-router-dom'
 import ModelSelectorModal from '../components/ModelSelectorModal'
 import {useParams, useLocation, useNavigate} from 'react-router-dom';
+import ToolsForm from '../components/ToolsForm'; 
 
-export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTranscript, onPartialTranscript, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}) {
+export default function SettingsPage({userTools, setUserTools, isOnlineRef,allowRestart, onCancel, onTranscript, onPartialTranscript, bodyStyle, exchangeRate, setExchangeRate,updateExchangeRate, modelSelector, creditBalance, updateCreditBalance, teamLlm, chatHistoryRoles, setChatHistoryRoles,chatHistoryTeams, setChatHistoryTeams,  user, token, login, logout, refresh, doSave, aiUsage, submitForm, stopAllPlaying, stopLanguageModels, aiLlm, usingOpenAiTts, usingSelfHostedTts, usingWebSpeechTts, usingMeSpeakTts, usingTts, usingStt, usingOpenAiStt, usingSelfHostedStt, usingLocalStt, queueSpeech, getUrl, playDataUri, stopPlaying,isPlaying,setIsPlaying, isMuted, isMutedRef, mute, unmute, deleteRole, exportRoles,importRoles,init, roles, setRoles, currentRole, setCurrentRole, newRole, utteranceQueue, setUtteranceQueue, mergeData, setMergeData, lastLlmTrigger, autoStartMicrophone, setAutoStartMicrophone, autoStopMicrophone, setAutoStopMicrophone, refreshHash, setRefreshHash, forceRefresh, hasRequiredConfig, isSpeaking, setIsSpeaking, isWaiting, startWaiting, stopWaiting, userMessage, userMessageRef, setUserMessage, isReady, setIsReady, config, setConfig, llmEnabled, setLlmEnabled, icons, configRef, utils, newChat, addUserMessage, addAssistantMessage, setLastAssistantMessage, setLastUserMessage, getLastUserMessage, chatHistoryId,chatHistoryIdRef, setChatHistoryId, chatHistories, setChatHistories, currentChatHistory, revertChatHistory, deleteChatHistory, playSpeech, duplicateChatHistory, configIn, chatHistoriesRef, getLastAssistantChatIndex, getLastAssistantMessage, categories, setCategories, teams, setTeams, currentTeam, setCurrentTeam, currentTeamRef, deleteTeam, configManager, runtimes, duplicateRole, accordionSelectedKey, setAccordionSelectedKey, categoryFilter, setCategoryFilter, fileManager, files, exportDocument, availableModels}) {
 	// console.log(token)
 	
 	// useEffect(function() {
@@ -69,7 +70,8 @@ export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTra
 	}
 			
 	const {openAiBillable, useLlm} = utils.summariseConfig(config)
-	
+	const [filter, setFilter] = useState('')
+
 	return (
 		<div className="App" style={{textAlign:'left'}} id={refreshHash} >
 			 
@@ -90,8 +92,14 @@ export default function SettingsPage({ isOnlineRef,allowRestart, onCancel, onTra
 					<PreferredModelsConfigForm availableModels={availableModels} creditBalance={creditBalance} modelSelector={modelSelector} token={token} aiUsage={aiUsage} configIn={config} setConfig={setConfig}  forceRefresh={forceRefresh} icons={icons} />
 				</Tab>
 				<Tab eventKey="tools" title="Tools">
-					<ToolsConfigForm  configIn={config} setConfig={setConfig}  forceRefresh={forceRefresh} />
+					<h3>Tools</h3>
+					{icons.search} <input type='text' value={filter} onChange={function(e) {setFilter(e.target.value)}} style={{width:'30em'}} />
+					<ToolsForm value={userTools} onChange={setUserTools}  {...{icons,filter}} />
 				</Tab>
+				<Tab eventKey="externaltools" title="External Tools">
+					<ExternalToolsConfigForm  configIn={config} setConfig={setConfig}  forceRefresh={forceRefresh} />
+				</Tab>
+				
 				<Tab eventKey="embeddings" title="Embeddings">
 					<EmbeddingsConfigForm  configIn={config} setConfig={setConfig}  forceRefresh={forceRefresh} />
 				</Tab>

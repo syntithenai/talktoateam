@@ -10,7 +10,6 @@ export default function useAppState(props) {
 	let abortController = useRef(new AbortController())
 	const [accordionSelectedKey, setAccordionSelectedKey] = useState(0)
 	const [errorMessage, setErrorMessage] = useState('')
-	
 
 	const utteranceQueue = useRef([])
 	
@@ -103,7 +102,7 @@ export default function useAppState(props) {
 	
 	const [creditBalance, setCreditBalance] = useState(0)
 	function updateCreditBalance(access_token) {
-		console.log('balance update',access_token)
+		// console.log('balance update',access_token)
 		
 		if (access_token) {
 			fetch(import.meta.env.VITE_API_URL + '/balance', {
@@ -117,7 +116,7 @@ export default function useAppState(props) {
 					throw new Error('Failed to load balance');
 				}
 				response.text().then(function(data) {
-					console.log("bill respon DATA", data)
+					// console.log("bill respon DATA", data)
 					if (parseFloat(data) > 0) {
 						setCreditBalance(parseFloat(data))
 					} else {
@@ -126,7 +125,7 @@ export default function useAppState(props) {
 				})
 			})
 		} else {
-			console.log("bill respon DATA 0 no token")
+			// console.log("bill respon DATA 0 no token")
 			setCreditBalance(0)
 		}
 	}

@@ -4,11 +4,12 @@ import useIcons from '../useIcons'
 import TextareaAutosize from 'react-textarea-autosize';
 //import CategoryAutosuggest from './CategoryAutosuggest'
 import CategoriesSelector from './CategoriesSelector'
+import ToolSelector from './ToolSelector'
 import FileList from './FileList'
-
+import ToolsForm from './ToolsForm'
 
 export default function RoleForm (props)  {
-	const {roleId, roles, rolesJSON, setRoles, icons, forceRefresh, utils, playSpeech, config, categories, setCategories, files} = props
+	const {roleId, roles, rolesJSON, setRoles, icons, forceRefresh, utils, playSpeech, config, categories, setCategories, files, userTools} = props
 	const [role, setRole] = useState({})
 	let [refresh, setRefresh] = useState('')
 	let [samples, setSamplesInner] = useState([])
@@ -18,7 +19,8 @@ export default function RoleForm (props)  {
 	}
 	let [addSample, setAddSample] = useState('')
 	let [generateSchemaErrorMessage, setGenerateSchemaErrorMessage] = useState('')
-	
+	const [toolsFilter, setToolsFilter] = useState('')
+
 	function save(field, value) {
 		//console.log('save', field, value)
 		if (roles && roleId && field) {
@@ -207,7 +209,8 @@ export default function RoleForm (props)  {
   const handleTtsSelfHostedVoiceChange = (e) => {
     saveConfig('ttsSelfHostedVoice',e.target.value)
   };
-  
+   
+
   
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -242,7 +245,6 @@ export default function RoleForm (props)  {
 		}	
 		return ''
 	}
-
   return (
     <>
     <Form id={refresh} onSubmit={function(e) {e.preventDefault(); return false}}>
@@ -258,7 +260,7 @@ export default function RoleForm (props)  {
 						<Row className="mb-3">
 							<Col>
 							   <Form.Label>Name</Form.Label>
-							  <Form.Control type="text" 
+							  <Form.Control type="text" style={{minWidth:'20em'}}
 							   onChange={(e) => handleNameChange(e)}
 								value={role && role.name ? role.name : ''}
 							></Form.Control>
@@ -670,7 +672,7 @@ export default function RoleForm (props)  {
 				  <Form.Group controlId="stopTokens">
 					<Form.Label>Preferred Model</Form.Label>
 					<Form.Select
-					  value={role && role.config && role.config.preferredModel ? role.config.preferredModel : '4'}
+					  value={role && role.config && role.config.preferredModel ? role.config.preferredModel : 'large'}
 					  onChange={handlePreferredModelChange}
 					>
 						 <option value="basic" >Basic</option>
@@ -831,7 +833,20 @@ export default function RoleForm (props)  {
         </Col>
       </Row>
 		  </Tab>
-		  
+
+		  <Tab eventKey="tools" title="Tools" >
+				 <Row>
+				 
+						  <Col>
+						   <Form.Label >Tools</Form.Label>
+						  	<ToolSelector value={role && role.config && Array.isArray(role.config.tools) ? role.config.tools : []} onChange={(e) => saveConfig('tools',e)} defaultOptions={userTools ? Object.values(userTools) : []}   />
+							<ToolsForm tools={role && role.config && Array.isArray(role.config.tools) ? role.config.tools : []} setTools={(e) => saveConfig('tools',e)}  filter={toolsFilter} icons={icons}  />
+						  </Col>  
+      </Row>
+		  </Tab>
+
+		
+		 
 		 
 		</Tabs>
 	</div>
@@ -839,89 +854,3 @@ export default function RoleForm (props)  {
     </>
   );
 };
-//<FileSelector />
-//<Tab eventKey="selfhosted" title="Self Hosted">
-			  //<a href={'https://docs.gpt4all.io/gpt4all_python.html#streaming-generations'} target="_new" ><Button style={{float:'right'}}>{icons.question}</Button></a>
-			  //<Row>
-				//<Col>
-				  //<Form.Group controlId="temperatureGpt4All">
-					//<Form.Label>Temperature: {role && role.config && role.config.temperature ? role.config.temperature : ''}</Form.Label>
-					//<Form.Control
-					  //type="range"
-					  //min={0}
-					  //max={1}
-					  //step={0.01}
-					  //value={role && role.config && role.config.temperature ? role.config.temperature : ''}
-					  //onChange={handleTemperatureChange}
-					///>
-				  //</Form.Group>
-				//</Col>
-			  //</Row>
-			  
-			  //<Row>
-				//<Col>
-				  //<Form.Group controlId="topP">
-					//<Form.Label>Top P: {role && role.config && role.config.topP ? role.config.topP : ''}</Form.Label>
-					//<Form.Control
-					  //type="range"
-					  //min={0}
-					  //max={1}
-					  //step={0.01}
-					  //value={role && role.config && role.config.topP ? role.config.topP : ''}
-					  //onChange={handleTopPChange}
-					///>
-				  //</Form.Group>
-				//</Col>
-			   //</Row>
-				//<Row>
-				//<Col>
-				  //<Form.Group controlId="topK">
-					//<Form.Label>Top K: {role && role.config && role.config.topK ? role.config.topK : ''}</Form.Label>
-					//<Form.Control
-					  //type="range"
-					  //min={1}
-					  //max={100}
-					  //value={role && role.config && role.config.topK ? role.config.topK : ''}
-					  //onChange={handleTopKChange}
-					///>
-				  //</Form.Group>
-				//</Col>
-			  //</Row>
-			  
-			  
-			  
-			  //</Tab>
-
-			  //<Row>
-				//<Col>
-				  //<Form.Group controlId="beams">
-					//<Form.Label>Beams: {role && role.config && role.config.beams ? role.config.beams : ''}</Form.Label>
-					//<Form.Control
-					  //type="range"
-					  //min={0}
-					  //max={20}
-					  //value={role && role.config && role.config.beams ? role.config.beams : ''}
-					  //onChange={handleBeamsChange}
-					///>
-				  //</Form.Group>
-				//</Col>
-			  //</Row>
-
-
-	
-		  
-//<option>HTML</option>
-					//<option>Markdown</option>
-					//<option>YAML</option>
-					//<option>XML</option>{role && role.config && role.config.ttsSelfHostedVoice ? role.config.ttsSelfHostedVoice : '
-						  //<Form.Group  controlId="openaiKey">
-							//<Form.Label>Comments</Form.Label>
-							  //<TextareaAutosize 
-							   //minRows={'1'}
-							   //style={{width:'100%'}}
-								//onChange={(e) => handleChange('comments',e)}
-								//value={role && role.comments ? role.comments : ''}
-							  //></TextareaAutosize>
-							//</Form.Group>
-					  //</Col>
-				  //</Row>

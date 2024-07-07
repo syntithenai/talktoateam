@@ -6,115 +6,115 @@ const escapeRegexCharacters = str => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 
 export default class CategoryAutosuggest extends React.Component {
-  constructor(props) {
-    super();
-    this.categories = props.categories ? Object.keys(props.categories).map(function(v) {return {name:v}}) : []
-    console.log("CONSTR",props, this.categories)
-	this.state = {
-      value: props.value,
-      suggestions: []
-    };    
-    this.onChangeCallback = props.onChange
-  }
+  // constructor(props) {
+  //   super();
+  //   this.categories = props.categories ? Object.keys(props.categories).map(function(v) {return {name:v}}) : []
+  //   console.log("CONSTR",props, this.categories)
+	// this.state = {
+  //     value: props.value,
+  //     suggestions: []
+  //   };    
+  //   this.onChangeCallback = props.onChange
+  // }
 
-	componentWillReceiveProps(nextProps) {
-	  // You don't have to do this check first, but it can help prevent an unneeded render
-	  //if (nextProps.startTime !== this.state.startTime) {
-	  console.log("UDPATE CATAUTOSUG PROPS",nextProps)
-		if (nextProps.value) { 
-		  let newState = {value: nextProps.value, suggestions: []}
-			this.setState(newState);
-		}
-		this.categories = this.props.categories ? Object.keys(this.props.categories).map(function(v) {return {name:v}}) : []
-	  //}
-	}
+	// componentWillReceiveProps(nextProps) {
+	//   // You don't have to do this check first, but it can help prevent an unneeded render
+	//   //if (nextProps.startTime !== this.state.startTime) {
+	//   console.log("UDPATE CATAUTOSUG PROPS",nextProps)
+	// 	if (nextProps.value) { 
+	// 	  let newState = {value: nextProps.value, suggestions: []}
+	// 		this.setState(newState);
+	// 	}
+	// 	this.categories = this.props.categories ? Object.keys(this.props.categories).map(function(v) {return {name:v}}) : []
+	//   //}
+	// }
 
-	getSuggestions = value => {
-	  const escapedValue = escapeRegexCharacters(value.trim());
+	// getSuggestions = value => {
+	//   const escapedValue = escapeRegexCharacters(value.trim());
 	  
-	  if (escapedValue === '') {
-		return this.categories;
-	  }
+	//   if (escapedValue === '') {
+	// 	return this.categories;
+	//   }
 
-	  const regex = new RegExp('^' + escapedValue, 'i');
-	  const suggestions = this.categories.filter(cat => regex.test(cat.name));
+	//   const regex = new RegExp('^' + escapedValue, 'i');
+	//   const suggestions = this.categories.filter(cat => regex.test(cat.name));
 	  
-	  if (suggestions.length === 0) {
-		return [
-		  { isAddNew: true }
-		];
-	  }
+	//   if (suggestions.length === 0) {
+	// 	return [
+	// 	  { isAddNew: true }
+	// 	];
+	//   }
 	  
-	  return suggestions;
-	}
+	//   return suggestions;
+	// }
 
-  onChange = (event, { newValue, method }) => {
-    this.setState({
-      value: newValue
-    });
-  };
+  // onChange = (event, { newValue, method }) => {
+  //   this.setState({
+  //     value: newValue
+  //   });
+  // };
 
-  getSuggestionValue = suggestion => {
-    if (suggestion.isAddNew) {
-      return this.state.value;
-    }
+  // getSuggestionValue = suggestion => {
+  //   if (suggestion.isAddNew) {
+  //     return this.state.value;
+  //   }
     
-    return suggestion.name;
-  };
+  //   return suggestion.name;
+  // };
 
-  renderSuggestion = suggestion => {
-    if (suggestion.isAddNew) {
-      return (
-        <span>
-          [+] Add new: <strong>{this.state.value}</strong>
-        </span>
-      );
-    }
+  // renderSuggestion = suggestion => {
+  //   if (suggestion.isAddNew) {
+  //     return (
+  //       <span>
+  //         [+] Add new: <strong>{this.state.value}</strong>
+  //       </span>
+  //     );
+  //   }
 
-    return suggestion.name;
-  };
+  //   return suggestion.name;
+  // };
   
-  onSuggestionsFetchRequested = ({ value }) => {
-    this.setState({
-      suggestions: this.getSuggestions(value)
-    });
-  };
+  // onSuggestionsFetchRequested = ({ value }) => {
+  //   this.setState({
+  //     suggestions: this.getSuggestions(value)
+  //   });
+  // };
 
-  onSuggestionsClearRequested = () => {
-    this.setState({
-      suggestions: this.categories
-    });
-  };
+  // onSuggestionsClearRequested = () => {
+  //   this.setState({
+  //     suggestions: this.categories
+  //   });
+  // };
 
-  onSuggestionSelected = (event, { suggestion }) => {
-    if (suggestion.isAddNew) {
-      console.log('Add new:', this.state.value);
-      this.onChangeCallback(this.state.value)
-    } else {
-		this.onChangeCallback(suggestion.name.toLowerCase())
-	}
+  // onSuggestionSelected = (event, { suggestion }) => {
+  //   if (suggestion.isAddNew) {
+  //     console.log('Add new:', this.state.value);
+  //     this.onChangeCallback(this.state.value)
+  //   } else {
+	// 	this.onChangeCallback(suggestion.name.toLowerCase())
+	// }
     
-  };
+  // };
 
-  render() {
-    const { value, suggestions } = this.state;
-    const inputProps = {
-      placeholder: "Search",
-      value: value,
-      onChange: this.onChange
-    };
+  // render() {
+  //   const { value, suggestions } = this.state;
+  //   const inputProps = {
+  //     placeholder: "Search",
+  //     value: value,
+  //     onChange: this.onChange
+  //   };
 
-    return (
-      <Autosuggest 
-        suggestions={suggestions}
-        onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
-        onSuggestionsClearRequested={this.onSuggestionsClearRequested}
-        getSuggestionValue={this.getSuggestionValue}
-        renderSuggestion={this.renderSuggestion}
-        onSuggestionSelected={this.onSuggestionSelected}
-        inputProps={inputProps} 
-        shouldRenderSuggestions={function() {return true}}
-      />
-    );
-  }
+  //   return (
+  //     <Autosuggest 
+  //       suggestions={suggestions}
+  //       onSuggestionsFetchRequested={this.onSuggestionsFetchRequested}
+  //       onSuggestionsClearRequested={this.onSuggestionsClearRequested}
+  //       getSuggestionValue={this.getSuggestionValue}
+  //       renderSuggestion={this.renderSuggestion}
+  //       onSuggestionSelected={this.onSuggestionSelected}
+  //       inputProps={inputProps} 
+  //       shouldRenderSuggestions={function() {return true}}
+  //     />
+  //   );
+  // }
 }

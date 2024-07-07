@@ -100,24 +100,24 @@ export default function CategoriesSelector({defaultOptions, onChange , value }) 
           <input type='search' value={filter} onChange={filterChange} onFocus={function() {setShowOptions(true)}} onBlur={function() {
 			  setTimeout(function() {
 				  setShowOptions(false)
-			  },500)
+			  },200)
 		  }}  />
           {(options.length === 0) && <Button style={{marginLeft:'0.3em'}} key="newcategory" onClick={function() {newCategory(filter)}}  >{icons.add}</Button>}
-           <div style={{clear:'both', marginTop:'1em'}} /> 
+           <div style={{clear:'both', marginTop:'0.5em'}} /> 
            
-          <div>{Array.isArray(value) && value.map(function(selectedCategory) {
-              return <Button key={selectedCategory} style={{marginRight:'0.2em'}} variant="secondary" onClick={function(e) {deselectCategory(selectedCategory)}} >{icons.bin}&nbsp;{selectedCategory}</Button>
-            })}</div>
-          
-        </div>
-        {showOptions && <div style={{position:'relative', top:'-40px', zIndex:10}} >
+         {showOptions && <div style={{position:'relative', zIndex:10}} >
           <ListGroup  style={{zIndex:'20',clear:'both', width: '100%'}}>
             {sortedOptions.map(function(option,tk) {
               return <ListGroup.Item  key={tk} className={(tk%2 === 0) ? 'even': 'odd'} onClick={function(e) {	selectCategory(option)}} >{option}</ListGroup.Item>
             })}
           </ListGroup>
         </div>}
-      
+        <div>{Array.isArray(value) && value.map(function(selectedCategory) {
+              return <Button key={selectedCategory} style={{marginRight:'0.2em'}} variant="secondary" onClick={function(e) {deselectCategory(selectedCategory)}} >{icons.bin}&nbsp;{selectedCategory}</Button>
+            })}</div>
+          
+        </div>
+        
     </>
   );
 }

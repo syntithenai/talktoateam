@@ -180,7 +180,7 @@ export default function useModelSelector({configString, creditBalance, token, av
     }
 
     function getModelUrl(provider) {
-        console.log('GET MODEL URL',provider, config)
+        // console.log('GET MODEL URL',provider, config)
         if (provider === 'selfhosted' && config && config.llm && config.llm.self_hosted_url) {
             return config.llm.self_hosted_url
         } else if (provider === 'openai' && config && config.llm && config.llm.openai_key) {
@@ -195,7 +195,7 @@ export default function useModelSelector({configString, creditBalance, token, av
     }
 
     function getModelApiKey(provider) {
-        console.log("GETLEU",provider, config)
+        // console.log("GETLEU",provider, config)
         switch (provider) {
             case 'openai':
                 return config && config.llm && config.llm.openai_key ? config.llm.openai_key : '' ;
